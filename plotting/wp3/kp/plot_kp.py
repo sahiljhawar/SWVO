@@ -7,13 +7,15 @@ matplotlib.use('Agg')
 import os
 import sys
 import argparse
+import datetime as dt
+import logging
 
-sys.path.append("../../../io/wp3")
+sys.path.append("/PAGER/WP8/data_management/io/wp3/")
 from read_kp import KPReader
 
 DATA_PATH = "/PAGER/WP3/data/outputs/"
-RESULTS_PATH = "/PAGER/WP3/data/figures/"
-
+#RESULTS_PATH = "/PAGER/WP3/data/figures/"
+RESULTS_PATH = "/home/ruggero/temp/"
 
 def add_bar_color(data, key):
     color = []
@@ -90,26 +92,33 @@ if __name__ == "__main__":
     parser.add_argument('-date', action="store", default=None, type=str,
                         help="Requested date to plot in the format %YYYY-%mm-%dd")
     args = parser.parse_args()
-    plotting_date = args.date
+    plotting_date = dt.datetime.strptime(args.date, "%Y-%m-%d")
 
     reader = KPReader()
 
-    data_niemegk, date = reader.read("niemegk", plotting_date)
-    plot_forecast(data_niemegk)
-    plt.savefig(os.path.join(RESULTS_PATH, "Niemegk_LAST.png"))
-    plt.savefig(os.path.join(RESULTS_PATH, "Niemegk_{}.png".format(date.strftime("%Y%m%d"))))
+    try:
+        data_niemegk, date = reader.read("niemegk", plotting_date)
+        plot_forecast(data_niemegk)
+        plt.savefig(os.path.join(RESULTS_PATH, "Niemegk_LAST.png"))
+        plt.savefig(os.path.join(RESULTS_PATH, "Niemegk_{}.png".format(date.strftime("%Y%m%d"))))
+    except TypeError:
+        logging.error("Data for Niemegk nowcast for date {} not found...impossible to produce data plot...".format(plotting_date))
 
-    data_swpc, date = reader.read("swpc", plotting_date)
-    plot_forecast(data_swpc)
-    plt.savefig(os.path.join(RESULTS_PATH, "SWPC_LAST.png"))
-    plt.savefig(os.path.join(RESULTS_PATH, "SWPC_{}.png".format(date.strftime("%Y%m%d"))))
+    try:
+        data_swpc, date = reader.read("swpc", plotting_date)
+        plot_forecast(data_swpc)
+        plt.savefig(os.path.join(RESULTS_PATH, "SWPC_LAST.png"))
+        plt.savefig(os.path.join(RESULTS_PATH, "SWPC_{}.png".format(date.strftime("%Y%m%d"))))
+    except TypeError:
+        logging.error("Data for SWPC forecast for date {} not found...impossible to produce data plot...".format(plotting_date))
 
-    data_l1, date = reader.read("l1", plotting_date)
-    plot_forecast(data_l1)
-    plt.savefig(os.path.join(RESULTS_PATH, "L1_LAST.png"))
-    plt.savefig(os.path.join(RESULTS_PATH, "L1_{}.png".format(date.strftime("%Y%m%d"))))
 
-    data_swift, date = reader.read("swift", plotting_date)
-    plot_forecast(data_swift)
-    plt.savefig(os.path.join(RESULTS_PATH, "SWIFTKP_LAST.png"))
-    plt.savefig(os.path.join(RESULTS_PATH, "SWIFTKP_{}.png".format(date.strftime("%Y%m%d"))))
+#    data_l1, date = reader.read("l1", plotting_date)
+#    plot_forecast(data_l1)
+#    plt.savefig(os.path.join(RESULTS_PATH, "L1_LAST.png"))
+#    plt.savefig(os.path.join(RESULTS_PATH, "L1_{}.png".format(date.strftime("%Y%m%d"))))
+
+#    data_swift, date = reader.read("swift", plotting_date)
+#    plot_forecast(data_swift)
+#    plt.savefig(os.path.join(RESULTS_PATH, "SWIFTKP_LAST.png"))
+#    plt.savefig(os.path.join(RESULTS_PATH, "SWIFTKP_{}.png".format(date.strftime("%Y%m%d"))))

@@ -1,4 +1,7 @@
-from ..base_file_reader import BaseReader
+import sys
+sys.path.append("/PAGER/WP8/data_management/io/")
+from base_file_reader import BaseReader
+
 import datetime as dt
 import glob
 import pandas as pd
@@ -10,7 +13,7 @@ class KPReader(BaseReader):
 
     def __init__(self):
         super().__init__()
-        self.data_folder = "/PAGER/WP3/data/outputs/SWIFT/"
+        self.data_folder = "/PAGER/WP3/data/outputs/"
 
     @staticmethod
     def _read_single_file(folder, requested_date=None):
@@ -30,13 +33,14 @@ class KPReader(BaseReader):
             for file in glob.glob(folder):
                 date = file.split("/")[-1]
                 date = date.split(".")[0]
-                date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
-
+                try:
+                    date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
+                except ValueError:
+                    date = dt.datetime.strptime(date.split("_")[-1], "%Y-%m-%d")
                 if date == requested_date:
                     last_file = file
                     start_date = date
                     break
-
         try:
             df = pd.read_csv(last_file, names=["t", "kp"])
             df["t"] = pd.to_datetime(df["t"])
