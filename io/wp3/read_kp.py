@@ -16,7 +16,7 @@ class KPReader(BaseReader):
         self.data_folder = "/PAGER/WP3/data/outputs/"
 
     @staticmethod
-    def _read_single_file(folder, requested_date=None):
+    def _read_single_file(folder, requested_date=None, header=False):
         start_date = dt.datetime(1900, 1, 1)
         last_file = None
 
@@ -41,8 +41,12 @@ class KPReader(BaseReader):
                     last_file = file
                     start_date = date
                     break
+
         try:
-            df = pd.read_csv(last_file, names=["t", "kp"])
+            if not header:
+                df = pd.read_csv(last_file, names=["t", "kp"])
+            else:
+                df = pd.read_csv(last_file)
             df["t"] = pd.to_datetime(df["t"])
             df.index = df["t"]
             df["index"] = ["kp"] * len(df)
@@ -70,7 +74,7 @@ class KPReader(BaseReader):
         elif source == "swpc":
             return self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date)
         elif source == "l1":
-            return self._read_single_file(os.path.join(self.data_folder, "RBM9/*"), requested_date)
+            return self._read_single_file(os.path.join(self.data_folder, "RBM9/*"), requested_date, header=True)
         elif source == "swift":
             return self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date)
         else:
