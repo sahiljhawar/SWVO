@@ -1,12 +1,12 @@
-import sys
-sys.path.append("/PAGER/WP8/data_management/io/")
-from base_file_reader import BaseReader
-
 import datetime as dt
 import glob
 import pandas as pd
 import os
 import logging
+import sys
+
+sys.path.append("/PAGER/WP8/data_management/io/")
+from base_file_reader import BaseReader
 
 
 class KPReader(BaseReader):
