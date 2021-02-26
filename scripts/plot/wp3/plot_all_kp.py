@@ -3,13 +3,9 @@ import argparse
 import datetime as dt
 import matplotlib.pyplot as plt
 import logging
-import sys
 
-sys.path.append("/PAGER/WP8/data_management/io/wp3/")
-from read_kp import KPReader
-
-sys.path.append("/PAGER/WP8/data_management/plotting/wp3/kp/")
-from plot_kp import PlotKpOutput
+from data_management.io.wp3.read_kp import KPReader
+from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

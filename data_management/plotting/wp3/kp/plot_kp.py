@@ -1,12 +1,10 @@
-import sys
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib
 
 matplotlib.use('Agg')
 
-sys.path.append("/PAGER/WP8/data_management/plotting/")
-from plotting_base import PlotOutput
+from data_management.plotting.plotting_base import PlotOutput
 
 
 class PlotKpOutput(PlotOutput):

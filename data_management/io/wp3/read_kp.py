@@ -3,20 +3,38 @@ import glob
 import pandas as pd
 import os
 import logging
-import sys
 
-sys.path.append("/PAGER/WP8/data_management/io/")
-from base_file_reader import BaseReader
+from data_management.io.base_file_reader import BaseReader
 
 
 class KPReader(BaseReader):
+    """
+    Reader class for Kp products from PAGER project. It can manage data
+    from SWPC, SWIFT and L1 forecast, as well as Niemegk nowcast.
 
-    def __init__(self):
+    :param data_folder: The path to data outputs for WP3. It needs to contain
+                        sub-folders with individual products (e.g. SWPC, SWIFT).
+    :type data_folder: str
+    """
+
+    def __init__(self, data_folder="/PAGER/WP3/data/outputs/"):
         super().__init__()
-        self.data_folder = "/PAGER/WP3/data/outputs/"
+        self.data_folder = data_folder
 
     @staticmethod
-    def _read_single_file(folder, requested_date=None, header=False):
+    def _read_single_file(folder, requested_date=None, header=False) -> tuple:
+        """
+        Reads a single file product with Kp data from PAGER.
+
+        :param folder: The location of the file to be read.
+        :type folder: str
+        :param requested_date: Requested data for data to read.
+        :type requested_date: datetime.datetime
+        :param header: True if the file product contains a header, False if not.
+        :type header: bool
+
+        :return: tuple of data in pandas.DataFrame format and datetime.datetime of the date extracted from the file.
+        """
         start_date = dt.datetime(1900, 1, 1)
         last_file = None
 
@@ -58,15 +76,17 @@ class KPReader(BaseReader):
             logging.error("No file found for requested date {}".format(requested_date))
             return None, None
 
-    def read(self, source, requested_date=None):
+    def read(self, source, requested_date=None) -> tuple:
         """
         Reads one of the available PAGER Kp forecast products.
 
         :param source: The source of Kp product requested. Choose among "niemegk", "swift", "swpc" and "l1"
         :type source: str
-        :param requested_date:
+        :param requested_date: Requested data for data to read. If None it reads data from the latest file produced.
         :type requested_date: datetime.datetime or None
-        :return:
+        :raises: RuntimeError if the sources of data requested is not among the available ones.
+
+        :return: tuple of data in pandas.DataFrame format and datetime.datetime of the date extracted from the file.
         """
 
         if source == "niemegk":
