@@ -4,6 +4,9 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import logging
 
+import sys
+sys.path.append("/PAGER/WP8/data_management/")
+
 from data_management.io.wp3.read_kp import KPReader
 from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
 
@@ -27,12 +30,20 @@ if __name__ == "__main__":
     RESULTS_PATH = args.output
     DATA_PATH = args.input
 
-    plotting_date = dt.datetime.strptime(args.date, "%Y-%m-%d")
+    date_now = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    if args.date is None:
+        plotting_date = date_now
+    else:
+        try:
+            plotting_date = dt.datetime.strptime(args.date, "%Y-%m-%d")
+        except TypeError:
+            msg = "Provided date {} not in correct format %Y-%m-%d. Aborting...".format(args.date)
+            logging.error(msg)
+            raise RuntimeError(msg)
 
     reader = KPReader()
     plotter = PlotKpOutput()
 
-    date_now = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     try:
         logging.info("Reading Niemegk Kp nowcast data file...")
         data_niemegk, date = reader.read("niemegk", plotting_date)
