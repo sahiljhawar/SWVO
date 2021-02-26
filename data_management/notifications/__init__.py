@@ -1,1 +1,1 @@
-import email
+import data_management.notifications.email
