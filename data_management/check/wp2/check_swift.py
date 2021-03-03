@@ -28,13 +28,16 @@ class SwiftCheck(BaseFileCheck):
         date = dt.datetime.strftime(folder, "%Y%m%d")
         return date
 
-    def check_files_exists(self):
-        time_now = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    def check_files_exists(self, check_date=None):
+        if check_date is None:
+            time_to_check = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
         folder_list = glob.glob(self.file_folder + "*")
         correct_folder = None
         for folder in folder_list:
             date = SwiftCheck._extract_date_from_folder(folder)
-            if date == time_now:
+            if date == time_to_check:
                 correct_folder = folder
                 break
 
@@ -64,8 +67,19 @@ class SwiftCheck(BaseFileCheck):
         success = True
         return success
 
-    def run_check(self):
-        success, gsm_file, hgc_file = self.check_files_exists()
+    def run_check(self, date=None):
+        """
+        It runs a check about existence of given outputs of swift module. If the files are not found
+        for a given date provided, it sends an email to a default list of users and notifies them
+        of the problem. If date is not specified then the check is performed on the date of the day
+        the script has been called.
+
+        We will add also a check on the file format and content later on...
+
+        :param date: Date on which to run the check.
+        :type date: datetime.datetime
+        """
+        success, gsm_file, hgc_file = self.check_files_exists(date)
         if not success:
             content = "Output files not generated yet today..."
             send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,

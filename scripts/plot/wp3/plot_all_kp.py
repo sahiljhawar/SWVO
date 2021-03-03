@@ -24,7 +24,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.logdir is not None:
-        log_file = "wp3_plot_all_kp_{}.log".format(args.date)
+        if args.date is not None:
+            log_file = "wp3_plot_all_kp_{}.log".format(args.date)
+        else:
+            log_date = dt.datetime.utcnow().replace(hour=0, minute=0, second=0,
+                                                    microsecond=0).strptime(args.date, "%Y-%m-%d")
+            log_file = "wp3_plot_all_kp_{}.log".format(log_date)
         logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
 
     RESULTS_PATH = args.output
