@@ -60,7 +60,7 @@ class SwiftCheck(BaseFileCheck):
             return success, None, None
 
     def check_file_format(self, gsm_file, hgc_file):
-        #TODO Complete using file reader
+        reader = SwiftReader()
         success = True
         return success
 
@@ -71,10 +71,10 @@ class SwiftCheck(BaseFileCheck):
             send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
                                address_from=self.email_sender)
 
-        success = self.check_file_format(gsm_file, hgc_file)
-        if not success:
-            content = "Output files are not of standard format..."
-            send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
-                               address_from=self.email_sender)
+        #success = self.check_file_format(gsm_file, hgc_file)
+        #if not success:
+        #    content = "Output files are not of standard format..."
+        #    send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
+        #                       address_from=self.email_sender)
 
 
