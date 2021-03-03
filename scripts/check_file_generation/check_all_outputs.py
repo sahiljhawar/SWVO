@@ -28,8 +28,12 @@ if __name__ == "__main__":
             log_file = "wp3_plot_all_kp_{}.log".format(log_date)
         logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
 
+    if args.date is not None:
+        check_date = dt.datetime.strptime(args.date, "%Y-%m-%d")
+    else:
+        check_date = None
     # WP2
     # SWIFT
-
+    
     checker = SwiftCheck()
-    checker.run_check()
+    checker.run_check(check_date)

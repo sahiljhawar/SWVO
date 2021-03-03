@@ -25,7 +25,7 @@ class SwiftCheck(BaseFileCheck):
     def _extract_date_from_folder(folder):
         folder = folder.split("/")[-1]
         folder = folder.split("t")[0]
-        date = dt.datetime.strftime(folder, "%Y%m%d")
+        date = dt.datetime.strptime(folder, "%Y%m%d")
         return date
 
     def check_files_exists(self, check_date=None):
@@ -34,6 +34,7 @@ class SwiftCheck(BaseFileCheck):
         else:
             time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
         folder_list = glob.glob(self.file_folder + "*")
+
         correct_folder = None
         for folder in folder_list:
             date = SwiftCheck._extract_date_from_folder(folder)
