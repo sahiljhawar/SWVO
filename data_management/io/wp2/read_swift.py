@@ -1,17 +1,18 @@
-from ..base_file_reader import BaseReader
+from data_management.io.base_file_reader import BaseReader
 import json
 import datetime as dt
 import glob
 import numpy as np
 import pandas as pd
+import os
 
 
 class SwiftReader(BaseReader):
     PROT_MASS = 1.67262192369e-27
 
-    def __init__(self):
+    def __init__(self, date_folder="/PAGER/WP2/data/outputs/"):
         super().__init__()
-        self.data_folder = "/PAGER/WP2/data/outputs/SWIFT/"
+        self.data_folder = os.path.join(date_folder, "SWIFT")
 
     @staticmethod
     def read_single_file(file_name, fields=None):
@@ -43,7 +44,6 @@ class SwiftReader(BaseReader):
             df = df[fields]
         return df
 
-    # TODO #Add exceptions
     def read(self, date=None, fields=None):
         if date is None:
             date = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
