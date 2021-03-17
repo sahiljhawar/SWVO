@@ -3,6 +3,7 @@ from os import path
 
 import math
 import numpy as np
+import pandas as pd
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -11,13 +12,14 @@ import matplotlib.ticker as mticker
 
 from datetime import datetime
 
+import warnings
 
 basepath = path.dirname(__file__)
-sys.path.append(path.abspath(path.join(basepath, "..")))
-from plotting.plotting_base import BasePlot
+sys.path.append(path.abspath(path.join(basepath, "..", "..", "..")))
+from plotting.plotting_base import PlotOutput
 
 
-class PlasmaspherePlot(BasePlot):
+class PlasmaspherePlot(PlotOutput):
 
     def _draw_earth_night_side(self):
         """
@@ -69,11 +71,6 @@ class PlasmaspherePlot(BasePlot):
 
     def _add_colour_bar(self):
 
-
-
-        # self._set_colour_bar_axes(self._get_figure().add_axes([0.87, 0.2, 0.04, 0.6],
-        #                                                       in_layout=True))
-
         colour_bar_normalization = mpl.colors.Normalize(vmin=0,
                                                         vmax=3.99
                                                         )
@@ -88,19 +85,6 @@ class PlasmaspherePlot(BasePlot):
             pad=0.15
         )
         color_bar.set_label('$log_{10}(n_e)$')
-        # mpl.colorbar.ColorbarBase(self._get_colour_bar_axes(),
-        #                           cmap=self._get_colour_map(),
-        #                           norm=colour_bar_normalization,
-        #                           ticklocation="right")
-        #
-        # self._get_colour_bar_axes().set_ylabel('$log_{10}(n_e)$',
-        #                                        size=16)
-        #
-        # self._get_colour_bar_axes().tick_params(axis='both', which='major',
-        #                                         labelsize=18, direction="in")
-
-
-
 
     def _set_colour_map(self):
         self.colour_map = mpl.colors.ListedColormap(np.load('./my_cmap.npy'))
@@ -138,8 +122,10 @@ class PlasmaspherePlot(BasePlot):
             raise ValueError("densities must not contain NaNs")
 
     def plot(self,  l_values, mlt_values, density_values, date,
-             fig_size=(7, 6.5)):
+              fig_size=(4, 4)):
 
+        if not isinstance(date, datetime):
+            raise ValueError("date must be datetime object")
 
         self._set_date(date)
         fig, ax = plt.subplots(subplot_kw=dict(projection='polar'),
@@ -147,7 +133,7 @@ class PlasmaspherePlot(BasePlot):
         self._set_figure(fig)
         self._set_ax(ax)
 
-        #self._check_inputs(density_values)
+        self._check_inputs(density_values)
 
         self._set_colour_map()
 
@@ -174,3 +160,25 @@ class PlasmaspherePlot(BasePlot):
     def save(self, path):
         plt.savefig(path)
         plt.close()
+
+    @staticmethod
+    def plot_output(data):
+
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError("data must be a pandas dataframe")
+
+        required_columns = ["L", "MLT", "predicted_densities", "date"]
+        for column in required_columns:
+            if column not in data.columns:
+                raise ValueError("column {} is missing".format(column))
+
+        if not isinstance(data.iloc[0]["date"], datetime):
+            raise ValueError("values of date column must be datetime objects")
+
+        l_values = data["L"]
+        mlt_values = data["MLT"]
+        density_values = data["predicted_densities"]
+        date = data.iloc[0]["date"]
+
+        plotter = PlasmaspherePlot()
+        plotter.plot(l_values, mlt_values, density_values, date)
