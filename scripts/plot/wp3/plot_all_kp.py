@@ -72,20 +72,20 @@ if __name__ == "__main__":
         logging.error(
             "Data for SWPC forecast for date {} not found...impossible to produce data plot...".format(plotting_date))
 
-    model_name = "KP-FULL-SW-PAGER"
-    try:
-        logging.info("Reading L1 Kp forecast data file...")
-        data_l1, date = reader.read("l1", plotting_date, model_name=model_name)
-        logging.info("...Complete!!")
-        logging.info("Plotting and saving L1 Kp forecast data...")
-        plotter.plot_output(data_l1)
-        if plotting_date >= date_now:
-            plt.savefig(os.path.join(RESULTS_PATH, "L1_LAST.png"))
-        plt.savefig(os.path.join(RESULTS_PATH, "L1_{}.png".format(date.strftime("%Y%m%d"))))
-        logging.info("...Complete!!")
-    except TypeError:
-        logging.error(
-            "Data for L1 Kp forecast for date {} not found...impossible to produce data plot...".format(plotting_date))
+    for model_name in ["KP-FULL-SW-PAGER", "HP60-FULL-SW-SWAMI-PAGER"]:
+        try:
+            logging.info("Reading L1 Kp forecast data file for model {}...".format(model_name))
+            data_l1, date = reader.read("l1", plotting_date, model_name=model_name)
+            logging.info("...Complete!!")
+            logging.info("Plotting and saving L1 Kp forecast data for model {}...".format(model_name))
+            plotter.plot_output(data_l1)
+            if plotting_date >= date_now:
+                plt.savefig(os.path.join(RESULTS_PATH, "L1_LAST_{}.png".format(model_name)))
+            plt.savefig(os.path.join(RESULTS_PATH, "L1_{}_{}.png".format(date.strftime("%Y%m%d"), model_name)))
+            logging.info("...Complete!!")
+        except TypeError:
+            logging.error(
+                "Data for L1 Kp forecast for date {} and model {} not found...impossible to produce data plot...".format(plotting_date, model_name))
  
     try:
         logging.info("Reading SWIFT Kp forecast data file...")
