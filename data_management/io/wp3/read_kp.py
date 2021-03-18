@@ -22,7 +22,7 @@ class KPReader(BaseReader):
         self.data_folder = data_folder
 
     @staticmethod
-    def _read_single_file(folder, requested_date=None, header=False) -> tuple:
+    def _read_single_file(folder, requested_date=None, header=False, model_name=None) -> tuple:
         """
         Reads a single file product with Kp data from PAGER.
 
@@ -35,30 +35,34 @@ class KPReader(BaseReader):
 
         :return: tuple of data in pandas.DataFrame format and datetime.datetime of the date extracted from the file.
         """
-        start_date = dt.datetime(1900, 1, 1)
         last_file = None
-
         if requested_date is None:
+            start_date = dt.datetime(1900, 1, 1)
             for file in glob.glob(folder):
                 date = file.split("/")[-1]
                 date = date.split(".")[0]
                 date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
 
                 if date > start_date:
+                    if (model_name is not None) and (model_name not in file):
+                        continue
                     last_file = file
                     start_date = date
         else:
+            start_date = requested_date
+            time_delta = dt.timedelta(days=10000)
             for file in glob.glob(folder):
                 date = file.split("/")[-1]
                 date = date.split(".")[0]
                 try:
                     date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
                 except ValueError:
-                    date = dt.datetime.strptime(date.split("_")[-1], "%Y-%m-%d")
-                if date == requested_date:
+                    date = dt.datetime.strptime("_".join(date.split("_")[-2:]), "%Y-%m-%d_%H:%M:%S")
+                if (requested_date >= date) and (requested_date - date < time_delta):
+                    if (model_name is not None) and (model_name not in file):
+                        continue
                     last_file = file
-                    start_date = date
-                    break
+                    time_delta = requested_date - date
 
         try:
             if not header:
@@ -76,7 +80,7 @@ class KPReader(BaseReader):
             logging.error("No file found for requested date {}".format(requested_date))
             return None, None
 
-    def read(self, source, requested_date=None) -> tuple:
+    def read(self, source, requested_date=None, model_name=None) -> tuple:
         """
         Reads one of the available PAGER Kp forecast products.
 
@@ -94,9 +98,9 @@ class KPReader(BaseReader):
         elif source == "swpc":
             return self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date)
         elif source == "l1":
-            return self._read_single_file(os.path.join(self.data_folder, "RBM9/*"), requested_date, header=True)
+            return self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"), requested_date, header=True, model_name=model_name)
         elif source == "swift":
-            return self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date)
+            return self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date, header=True)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)

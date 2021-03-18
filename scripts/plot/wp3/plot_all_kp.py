@@ -23,19 +23,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.logdir is not None:
-        if args.date is not None:
-            log_file = "wp3_plot_all_kp_{}.log".format(args.date)
-        else:
-            log_date = dt.datetime.utcnow().replace(hour=0, minute=0, second=0,
-                                                    microsecond=0).strptime(args.date, "%Y-%m-%d")
-            log_file = "wp3_plot_all_kp_{}.log".format(log_date)
-        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
-
-    RESULTS_PATH = args.output
-    DATA_PATH = args.input
-
-    date_now = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    date_now = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
     if args.date is None:
         plotting_date = date_now
     else:
@@ -45,6 +33,13 @@ if __name__ == "__main__":
             msg = "Provided date {} not in correct format %Y-%m-%d. Aborting...".format(args.date)
             logging.error(msg)
             raise RuntimeError(msg)
+
+    if args.logdir is not None:
+        log_file = "wp3_plot_all_kp_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
+        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
+
+    RESULTS_PATH = args.output
+    DATA_PATH = args.input
 
     reader = KPReader()
     plotter = PlotKpOutput()
@@ -62,7 +57,7 @@ if __name__ == "__main__":
     except TypeError:
         logging.error(
             "Data for Niemegk nowcast for date {} not found...impossible to produce data plot...".format(plotting_date))
-
+    
     try:
         logging.info("Reading SWPC Kp forecast data file...")
         data_swpc, date = reader.read("swpc", plotting_date)
@@ -77,9 +72,10 @@ if __name__ == "__main__":
         logging.error(
             "Data for SWPC forecast for date {} not found...impossible to produce data plot...".format(plotting_date))
 
+    model_name = "KP-FULL-SW-PAGER"
     try:
         logging.info("Reading L1 Kp forecast data file...")
-        data_l1, date = reader.read("l1", plotting_date)
+        data_l1, date = reader.read("l1", plotting_date, model_name=model_name)
         logging.info("...Complete!!")
         logging.info("Plotting and saving L1 Kp forecast data...")
         plotter.plot_output(data_l1)
@@ -90,7 +86,7 @@ if __name__ == "__main__":
     except TypeError:
         logging.error(
             "Data for L1 Kp forecast for date {} not found...impossible to produce data plot...".format(plotting_date))
-
+ 
     try:
         logging.info("Reading SWIFT Kp forecast data file...")
         data_swift, date = reader.read("swift", plotting_date)
