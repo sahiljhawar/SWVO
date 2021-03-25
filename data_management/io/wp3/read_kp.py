@@ -66,12 +66,13 @@ class KPReader(BaseReader):
 
         try:
             if not header:
+                #TODO Attention, this is not valid for hp or other indexes
                 df = pd.read_csv(last_file, names=["t", "kp"])
             else:
                 df = pd.read_csv(last_file)
             df["t"] = pd.to_datetime(df["t"])
             df.index = df["t"]
-            df["index"] = ["kp"] * len(df)
+            df.drop(["t"], 1, inplace=True)
             return df, start_date
         except FileNotFoundError:
             logging.error("File not found in folder {}...".format(folder))
@@ -88,6 +89,8 @@ class KPReader(BaseReader):
         :type source: str
         :param requested_date: Requested data for data to read. If None it reads data from the latest file produced.
         :type requested_date: datetime.datetime or None
+        :param model_name:
+        :type model_name: str
         :raises: RuntimeError if the sources of data requested is not among the available ones.
 
         :return: tuple of data in pandas.DataFrame format and datetime.datetime of the date extracted from the file.
@@ -98,10 +101,19 @@ class KPReader(BaseReader):
         elif source == "swpc":
             return self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date)
         elif source == "l1":
-            return self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"), requested_date, header=True, model_name=model_name)
+            return self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"), requested_date, header=True,
+                                          model_name=model_name)
         elif source == "swift":
             return self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date, header=True)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
             raise RuntimeError(msg)
+
+
+if __name__ == "__main__":
+    import datetime as dt
+    reader = KPReader("/home/ruggero/repositories/data_management/data/outputs/")
+    data, requested_date = reader.read("l1", requested_date=dt.datetime(2021,3,21,9), model_name="HP60-FULL-SW-SWAMI-PAGER")
+    print (requested_date)
+    print (data)
