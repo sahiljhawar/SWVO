@@ -28,9 +28,9 @@ class RawFormat(object):
         data["year"] = data.index.map(lambda x: x.year)
         data["doy"] = data.index.map(lambda x: x.timetuple().tm_yday)
         data["hour"] = data.index.map(lambda x: x.hour)
-        data["kp"] = data["kp"].apply(RawFormat._reformat_index)
-        to_drop = [k for k in data if k not in ["year","doy","hour","forecast"]]
-        data.drop(to_drop, 1, inplace=True)
+        kp = data["kp"].apply(RawFormat._reformat_index)
+        data.drop(["kp"], 1, inplace=True)
+        data["kp"] = kp
         data.to_csv(filename, header=False, index=False, sep=" ")
 
     # TODO To finish

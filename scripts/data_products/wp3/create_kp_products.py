@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     reader = KPReader(data_folder=args.input)
     for model in ["KP-FULL-SW-PAGER", "HP60-FULL-SW-SWAMI-PAGER"]:
-        data = reader.read(source="l1", requested_date=product_date, model_name=model)
+        data, _ = reader.read(source="l1", requested_date=product_date, model_name=model)
 
         wdc_path = os.path.join(args.output, "FORECAST_{}_{}_{}.wdc".format(model, "dscovr_rt",
                                                                             product_date.strftime("%Y%m%dT%H%M%S")))
