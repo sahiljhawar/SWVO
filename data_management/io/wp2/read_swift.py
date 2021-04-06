@@ -5,6 +5,7 @@ import glob
 import numpy as np
 import pandas as pd
 import os
+import logging
 
 
 class SwiftReader(BaseReader):
@@ -34,7 +35,7 @@ class SwiftReader(BaseReader):
         :param file_name: The path of the file to read.
         :type file_name: str
         :param fields: Lists of fields to extract from the DataFrame. The list needs to contain a subset
-                       of available fields. if None, all the fields available are retreived.
+                       of available fields. if None, all the fields available are retrieved.
         :type fields: list
         :return: A pandas.DataFrame with requested variables.
         """
@@ -76,7 +77,7 @@ class SwiftReader(BaseReader):
         :type date: datetime.datetime
         :param fields: List of fields to be extracted from the available data.
         :type fields: list
-        :raises: KeyError: when a field requested is not among available field list.
+        :raises: RuntimeError: when a field requested is not among available field list.
         :return: Tuple of GSM and HGC data as pandas data frames
         """
         if date is None:
@@ -87,7 +88,9 @@ class SwiftReader(BaseReader):
 
         for f in fields:
             if f not in SwiftReader.DATA_FIELDS:
-                raise KeyError("Requested field from SWIFT data not available...")
+                msg = "Requested field from SWIFT data not available..."
+                logging.error(msg)
+                raise RuntimeError(msg)
 
         data_gsm = SwiftReader._read_single_file(gsm_file, fields)
         data_hgc = SwiftReader._read_single_file(hgc_file, fields)
