@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from datetime import datetime
+import datetime as dt
 
 from data_management.io.base_file_reader import BaseReader
 
@@ -15,8 +16,8 @@ class PlasmaspherePredictionReader(BaseReader):
     def __init__(self, data_folder="/PAGER/WP3/data/outputs/"):
         super().__init__()
         self.data_folder = data_folder
-        self.file=None
-        self.requested_date=None
+        self.file = None
+        self.requested_date = None
 
     @staticmethod
     def _get_file_full_path(directory, file_name):
@@ -107,9 +108,9 @@ class PlasmaspherePredictionReader(BaseReader):
                                                             self.file)
             if file_full_path is None:
                 raise ValueError(
-                "file {} doesn't exist in the directory {}".format(self.file,
-                                                                   folder)
-            )
+                    "file {} doesn't exist in the directory {}".format(self.file,
+                                                                       folder)
+                )
 
             df_file = pd.read_csv(file_full_path,
                                   parse_dates=["date"])
@@ -128,16 +129,15 @@ class PlasmaspherePredictionReader(BaseReader):
 
             return df_file[df_file["date"] == self.date]
 
-    def read(self, source, requested_date, file=None):
+    def read(self, source, requested_date=None, file=None) -> pd.DataFrame:
         """
         Reads one of the available PAGER plasmasphere density prediction.
 
-        :param source: The source of plasmasphere density product requested.
-                        Choose among "GFZ_PLASMA"
-        :param requested_date: Requested data for which we want to have the
-                               plasmadensity prediction.
-                               datetime instance which needs up to hour precision,
-                               since at this resolution the plasmasphere is predicted.
+        :param source: The source of plasmasphere density product requested. Available only "gfz_plasma".
+        :type source: str
+        :param requested_date: Requested data for which we want to read the plasma density data. It needs to be up to
+                               hour precision since the plasmasphere is predicted with this time resolution.
+        :type requested_date: datetime.datetime
         :param file: specifies a file from which to read the prediction.
                      If None it will read from the most recent file in which
                      the date is present, since it gives the most accurate prediction.
@@ -151,23 +151,20 @@ class PlasmaspherePredictionReader(BaseReader):
 
         self.file = file
 
+        if requested_date is None:
+            requested_date = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+
         if not isinstance(requested_date, datetime):
-            raise ValueError("requested_date must be a datetime variable")
+            msg = "requested_date must be a datetime variable"
+            logging.error(msg)
+            raise ValueError(msg)
 
-        if requested_date.minute !=0 or requested_date.second !=0 or \
-                requested_date.microsecond != 0:
-            requested_date = requested_date.replace(minute=0,
-                                                    second=0,
-                                                    microsecond=0)
+        requested_date = requested_date.replace(minute=0, second=0, microsecond=0)
         self.requested_date = requested_date
-
 
         if source == "gfz_plasma":
             return self._read_from_source(os.path.join(self.data_folder, "GFZ_PLASMA/*"), requested_date)
         else:
             msg = "Source {} requested for reading plasmasphere prediction not available...".format(source)
             logging.error(msg)
-            # save the logs?????????
-            # or the logs outside?????
             raise RuntimeError(msg)
-
