@@ -74,24 +74,38 @@ class SwiftReader(BaseReader):
 
         :param date: The date in which data has been produced. It assumes that the data is produced once a day. If None
                      the data with current date is requested.
-        :type date: datetime.datetime
+        :type date: datetime.datetime or None
         :param fields: List of fields to be extracted from the available data.
-        :type fields: list
-        :raises: RuntimeError: when a field requested is not among available field list.
+        :type fields: list or None
+        :raises: RuntimeError: when a field requested is not among available field list or when the file requested
+                               with output data is not found.
         :return: Tuple of GSM and HGC data as pandas data frames
         """
         if date is None:
             date = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         date_to_string = date.strftime("%Y%m%d")
-        gsm_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/gsm*"))[0]
-        hgc_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/hgc*"))[0]
 
-        for f in fields:
-            if f not in SwiftReader.DATA_FIELDS:
-                msg = "Requested field from SWIFT data not available..."
-                logging.error(msg)
-                raise RuntimeError(msg)
+        if fields is not None:
+            for f in fields:
+                if f not in SwiftReader.DATA_FIELDS:
+                    msg = "Requested field from SWIFT data not available..."
+                    logging.error(msg)
+                    raise RuntimeError(msg)
 
-        data_gsm = SwiftReader._read_single_file(gsm_file, fields)
-        data_hgc = SwiftReader._read_single_file(hgc_file, fields)
+        try:
+            gsm_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/gsm*"))[0]
+            data_gsm = SwiftReader._read_single_file(gsm_file, fields)
+        except IndexError:
+            msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
+            logging.error(msg)
+            raise RuntimeError(msg)
+
+        try:
+            hgc_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/hgc*"))[0]
+            data_hgc = SwiftReader._read_single_file(hgc_file, fields)
+        except IndexError:
+            msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
+            logging.error(msg)
+            raise RuntimeError(msg)
+
         return data_gsm, data_hgc
