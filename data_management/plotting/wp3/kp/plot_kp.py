@@ -8,6 +8,9 @@ from data_management.plotting.plotting_base import PlotOutput
 
 
 class PlotKpOutput(PlotOutput):
+    """
+    This class is in charge to produce standard plots for Kp and geomagnetic indexes output data.
+    """
     def __init__(self):
         super().__init__()
 
@@ -19,11 +22,10 @@ class PlotKpOutput(PlotOutput):
                 color.append('g')
             elif data[key][i] == 4:
                 color.append([204 / 255.0, 204 / 255.0, 0.0, 1.0])
-                # color.append('y')
             elif data[key][i] > 4:
                 color.append('r')
-            # elif data[key][i] >= 9.5:
-            #    color.append([0.0, 0.0, 0.0, 0.1])
+            elif data[key][i] >= 9.5:
+                color.append([0.0, 0.0, 0.0, 0.1])
         return color
 
     @staticmethod
@@ -66,6 +68,13 @@ class PlotKpOutput(PlotOutput):
 
     @staticmethod
     def plot_output(data):
+        """
+        This function plots output data for Kp and other geomagnetic index products. The plot format is at the moment
+        fixed.
+
+        :param data: This is the standard output format of Kp products read by KpReader class.
+        :type data: pandas.DataFrame
+        """
         _ = plt.figure(figsize=(15, 8))
         ax = plt.subplot(1, 1, 1)
         PlotKpOutput.add_subplot(ax, data=data[["kp"]], title=None,
