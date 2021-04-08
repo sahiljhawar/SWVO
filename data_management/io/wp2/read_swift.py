@@ -24,6 +24,13 @@ class SwiftReader(BaseReader):
         """
         super().__init__()
         self.data_folder = os.path.join(wp2_output_folder, "SWIFT/")
+        self._check_data_folder()
+
+    def _check_data_folder(self):
+        if not os.path.exists(self.data_folder):
+            msg = "Data folder for WP2 SWIFT output not found...impossible to retrieve data."
+            logging.error(msg)
+            raise FileNotFoundError(msg)
 
     @staticmethod
     def _read_single_file(file_name, fields=None) -> pd.DataFrame:
@@ -77,8 +84,8 @@ class SwiftReader(BaseReader):
         :type date: datetime.datetime or None
         :param fields: List of fields to be extracted from the available data.
         :type fields: list or None
-        :raises: RuntimeError: when a field requested is not among available field list or when the file requested
-                               with output data is not found.
+        :raises: FileNotFoundError: when one of the data files requested is not found.
+                 KeyError: when a field requested is not among available field list
         :return: Tuple of GSM and HGC data as pandas data frames
         """
         if date is None:
@@ -90,7 +97,7 @@ class SwiftReader(BaseReader):
                 if f not in SwiftReader.DATA_FIELDS:
                     msg = "Requested field from SWIFT data not available..."
                     logging.error(msg)
-                    raise RuntimeError(msg)
+                    raise KeyError(msg)
 
         try:
             gsm_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/gsm*"))[0]
@@ -98,7 +105,7 @@ class SwiftReader(BaseReader):
         except IndexError:
             msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
             logging.error(msg)
-            raise RuntimeError(msg)
+            raise FileNotFoundError(msg)
 
         try:
             hgc_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/hgc*"))[0]
@@ -106,6 +113,6 @@ class SwiftReader(BaseReader):
         except IndexError:
             msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
             logging.error(msg)
-            raise RuntimeError(msg)
+            raise FileNotFoundError(msg)
 
         return data_gsm, data_hgc
