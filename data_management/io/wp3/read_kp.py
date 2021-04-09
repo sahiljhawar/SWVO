@@ -21,6 +21,13 @@ class KPReader(BaseReader):
         """
         super().__init__()
         self.data_folder = wp3_output_folder
+        self._check_data_folder()
+
+    def _check_data_folder(self):
+        if not os.path.exists(self.data_folder):
+            msg = "Data folder for WP3 KP output not found...impossible to retrieve data."
+            logging.error(msg)
+            raise FileNotFoundError(msg)
 
     @staticmethod
     def _read_single_file(folder, requested_date=None, header=False, model_name=None) -> tuple:
@@ -100,15 +107,18 @@ class KPReader(BaseReader):
         """
 
         if source == "niemegk":
-            return self._read_single_file(os.path.join(self.data_folder, "NIEMEGK/*"), requested_date)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "NIEMEGK/*"), requested_date)
         elif source == "swpc":
-            return self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date)
         elif source == "l1":
-            return self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"), requested_date, header=True,
-                                          model_name=model_name)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"),
+                                                          requested_date, header=True, model_name=model_name)
         elif source == "swift":
-            return self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date, header=True)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"),
+                                                          requested_date, header=True)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
             raise RuntimeError(msg)
+
+        return data, data_timestamp
