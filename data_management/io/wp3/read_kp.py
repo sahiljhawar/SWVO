@@ -44,6 +44,8 @@ class KPReader(BaseReader):
 
         :return: Tuple of data in pandas.DataFrame format and datetime.datetime of the date extracted from the file.
         """
+        # TODO Attention model_name Needs to be specified in the case of L1 source at the moment we cannot do that
+
         last_file = None
         if requested_date is None:
             start_date = dt.datetime(1900, 1, 1)
