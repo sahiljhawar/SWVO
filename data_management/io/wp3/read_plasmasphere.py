@@ -25,9 +25,9 @@ class PlasmaspherePredictionReader(BaseReader):
         If it founds the file, it returns the full path of the file,
         otherwise it returns None.
 
-        :param directory:
+        :param directory: directory where the file is
         :type directory: str
-        :param file_name:
+        :param file_name: name of the file
         :type file_name: str
 
         :return: string or None
@@ -45,9 +45,9 @@ class PlasmaspherePredictionReader(BaseReader):
         """
         It raises if date is not contained in df["date"] column
 
-        :param df:
+        :param df: dataframe containing plasma density at different times
         :type df: instance of pd.DataFrame
-        :param date:
+        :param date: date for which we want the plasmadensity
         :type date:
         :raises: ValueError if date is not present in  df["date"] column
         """
@@ -58,9 +58,9 @@ class PlasmaspherePredictionReader(BaseReader):
     @staticmethod
     def _get_date_components(date):
         """
-        It gets a date and returns year, month, day, hour, minute
+        It gets a datetime instance and returns year, month, day, hour, minute
 
-        :param date:
+        :param date: a date
         :type date: an instance of datetime object
         :return: tuple of int, year, month, day, hour, minute
         """
@@ -76,9 +76,9 @@ class PlasmaspherePredictionReader(BaseReader):
         """
         It checks whether the date is contained in the specified file
 
-        :param file_full_path:
+        :param file_full_path: full path of a file containing plasma density
         :type file_full_path: str
-        :param date:
+        :param date: date for which we want the plasmadensity
         :type date:
         :return: True or False
         """
@@ -93,9 +93,9 @@ class PlasmaspherePredictionReader(BaseReader):
     def _find_file(self, folder):
         """
         It returns the file in the specified folder in which self.date
-        is present, otherwise None
+        is present. If it cannot find the file, it returns None
 
-        :param folder: it specifies the folder in which to look
+        :param folder: it specifies the folder where to look
                        for the file
         :type folder: str
         :return: string or None
@@ -124,14 +124,18 @@ class PlasmaspherePredictionReader(BaseReader):
     def _read_from_source(self, folder, requested_date):
         """
         It reads the plasmasphere prediction for the requested date
-        from the specified folder
+        from the specified folder.
 
-        :param folder:
+        :param folder: folder where we look for the plasmasphere prediction
         :type folder: str
-        :param requested_date:
+        :param requested_date: date for which we want the plasmasphere
+                               prediction
         :type requested_date:
-        :return:
-        :raises:
+        :return: instance of pd.DataFrame containing the plasmasphere
+                 prediction for the requested date
+        :raises: ValueError if self.file is not None, but it cannot be found.
+                 RuntimeError is self.file is None, and no files containing
+                 requested_date can be found.
         """
 
         for file in glob.glob(folder):
