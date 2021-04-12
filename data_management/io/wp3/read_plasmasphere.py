@@ -30,7 +30,8 @@ class PlasmaspherePredictionReader(BaseReader):
         :param file_name: name of the file
         :type file_name: str
 
-        :return: string or None
+        :return: file full path or None
+        :rtype: string or None
         """
 
         complete_file_path = directory + file_name
@@ -62,7 +63,8 @@ class PlasmaspherePredictionReader(BaseReader):
 
         :param date: a date
         :type date: an instance of datetime object
-        :return: tuple of int, year, month, day, hour, minute
+        :return: year, month, day, hour, minute
+        :rtype: tuple of int
         """
         year = str(date.year)
         month = date.strftime('%m')
@@ -80,7 +82,9 @@ class PlasmaspherePredictionReader(BaseReader):
         :type file_full_path: str
         :param date: date for which we want the plasmadensity
         :type date:
-        :return: True or False
+        :return: indicator which tells whether the date is present or not
+                 in the file
+        :rtype: boolean
         """
         df_file = pd.read_csv(file_full_path,
                               parse_dates=["date"])
@@ -98,7 +102,8 @@ class PlasmaspherePredictionReader(BaseReader):
         :param folder: it specifies the folder where to look
                        for the file
         :type folder: str
-        :return: string or None
+        :return: file in which self.date is present or None
+        :rtype: string or None
         """
 
         file_full_path = None
@@ -131,8 +136,8 @@ class PlasmaspherePredictionReader(BaseReader):
         :param requested_date: date for which we want the plasmasphere
                                prediction
         :type requested_date:
-        :return: instance of pd.DataFrame containing the plasmasphere
-                 prediction for the requested date
+        :return: the plasmasphere prediction for the requested date
+        :rtype: instance of pd.DataFrame
         :raises: ValueError if self.file is not None, but it cannot be found.
                  RuntimeError is self.file is None, and no files containing
                  requested_date can be found.
