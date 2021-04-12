@@ -1,16 +1,16 @@
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+import matplotlib.patches as patches
 import matplotlib
+from data_management.plotting.plotting_base import PlotOutput
 
 matplotlib.use('Agg')
-
-from data_management.plotting.plotting_base import PlotOutput
 
 
 class PlotKpOutput(PlotOutput):
     """
     This class is in charge to produce standard plots for Kp and geomagnetic indexes output data.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -30,13 +30,14 @@ class PlotKpOutput(PlotOutput):
 
     @staticmethod
     def add_subplot(ax, data, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
-                    ylabel_fontsize=20, ylim=(-0.1, 9.1), ylabel=r"$K_{p}$", cadence=3):
+                    ylabel_fontsize=20, ylim=(-0.1, 9.1),
+                    ylabel=r"$K_{p}$", cadence=3):
         # PLOT
         bar_colors = PlotKpOutput.add_bar_color(data, list(data.keys())[0])
-        data.plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=[bar_colors],
-                  align="edge", width=0.9, legend=False)
+        ax = data.plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=[bar_colors],
+                       align="edge", width=0.9, legend=False)
         # TITLE
-        plt.title(title, fontsize=title_font)
+        ax.set_title(title, fontsize=title_font)
 
         # Y-AXIS
         ax.set_ylim(ylim)
@@ -66,27 +67,41 @@ class PlotKpOutput(PlotOutput):
         # GRID
         ax.grid(True, axis='y', linestyle='dashed')
 
+        return ax
+
     @staticmethod
-    def plot_output(data):
+    def plot_output(data) -> matplotlib.figure.Figure:
         """
         This function plots output data for Kp and other geomagnetic index products. The plot format is at the moment
         fixed.
 
         :param data: This is the standard output format of Kp products read by KpReader class.
         :type data: pandas.DataFrame
+        :return: A figure object of type matplotlib.figure.Figure containing the produced plot
         """
-        _ = plt.figure(figsize=(15, 8))
-        ax = plt.subplot(1, 1, 1)
-        PlotKpOutput.add_subplot(ax, data=data[["kp"]], title=None,
-                                 cadence=(data.index[1] - data.index[0]).seconds // 3600)
+        fig = plt.figure(figsize=(15, 8))
+        ax = fig.add_subplot(1, 1, 1)
+        ax = PlotKpOutput.add_subplot(ax, data=data[["kp"]], title=None,
+                                      cadence=(data.index[1] - data.index[0]).seconds // 3600)
 
-        red_patch = mpatches.Patch(color='red', label=r'$K_{p}$ > 4')
-        yellow_patch = mpatches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'$K_{p}$ = 4')
-        green_patch = mpatches.Patch(color='green', label=r'$K_{p}$ < 4')
-        transparent_patch = mpatches.Patch(color=[0, 0, 0, 0.1], label='Data not available')
-        plt.legend(bbox_to_anchor=(0., 1., 0.84, .275),
-                   handles=[green_patch, yellow_patch, red_patch, transparent_patch],
-                   ncol=4, fontsize="x-large", shadow=True)
+        red_patch = patches.Patch(color='red', label=r'$K_{p}$ > 4')
+        yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'$K_{p}$ = 4')
+        green_patch = patches.Patch(color='green', label=r'$K_{p}$ < 4')
+        transparent_patch = patches.Patch(color=[0, 0, 0, 0.1], label='Data not available')
+        ax.legend(bbox_to_anchor=(0., 1., 0.84, .275),
+                  handles=[green_patch, yellow_patch, red_patch, transparent_patch],
+                  ncol=4, fontsize="x-large", shadow=True)
 
-        plt.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7,
-                            wspace=None, hspace=0.6)
+        fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7, wspace=None, hspace=0.6)
+        return fig
+
+
+if __name__ == "__main__":
+    from data_management.io.wp3.read_kp import KPReader
+
+    reader = KPReader()
+    data, _ = reader.read(source="swpc")
+    fig = PlotKpOutput.plot_output(data)
+    print (type(fig))
+
+    figure = matplotlib.figure.Figure()
