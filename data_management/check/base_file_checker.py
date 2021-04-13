@@ -10,7 +10,7 @@ class BaseFileCheck(object):
         self.email_sender = Address("PAGER Bot", "pagerbot", "gfz-potsdam.de")
 
     @abstractmethod
-    def check_files_exists(self):
+    def check_files_exists(self, *args):
         raise NotImplementedError
 
     @abstractmethod
@@ -18,5 +18,5 @@ class BaseFileCheck(object):
         raise NotImplementedError
 
     @abstractmethod
-    def run_check(self):
+    def run_check(self, *args):
         raise NotImplementedError

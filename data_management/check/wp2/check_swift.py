@@ -18,7 +18,7 @@ class SwiftCheck(BaseFileCheck):
     @staticmethod
     def _get_email_recipients():
         addresses = tuple()
-        addresses += (Address("Ruggero Vasile", "ruggero", "gfz-potsdam.de"), )
+        addresses += (Address("Ruggero Vasile", "ruggero", "gfz-potsdam.de"),)
         return addresses
 
     @staticmethod
@@ -64,7 +64,8 @@ class SwiftCheck(BaseFileCheck):
             return success, None, None
 
     def check_file_format(self, gsm_file, hgc_file):
-        reader = SwiftReader()
+        #TODO To implement this
+        SwiftReader()
         success = True
         return success
 
@@ -85,11 +86,3 @@ class SwiftCheck(BaseFileCheck):
             content = "Output files not generated yet today..."
             send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
                                address_from=self.email_sender)
-
-        #success = self.check_file_format(gsm_file, hgc_file)
-        #if not success:
-        #    content = "Output files are not of standard format..."
-        #    send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
-        #                       address_from=self.email_sender)
-
-
