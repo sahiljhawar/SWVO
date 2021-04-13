@@ -31,7 +31,7 @@ class KpDataCheck(BaseFileCheck):
             success = True
         except IndexError:
             file = None
-            logging.warning("SWPC KP forecast for date {} found ...".format(check_date_str))
+            logging.warning("SWPC KP forecast for date {} not found ...".format(check_date_str))
             success = False
         return success, file
 
@@ -46,7 +46,7 @@ class KpDataCheck(BaseFileCheck):
             success = True
         except IndexError:
             file = None
-            logging.warning("NIEMEGK KP nowcast for date {} found ...".format(check_date_str))
+            logging.warning("NIEMEGK KP nowcast for date {} not found ...".format(check_date_str))
             success = False
         return success, file
 
@@ -61,7 +61,7 @@ class KpDataCheck(BaseFileCheck):
             success = True
         except IndexError:
             file = None
-            logging.warning("SWIFT Kp forecast for date {} found ...".format(check_date_str))
+            logging.warning("SWIFT Kp forecast for date {} not found ...".format(check_date_str))
             success = False
         return success, file
 

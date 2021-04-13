@@ -83,6 +83,9 @@ class SwiftCheck(BaseFileCheck):
         """
         success, gsm_file, hgc_file = self.check_files_exists(date)
         if not success:
+            logging.info("SWIFT GSM and HGC files for date {} not found...sending notification email".format(date))
             content = "Output files not generated yet today..."
             send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
                                address_from=self.email_sender)
+        if success:
+            logging.info("SWIFT GSM and HGC files for date {} found!!".format(date))

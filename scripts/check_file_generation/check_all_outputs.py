@@ -13,11 +13,13 @@ from data_management.check.wp3.check_kp import KpDataCheck
 
 
 def wp2_check_swift(date):
+    logging.info("Checking SWIFT output... ")
     checker = SwiftCheck()
     checker.run_check(date)
 
 
 def wp3_check_kp(date, product, model=None):
+    logging.info("Checking Kp output for product {}".format(product))
     checker = KpDataCheck()
     checker.run_check(product, model, date)
 
@@ -41,6 +43,8 @@ if __name__ == "__main__":
         log_file = "wp8_output_checker_{}.log".format(check_date)
         logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
 
+    check_date = dt.datetime.strptime(check_date, "%Y%m%dT%H%M%S")
+    logging.info("Start checking outputs for date {}".format(check_date))
     # WP2
     # SWIFT
     wp2_check_swift(check_date)
