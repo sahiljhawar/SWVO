@@ -15,7 +15,7 @@ class PlotKpOutput(PlotOutput):
         super().__init__()
 
     @staticmethod
-    def add_bar_color(data, key):
+    def _add_bar_color(data, key):
         color = []
         for i in range(len(data)):
             if data[key][i] < 4:
@@ -29,11 +29,11 @@ class PlotKpOutput(PlotOutput):
         return color
 
     @staticmethod
-    def add_subplot(ax, data, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
-                    ylabel_fontsize=20, ylim=(-0.1, 9.1),
-                    ylabel=r"$K_{p}$", cadence=3):
+    def _add_subplot(ax, data, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
+                     ylabel_fontsize=20, ylim=(-0.1, 9.1),
+                     ylabel=r"$K_{p}$", cadence=3):
         # PLOT
-        bar_colors = PlotKpOutput.add_bar_color(data, list(data.keys())[0])
+        bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
         ax = data.plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=[bar_colors],
                        align="edge", width=0.9, legend=False)
         # TITLE
@@ -81,8 +81,8 @@ class PlotKpOutput(PlotOutput):
         """
         fig = plt.figure(figsize=(15, 8))
         ax = fig.add_subplot(1, 1, 1)
-        ax = PlotKpOutput.add_subplot(ax, data=data[["kp"]], title=None,
-                                      cadence=(data.index[1] - data.index[0]).seconds // 3600)
+        ax = PlotKpOutput._add_subplot(ax, data=data[["kp"]], title=None,
+                                       cadence=(data.index[1] - data.index[0]).seconds // 3600)
 
         red_patch = patches.Patch(color='red', label=r'$K_{p}$ > 4')
         yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'$K_{p}$ = 4')
@@ -102,6 +102,6 @@ if __name__ == "__main__":
     reader = KPReader()
     data, _ = reader.read(source="swpc")
     fig = PlotKpOutput.plot_output(data)
-    print (type(fig))
+    print(type(fig))
 
     figure = matplotlib.figure.Figure()
