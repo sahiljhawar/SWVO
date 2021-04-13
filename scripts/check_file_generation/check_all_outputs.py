@@ -10,6 +10,7 @@ sys.path.append(os.path.join(LOCAL_PATH, "../../"))
 
 from data_management.check.wp2.check_swift import SwiftCheck
 from data_management.check.wp3.check_kp import KpDataCheck
+from data_management.check.wp3.check_plasma import PlasmaDataCheck
 
 
 def wp2_check_swift(date):
@@ -22,6 +23,12 @@ def wp3_check_kp(date, product, model=None):
     logging.info("Checking Kp output for product {}".format(product))
     checker = KpDataCheck()
     checker.run_check(product, model, date)
+
+
+def wp3_check_plasma(date, product):
+    logging.info("Checking Plasma output for product {}".format(product))
+    checker = PlasmaDataCheck()
+    checker.run_check(product, date)
 
 
 if __name__ == "__main__":
@@ -50,10 +57,13 @@ if __name__ == "__main__":
     wp2_check_swift(check_date)
 
     # WP3
+    # KP
     wp3_check_kp(check_date, "swpc")
     wp3_check_kp(check_date, "niemegk")
     wp3_check_kp(check_date, "swift")
     wp3_check_kp(check_date, "l1", model="KP-FULL-SW-PAGER")
     wp3_check_kp(check_date, "l1", model="HP60-FULL-SW-SWAMI-PAGER")
 
-
+    # PLASMA
+    wp3_check_plasma(check_date, "ca")
+    wp3_check_plasma(check_date, "gfz_plasma")
