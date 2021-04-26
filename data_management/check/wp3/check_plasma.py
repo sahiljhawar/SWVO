@@ -30,10 +30,11 @@ class PlasmaDataCheck(BaseFileCheck):
         try:
             file = glob.glob(self.file_folder + "/CA/plasmapause_{}.csv".format(check_date_str))[0]
             success = True
+            logging.warning("Carpenter Anderson Plasmapause for date {} found!!".format(check_date_str))
         except IndexError:
             file = None
-            logging.warning("Carpenter Anderson Plasmapause for date {} not found ...".format(check_date_str))
             success = False
+            logging.warning("Carpenter Anderson Plasmapause for date {} not found ...".format(check_date_str))
         return success, file
 
     def _check_plasma_file_exists(self, check_date=None):
@@ -45,10 +46,11 @@ class PlasmaDataCheck(BaseFileCheck):
         try:
             file = glob.glob(self.file_folder + "/GFZ_PLASMA/plasmasphere_density_{}.csv".format(check_date_str))[0]
             success = True
+            logging.warning("Plasma density for date {} found!!".format(check_date_str))
         except IndexError:
             file = None
-            logging.warning("Plasma density for date {} not found ...".format(check_date_str))
             success = False
+            logging.warning("Plasma density for date {} not found ...".format(check_date_str))
         return success, file
 
     def run_check(self, product, date=None):

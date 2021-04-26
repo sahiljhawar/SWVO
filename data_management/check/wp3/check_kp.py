@@ -29,10 +29,11 @@ class KpDataCheck(BaseFileCheck):
         try:
             file = glob.glob(self.file_folder + "/SWPC/SWPC_KP_FORECAST_{}.csv".format(check_date_str))[0]
             success = True
+            logging.info("SWPC output Kp for date {} found!!".format(check_date))
         except IndexError:
             file = None
-            logging.warning("SWPC KP forecast for date {} not found ...".format(check_date_str))
             success = False
+            logging.warning("SWPC KP forecast for date {} not found ...".format(check_date_str))
         return success, file
 
     def _check_niemegk_file_exists(self, check_date=None):
@@ -44,10 +45,11 @@ class KpDataCheck(BaseFileCheck):
         try:
             file = glob.glob(self.file_folder + "/NIEMEGK/NIEMEGK_KP_NOWCAST_{}.csv".format(check_date_str))[0]
             success = True
+            logging.info("NIEMEGK output Kp for date {} found!!".format(check_date))
         except IndexError:
             file = None
-            logging.warning("NIEMEGK KP nowcast for date {} not found ...".format(check_date_str))
             success = False
+            logging.warning("NIEMEGK KP nowcast for date {} not found ...".format(check_date_str))
         return success, file
 
     def _check_swift_file_exists(self, check_date=None):
@@ -59,10 +61,11 @@ class KpDataCheck(BaseFileCheck):
         try:
             file = glob.glob(self.file_folder + "/SWIFT/FORECAST_PAGER_SWIFT_swift_{}.csv".format(check_date_str))[0]
             success = True
+            logging.info("SWIFT output Kp for date {} found!!".format(check_date))
         except IndexError:
             file = None
-            logging.warning("SWIFT Kp forecast for date {} not found ...".format(check_date_str))
             success = False
+            logging.warning("SWIFT Kp forecast for date {} not found ...".format(check_date_str))
         return success, file
 
     def _check_l1_file_exists(self, model, spc, check_date=None):
@@ -75,11 +78,13 @@ class KpDataCheck(BaseFileCheck):
             file = glob.glob(self.file_folder + "/L1_FORECAST/FORECAST_{}_{}_{}.csv".format(model,
                                                                                             spc, check_date_str))[0]
             success = True
+            logging.info("L1 Kp forecast for date {},"
+                         " spacecraft source {} and model {} found!!".format(check_date_str, spc, model))
         except IndexError:
             file = None
+            success = False
             logging.warning("L1 Kp forecast for date {},"
                             " spacecraft source {} and model {} not found ...".format(check_date_str, spc, model))
-            success = False
         return success, file
 
     def run_check(self, product, model=None, date=None):
