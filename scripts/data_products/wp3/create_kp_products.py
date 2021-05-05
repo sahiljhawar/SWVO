@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     RESULTS_PATH = args.output
 
-    reader = KPReader(data_folder=args.input)
+    reader = KPReader(args.input)
     for model in ["KP-FULL-SW-PAGER", "HP60-FULL-SW-SWAMI-PAGER"]:
         data, _ = reader.read(source="l1", requested_date=product_date, model_name=model)
 
