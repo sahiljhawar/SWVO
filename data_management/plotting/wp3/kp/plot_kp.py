@@ -78,13 +78,20 @@ class PlotKpOutput(PlotOutput):
         :type data: pandas.DataFrame
         :return: A figure object of type matplotlib.figure.Figure containing the produced plot
         """
+        # Todo This is a hack, still working on it
+        cadence = (data.index[1] - data.index[0]).seconds // 3600
+        if cadence == 3:
+            label = "K_{p}"
+        else:
+            label = "H_{p}"
+
         fig = plt.figure(figsize=(15, 8))
         ax = fig.add_subplot(1, 1, 1)
-        ax = PlotKpOutput._add_subplot(ax, data=data[["kp"]], title=None)
+        ax = PlotKpOutput._add_subplot(ax, data=data[["kp"]], title=None, ylabel=r'${}$'.format(label))
 
-        red_patch = patches.Patch(color='red', label=r'$K_{p}$ > 4')
-        yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'$K_{p}$ = 4')
-        green_patch = patches.Patch(color='green', label=r'$K_{p}$ < 4')
+        red_patch = patches.Patch(color='red', label=r'${}$ > 4'.format(label))
+        yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'${}$ = 4'.format(label))
+        green_patch = patches.Patch(color='green', label=r'${}$ < 4'.format(label))
         transparent_patch = patches.Patch(color=[0, 0, 0, 0.1], label='Data not available')
         ax.legend(bbox_to_anchor=(0., 1., 0.84, .275),
                   handles=[green_patch, yellow_patch, red_patch, transparent_patch],
