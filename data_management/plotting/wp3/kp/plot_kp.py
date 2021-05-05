@@ -3,6 +3,7 @@ import matplotlib.patches as patches
 import matplotlib
 from data_management.plotting.plotting_base import PlotOutput
 
+
 matplotlib.use('Agg')
 
 
@@ -31,7 +32,7 @@ class PlotKpOutput(PlotOutput):
     @staticmethod
     def _add_subplot(ax, data, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
                      ylabel_fontsize=20, ylim=(-0.1, 9.1),
-                     ylabel=r"$K_{p}$", cadence=3):
+                     ylabel=r"$K_{p}$"):
         # PLOT
         bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
         ax = data.plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=[bar_colors],
@@ -45,16 +46,14 @@ class PlotKpOutput(PlotOutput):
         ax.set_yticks(y_labels)
         ax.tick_params(axis="y", labelsize=ylabel_fontsize, direction='in')
         ax.set_ylabel(ylabel, fontsize=ylabel_fontsize, rotation=90, labelpad=15)
-
-        n_points = len(data)
-        if n_points > 12:
-            cadence *= 2
+        first_hour = data.index[0].hour
 
         # X-AXIS
         def map_dates(x):
-            if x.hour % cadence != 0:
+
+            if (x.hour - first_hour) % 6 != 0:
                 return ""
-            if (x.hour % cadence == 0) and (x.minute == 0):
+            elif ((x.hour - first_hour) % 6 == 0) and (x.hour == first_hour):
                 return x.strftime("%H:%M\n%d %b")
             else:
                 return x.strftime("%H:%M")
@@ -70,7 +69,7 @@ class PlotKpOutput(PlotOutput):
         return ax
 
     @staticmethod
-    def plot_output(data) -> matplotlib.figure.Figure:
+    def plot_output(data):
         """
         This function plots output data for Kp and other geomagnetic index products. The plot format is at the moment
         fixed.
@@ -81,8 +80,7 @@ class PlotKpOutput(PlotOutput):
         """
         fig = plt.figure(figsize=(15, 8))
         ax = fig.add_subplot(1, 1, 1)
-        ax = PlotKpOutput._add_subplot(ax, data=data[["kp"]], title=None,
-                                       cadence=(data.index[1] - data.index[0]).seconds // 3600)
+        ax = PlotKpOutput._add_subplot(ax, data=data[["kp"]], title=None)
 
         red_patch = patches.Patch(color='red', label=r'$K_{p}$ > 4')
         yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'$K_{p}$ = 4')
@@ -94,14 +92,3 @@ class PlotKpOutput(PlotOutput):
 
         fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7, wspace=None, hspace=0.6)
         return fig
-
-
-if __name__ == "__main__":
-    from data_management.io.wp3.read_kp import KPReader
-
-    reader = KPReader()
-    data, _ = reader.read(source="swpc")
-    fig = PlotKpOutput.plot_output(data)
-    print(type(fig))
-
-    figure = matplotlib.figure.Figure()
