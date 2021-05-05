@@ -50,3 +50,7 @@ if __name__ == "__main__":
                                                                              product_date.strftime("%Y%m%dT%H%M%S")))
         RawFormat.wdc(data, wdc_path)
         RawFormat.omniweb(data, omni_path)
+        wdc_path = os.path.join(args.output, "FORECAST_{}_{}_LAST.wdc".format(model, "dscovr_rt"))
+        omni_path = os.path.join(args.output, "FORECAST_{}_{}_LAST.dat".format(model, "dscovr_rt"))
+        RawFormat.wdc(data, wdc_path)
+        RawFormat.omniweb(data, omni_path)
