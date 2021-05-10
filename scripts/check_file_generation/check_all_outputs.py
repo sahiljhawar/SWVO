@@ -16,7 +16,8 @@ from data_management.check.wp3.check_plasma import PlasmaDataCheck
 def wp2_check_swift(date):
     logging.info("Checking SWIFT output... ")
     checker = SwiftCheck()
-    checker.run_check(date)
+    # TODO We check 24 before because of bug on swift code that produces a wrong date (one day before)
+    checker.run_check(date - dt.timedelta(hours=24))
 
 
 def wp3_check_kp(date, product, model=None):
