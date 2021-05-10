@@ -96,18 +96,18 @@ class PlasmaspherePredictionReader(BaseReader):
 
     def _find_file(self, folder):
         """
-        It returns the file in the specified folder in which self.date
+        It returns the file in the specified folder in which self.requested_date
         is present. If it cannot find the file, it returns None
 
         :param folder: it specifies the folder where to look
                        for the file
         :type folder: str
-        :return: file in which self.date is present or None
+        :return: file in which self.requested_date is present or None
         :rtype: string or None
         """
 
         file_full_path = None
-        dates = np.array([self.date - datetime.timedelta(hours=hours_to_shift)
+        dates = np.array([self.requested_date - dt.timedelta(hours=hours_to_shift)
                           for hours_to_shift in range(48)])
 
         for date in dates:
@@ -143,48 +143,15 @@ class PlasmaspherePredictionReader(BaseReader):
                  requested_date can be found.
         """
 
-        for file in glob.glob(folder):
-            date = file.split("/")[-1]
-            date = date.split(".")[0]
-            try:
-                date = datetime.strptime(date.split("_")[-1], "%Y%m%d")
-            except ValueError:
-                date = datetime.strptime(date.split("_")[-1], "%Y-%m-%d")
-            if date == requested_date:
-                last_file = file
-                start_date = date
-                break
+        file_full_path = self._find_file(folder)
+        if file_full_path is None:
+            raise RuntimeError("No suitable files found in the folder {}"
+                               "containing the date {}".format(folder,
+                                                               self.requested_date))
+        df_file = pd.read_csv(file_full_path,
+                              parse_dates=["date"])
 
-        if self.file is not None:
-
-            file_full_path = \
-                PlasmaspherePredictionReader._get_file_full_path(folder,
-                                                                 self.file)
-            if file_full_path is None:
-                raise ValueError(
-                    "file {} doesn't exist in the directory {}".format(
-                        self.file,
-                        folder
-                    )
-                )
-
-            df_file = pd.read_csv(file_full_path,
-                                  parse_dates=["date"])
-            PlasmaspherePredictionReader._raise_if_date_not_present(df_file,
-                                                                    self.date)
-            return df_file[df_file["date"] == self.date]
-
-        else:
-
-            file_full_path = self._find_file(folder)
-            if file_full_path is None:
-                raise RuntimeError("No suitable files found in the folder {}"
-                                   "containing the date {}".format(folder,
-                                                                   date))
-            df_file = pd.read_csv(file_full_path,
-                                  parse_dates=["date"])
-
-            return df_file[df_file["date"] == self.date]
+        return df_file[df_file["date"] == self.requested_date]
 
     def read(self, source, requested_date=None, file=None) -> pd.DataFrame:
         """
