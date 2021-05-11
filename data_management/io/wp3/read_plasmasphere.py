@@ -108,7 +108,7 @@ class PlasmaspherePredictionReader(BaseReader):
 
         file_full_path = None
         dates = np.array([self.requested_date - dt.timedelta(hours=hours_to_shift)
-                          for hours_to_shift in range(48)])
+                          for hours_to_shift in range(72)])
 
         for date in dates:
 
@@ -126,16 +126,17 @@ class PlasmaspherePredictionReader(BaseReader):
 
         return file_full_path
 
-    def _read_from_source(self, folder, requested_date):
+    def _read_from_folder(self, folder):
         """
-        It reads the plasmasphere prediction for the requested date
-        from the specified folder.
+        It reads the plasmasphere prediction from the specified folder.
+        If self.file is None and self.requested_date is not None,
+        looks for the most recent file having the self.requested_date.
+        If  self.file is not None and self.requested_date is None, returns
+        the full data contained in self.file
+
 
         :param folder: folder where we look for the plasmasphere prediction
         :type folder: str
-        :param requested_date: date for which we want the plasmasphere
-                               prediction
-        :type requested_date:
         :return: the plasmasphere prediction for the requested date
         :rtype: instance of pd.DataFrame
         :raises: ValueError if self.file is not None, but it cannot be found.
@@ -143,15 +144,39 @@ class PlasmaspherePredictionReader(BaseReader):
                  requested_date can be found.
         """
 
-        file_full_path = self._find_file(folder)
-        if file_full_path is None:
-            raise RuntimeError("No suitable files found in the folder {}"
-                               "containing the date {}".format(folder,
-                                                               self.requested_date))
-        df_file = pd.read_csv(file_full_path,
-                              parse_dates=["date"])
+        if self.file is not None:
 
-        return df_file[df_file["date"] == self.requested_date]
+            file_full_path = \
+                PlasmaspherePredictionReader._get_file_full_path(folder,
+                                                                 self.file)
+            if file_full_path is None:
+                raise ValueError(
+                    "file {} doesn't exist in the directory {}".format(
+                        self.file,
+                        folder
+                    )
+                )
+
+            df_file = pd.read_csv(file_full_path,
+                                  parse_dates=["date"])
+            if self.requested_date is None:
+                return df_file
+            else:
+                PlasmaspherePredictionReader._raise_if_date_not_present(df_file,
+                                                                        self.requested_date)
+                return df_file[df_file["date"] == self.requested_date]
+
+        else:
+
+            file_full_path = self._find_file(folder)
+            if file_full_path is None:
+                raise RuntimeError("No suitable files found in the folder {}"
+                                   "containing the date {}".format(folder,
+                                                                   self.requested_date))
+            df_file = pd.read_csv(file_full_path,
+                                  parse_dates=["date"])
+
+            return df_file[df_file["date"] == self.requested_date]
 
     def read(self, source, requested_date=None, file=None) -> pd.DataFrame:
         """
@@ -172,6 +197,7 @@ class PlasmaspherePredictionReader(BaseReader):
                      file name.
 
         :raises: ValueError if requested_date is not in datetime format
+        :raises: ValueError if both file and requested_date are None
         :raises: RuntimeError if the sources of data requested is not among
                  the available ones.
 
@@ -180,24 +206,20 @@ class PlasmaspherePredictionReader(BaseReader):
         """
 
         self.file = file
-
-        if requested_date is None:
-            requested_date = dt.datetime.utcnow().replace(minute=0,
-                                                          second=0,
-                                                          microsecond=0)
-
-        if not isinstance(requested_date, datetime):
-            raise ValueError("requested_date must be a datetime variable")
-
-        requested_date = requested_date.replace(minute=0,
-                                                second=0,
-                                                microsecond=0)
         self.requested_date = requested_date
 
+        if self.requested_date is None and self.file is None:
+            raise ValueError("At least one between requested_date and file"
+                             "must be specified")
+
+        if self.requested_date is not None:
+            if not isinstance(requested_date, datetime):
+                raise ValueError("requested_date must be a datetime variable")
+
         if source == "gfz_plasma":
-            return self._read_from_source(os.path.join(self.data_folder,
-                                                       "GFZ_PLASMA/*"),
-                                          requested_date)
+            return self._read_from_folder(os.path.join(self.data_folder,
+                                                       "GFZ_PLASMA/*")
+                                          )
         else:
             msg = "Source {} requested for reading plasmasphere prediction " \
                   "not available...".format(source)
