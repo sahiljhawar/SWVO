@@ -11,12 +11,15 @@ sys.path.append(os.path.join(LOCAL_PATH, "../../"))
 from data_management.check.wp2.check_swift import SwiftCheck
 from data_management.check.wp3.check_kp import KpDataCheck
 from data_management.check.wp3.check_plasma import PlasmaDataCheck
+from data_management.check.wp6.check_rbm_forecast import RBMForecastCheck
+from data_management.check.wp6.check_ring_current import RingCurrentCheck
 
 
 def wp2_check_swift(date):
     logging.info("Checking SWIFT output... ")
     checker = SwiftCheck()
-    checker.run_check(date)
+    # TODO We check 24 before because of bug on swift code that produces a wrong date (one day before)
+    checker.run_check(date - dt.timedelta(hours=24))
 
 
 def wp3_check_kp(date, product, model=None):
@@ -29,6 +32,18 @@ def wp3_check_plasma(date, product):
     logging.info("Checking Plasma output for product {}".format(product))
     checker = PlasmaDataCheck()
     checker.run_check(product, date)
+
+
+def wp6_check_rbm_forecast(date):
+    logging.info("Checking RBM Forecast output...")
+    checker = RBMForecastCheck()
+    checker.run_check(date)
+
+
+def wp6_check_ring_current(date):
+    logging.info("Checking Ring Current output...")
+    checker = RingCurrentCheck()
+    checker.run_check(date)
 
 
 if __name__ == "__main__":
@@ -67,3 +82,10 @@ if __name__ == "__main__":
     # PLASMA
     wp3_check_plasma(check_date, "ca")
     wp3_check_plasma(check_date, "gfz_plasma")
+
+    # WP6
+    # RBM Forecast
+    wp6_check_rbm_forecast(check_date)
+
+    # Ring Current
+    wp6_check_ring_current(check_date)

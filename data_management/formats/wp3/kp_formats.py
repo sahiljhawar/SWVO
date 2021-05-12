@@ -1,9 +1,17 @@
 import os
+import scipy.io
 
 
 class RawFormat(object):
     def __init__(self):
-        self.data = None
+        pass
+
+    @staticmethod
+    def matlab(data, filename):
+        dic = dict()
+        dic["t"] = [ind.strftime('%Y-%m-%d %H:%M:%S') for ind in data.index]
+        dic["kp"] = data["kp"].values
+        scipy.io.savemat(filename, dic)
 
     @staticmethod
     def csv(data, filename, index, header=True):

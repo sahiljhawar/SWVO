@@ -54,3 +54,9 @@ if __name__ == "__main__":
         omni_path = os.path.join(args.output, "FORECAST_{}_{}_LAST.dat".format(model, "dscovr_rt"))
         RawFormat.wdc(data, wdc_path)
         RawFormat.omniweb(data, omni_path)
+
+if __name__ == "__main__":
+    from data_management.io.wp3.read_kp import KPReader
+
+    reader = KPReader()
+    reader.read("l1", requested_date=dt.datetime(2021, 5, 5, 0), model_name="HP60-FULL-SW-SWAMI-PAGER")
