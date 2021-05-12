@@ -1,4 +1,4 @@
-from os import path
+import os
 
 import math
 import numpy as np
@@ -12,16 +12,37 @@ import matplotlib.ticker as mticker
 
 from data_management.plotting.plotting_base import PlotOutput
 
-basepath = path.dirname(__file__)
+basepath = os.path.dirname(__file__)
 
 class PlasmaspherePlot(PlotOutput):
 
     def __init__(self):
+
+        super().__init__()
+
+        self.output_folder = "/PAGER/WP3/data/figures/plasmasphere/"
         self.figure = None
         self.ax = None
         self.colour_map = mpl.colors.ListedColormap(
-            np.load(path.abspath(path.join(basepath, './my_cmap.npy')))
+            np.load(os.path.abspath(os.path.join(basepath, './my_cmap.npy')))
         )
+
+    @staticmethod
+    def _get_date_components(date):
+        """
+        It gets a datetime instance and returns year, month, day, hour, minute
+
+        :param date: a date
+        :type date: an instance of datetime object
+        :return: year, month, day, hour, minute
+        :rtype: tuple of int
+        """
+        year = str(date.year)
+        month = date.strftime('%m')
+        day = date.strftime('%d')
+        hour = date.strftime('%H')
+        minute = date.strftime("%M")
+        return year, month, day, hour, minute
 
     def _draw_earth_night_side(self):
         self.ax.fill_between(np.linspace(-np.pi / 2, np.pi / 2, 100),
@@ -48,13 +69,20 @@ class PlasmaspherePlot(PlotOutput):
                              l_values,
                              density_values
                              ):
-        self.ax.scatter(angle_values,
-                        l_values,
-                        c=density_values,
-                        s=l_values ** 2,
-                        cmap=self.colour_map,
-                        alpha=0.4
-                        )
+
+        unique_l_values = np.unique(l_values)
+        unique_angle_values = np.unique(angle_values)
+
+        angle_grid = np.reshape(angle_values,
+                                (len(unique_l_values), len(unique_angle_values)),
+                                order="F")
+        l_grid = np.reshape(l_values,
+                            (len(unique_l_values), len(unique_angle_values)),
+                            order="F")
+        density_grid = np.reshape(density_values,
+                                  (len(unique_l_values), len(unique_angle_values)),
+                                  order="F")
+        self.ax.contourf(angle_grid, l_grid, density_grid, levels=512, cmap=self.colour_map)
 
     def _add_colour_bar(self):
 
@@ -90,7 +118,7 @@ class PlasmaspherePlot(PlotOutput):
         if np.sum(np.isnan(density_values)):
             raise ValueError("densities must not contain NaNs")
 
-    def plot(self,  l_values, mlt_values, density_values, date,
+    def _plot_single_plasmasphere(self,  l_values, mlt_values, density_values, date,
               fig_size=(4, 4)):
 
         self._set_date(date)
@@ -122,7 +150,7 @@ class PlasmaspherePlot(PlotOutput):
         self.figure.subplots_adjust(left=0.07, right=0.8)
         plt.tight_layout()
 
-    def save(self, path):
+    def _save(self, path):
         plt.savefig(path)
         plt.close()
 
@@ -140,10 +168,20 @@ class PlasmaspherePlot(PlotOutput):
         if not isinstance(data.iloc[0]["date"], datetime):
             raise ValueError("values of date column must be datetime objects")
 
-        l_values = data["L"]
-        mlt_values = data["MLT"]
-        density_values = data["predicted_densities"]
-        date = data.iloc[0]["date"]
+        dates = pd.to_datetime(data["date"].unique())
+        for date in dates:
 
-        plotter = PlasmaspherePlot()
-        plotter.plot(l_values, mlt_values, density_values, date)
+            df_date = data[data["date"] == date]
+
+            l_values = df_date["L"].values
+            mlt_values = df_date["MLT"].values
+            density_values = df_date["predicted_densities"].values
+            date = df_date.iloc[0]["date"]
+
+            plotter = PlasmaspherePlot()
+            plotter._plot_single_plasmasphere(l_values, mlt_values, density_values, date)
+
+            year, month, day, hour, minute = plotter._get_date_components(date)
+            plotter._save(os.path.abspath(os.path.join(plotter.output_folder,
+                "./plasmasphere_{}_{}_{}_{}_{}".format(
+                    year, month, day, hour, minute))))
