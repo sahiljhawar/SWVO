@@ -1,9 +1,12 @@
 import os
-
+import subprocess
+import glob
 import math
+
 import numpy as np
 import pandas as pd
 from datetime import datetime
+
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -20,7 +23,6 @@ class PlasmaspherePlot(PlotOutput):
 
         super().__init__()
 
-        self.output_folder = "/PAGER/WP3/data/figures/plasmasphere/"
         self.figure = None
         self.ax = None
         self.colour_map = mpl.colors.ListedColormap(
@@ -114,9 +116,9 @@ class PlasmaspherePlot(PlotOutput):
     def _set_figure(self, fig):
         self.figure = fig
 
-    def _check_inputs(self, density_values):
+    def _nan_presence(self, density_values):
         if np.sum(np.isnan(density_values)):
-            raise ValueError("densities must not contain NaNs")
+            return True
 
     def _plot_single_plasmasphere(self,  l_values, mlt_values, density_values, date,
               fig_size=(4, 4)):
@@ -128,14 +130,14 @@ class PlasmaspherePlot(PlotOutput):
         self.figure = fig
         self.ax = ax
 
-        self._check_inputs(density_values)
-
         angle_values = PlasmaspherePlot._mlt_to_angle(mlt_values)
-        self._plot_plasma_density(
-            angle_values,
-            l_values,
-            density_values,
-        )
+
+        if not self._nan_presence(density_values):
+            self._plot_plasma_density(
+                angle_values,
+                l_values,
+                density_values,
+            )
 
         self._draw_earth_night_side()
 
@@ -155,7 +157,17 @@ class PlasmaspherePlot(PlotOutput):
         plt.close()
 
     @staticmethod
-    def plot_output(data):
+    def plot_output(data, output_folder, file_name):
+        """
+        It produces a video form the output of the plasmasphere predictions.
+        In case the predicted densities are nan for some date,
+        only the Earth and the basic skeleton appear.
+
+        :param data: instance of pandas DataFrame containing the ouutput of the plasmasphere prediction modules
+        :param output_folder: output folder where to store the video, specify as an absolute path
+        :param file_name: filename of the video, with extension .mp4
+        :return: None
+        """
 
         if not isinstance(data, pd.DataFrame):
             raise ValueError("data must be a pandas dataframe")
@@ -167,6 +179,12 @@ class PlasmaspherePlot(PlotOutput):
 
         if not isinstance(data.iloc[0]["date"], datetime):
             raise ValueError("values of date column must be datetime objects")
+
+        if not os.path.isdir(output_folder):
+            raise ValueError("specified output_folder doesn't exist")
+
+        if os.path.isfile(os.path.join(output_folder,file_name)):
+            os.remove(os.path.join(output_folder, file_name))
 
         dates = pd.to_datetime(data["date"].unique())
         for date in dates:
@@ -182,6 +200,16 @@ class PlasmaspherePlot(PlotOutput):
             plotter._plot_single_plasmasphere(l_values, mlt_values, density_values, date)
 
             year, month, day, hour, minute = plotter._get_date_components(date)
-            plotter._save(os.path.abspath(os.path.join(plotter.output_folder,
-                "./plasmasphere_{}_{}_{}_{}_{}".format(
+            plotter._save(os.path.abspath(os.path.join(output_folder,
+                "./plasmasphere_{}_{}_{}_{}_{}.png".format(
                     year, month, day, hour, minute))))
+
+        os.chdir(os.path.abspath(output_folder))
+        subprocess.call([
+            'ffmpeg', '-framerate', '5', '-i', '%*.png', '-vcodec', 'libx265', '-crf', '28', '-pix_fmt', 'yuv420p',
+            file_name
+        ])
+
+        for file_name in glob.glob("*.png"):
+            os.remove(file_name)
+
