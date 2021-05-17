@@ -42,21 +42,6 @@ class PlasmaspherePredictionReader(BaseReader):
             return None
 
     @staticmethod
-    def _raise_if_date_not_present(df, date):
-        """
-        It raises if date is not contained in df["date"] column
-
-        :param df: dataframe containing plasma density at different times
-        :type df: instance of pd.DataFrame
-        :param date: date for which we want the plasmadensity
-        :type date:
-        :raises: ValueError if date is not present in  df["date"] column
-        """
-        df_date = df[df["date"] == date]
-        if df_date.empty:
-            raise ValueError("date {} is not present".format(date))
-
-    @staticmethod
     def _get_date_components(date):
         """
         It gets a datetime instance and returns year, month, day, hour, minute
@@ -136,11 +121,14 @@ class PlasmaspherePredictionReader(BaseReader):
 
         file_full_path = self._get_file_path(folder)
         if file_full_path is None:
-            raise RuntimeError("No suitable files found in the folder {}"
-                               "for the requested date {}".format(folder,
-                                                                  self.requested_date))
-        return pd.read_csv(file_full_path,
-                           parse_dates=["date"])
+            msg = "No suitable files found in the folder {} " \
+                  "for the requested date {}".format(folder,
+                                                     self.requested_date)
+            logging.error(msg)
+            raise FileNotFoundError(msg)
+        else:
+            return pd.read_csv(file_full_path,
+                               parse_dates=["date"])
 
 
 
