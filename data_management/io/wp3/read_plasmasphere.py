@@ -118,7 +118,6 @@ class PlasmaspherePredictionReader(BaseReader):
                  requested_date can be found.
         """
 
-
         file_full_path = self._get_file_path(folder)
         if file_full_path is None:
             msg = "No suitable files found in the folder {} " \
@@ -129,8 +128,6 @@ class PlasmaspherePredictionReader(BaseReader):
         else:
             return pd.read_csv(file_full_path,
                                parse_dates=["date"])
-
-
 
     def read(self, source, requested_date) -> pd.DataFrame:
         """

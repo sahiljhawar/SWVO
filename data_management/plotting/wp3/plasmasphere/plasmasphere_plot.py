@@ -7,15 +7,14 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-
 from data_management.plotting.plotting_base import PlotOutput
 
 basepath = os.path.dirname(__file__)
+
 
 class PlasmaspherePlot(PlotOutput):
 
@@ -120,8 +119,8 @@ class PlasmaspherePlot(PlotOutput):
         if np.sum(np.isnan(density_values)):
             return True
 
-    def _plot_single_plasmasphere(self,  l_values, mlt_values, density_values, date,
-              fig_size=(4, 4)):
+    def _plot_single_plasmasphere(self, l_values, mlt_values, density_values, date,
+                                  fig_size=(4, 4)):
 
         self._set_date(date)
 
@@ -145,7 +144,7 @@ class PlasmaspherePlot(PlotOutput):
 
         self.ax.set_title(
             "{}".format(self.date.strftime("%Y-%m-%d, %H:%M")),
-        fontdict={'fontweight': 'bold'})
+            fontdict={'fontweight': 'bold'})
 
         self._add_colour_bar()
 
@@ -156,17 +155,26 @@ class PlasmaspherePlot(PlotOutput):
         plt.savefig(path)
         plt.close()
 
+    # TODO It would be better that this function does not take care of saving plots of videos, but only generating
+    # TODO them on the fly. Video saving (which according to Stefano the only output needed) can be handled by the
+    # TODO plot calling script.
+
+    # TODO Please add logging here and there in the class. Logging will be taken care on the calling script if
+    # TODO requested, but the logging.info  logging.error and logging.warning need to be put a bit everywhere in the
+    # TODO class
+
+    # TODO Separate temp and output folder.
     @staticmethod
-    def plot_output(data, output_folder, file_name):
+    def plot_output(data, output_folder, video_file_name):
         """
         It produces a video form the output of the plasmasphere predictions.
         In case the predicted densities are nan for some date,
         only the Earth and the basic skeleton appear.
 
-        :param data: instance of pandas DataFrame containing the ouutput of the plasmasphere prediction modules
+        # TODO Add parameter type
+        :param data: instance of pandas DataFrame containing the output of the plasmasphere prediction modules
         :param output_folder: output folder where to store the video, specify as an absolute path
-        :param file_name: filename of the video, with extension .mp4
-        :return: None
+        :param video_file_name: filename of the video, with extension .mp4
         """
 
         if not isinstance(data, pd.DataFrame):
@@ -183,12 +191,11 @@ class PlasmaspherePlot(PlotOutput):
         if not os.path.isdir(output_folder):
             raise ValueError("specified output_folder doesn't exist")
 
-        if os.path.isfile(os.path.join(output_folder,file_name)):
-            os.remove(os.path.join(output_folder, file_name))
+        if os.path.isfile(os.path.join(output_folder, video_file_name)):
+            os.remove(os.path.join(output_folder, video_file_name))
 
         dates = pd.to_datetime(data["date"].unique())
         for date in dates:
-
             df_date = data[data["date"] == date]
 
             l_values = df_date["L"].values
@@ -201,15 +208,18 @@ class PlasmaspherePlot(PlotOutput):
 
             year, month, day, hour, minute = plotter._get_date_components(date)
             plotter._save(os.path.abspath(os.path.join(output_folder,
-                "./plasmasphere_{}_{}_{}_{}_{}.png".format(
-                    year, month, day, hour, minute))))
+                                                       "./plasmasphere_{}_{}_{}_{}_{}.png".format(
+                                                           year, month, day, hour, minute))))
 
         os.chdir(os.path.abspath(output_folder))
+
+        # TODO Better find a pythonic solution to create videos (look for python libraries). Calling a subprocess
+        # TODO may lead to more unknown behaviors that we will have to handle anyway...
         subprocess.call([
             'ffmpeg', '-framerate', '5', '-i', '%*.png', '-vcodec', 'libx265', '-crf', '28', '-pix_fmt', 'yuv420p',
-            file_name
+            video_file_name
         ])
 
+        # TODO Like this you cancel all the png images in the folder. A bit dangerous...
         for file_name in glob.glob("*.png"):
             os.remove(file_name)
-
