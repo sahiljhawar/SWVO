@@ -13,11 +13,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
                         help="Requested date to plot in the format %YYYY-%mm-%dd")
-    parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/", type=str,
+    parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/plasmasphere/", type=str,
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
                         help="Path to a folder where the data to plot is stored...(be more precise)")
-    parser.add_argument('-logdir', action="store", default=None, type=str,
+    parser.add_argument('-logdir', action="store", default="/PAGER/WP3/logs/plasmasphere/", type=str,
                         help="Log directory if logging is to be enabled.")
 
     args = parser.parse_args()
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         plotting_date = date_now
     else:
         try:
-            plotting_date = dt.datetime.strptime(args.date, "%Y-%m-%d")
+            plotting_date = dt.datetime.strptime(args.date, "%Y-%m-%d-%H-%M")
         except TypeError:
             msg = "Provided date {} not in correct format %Y-%m-%d. Aborting...".format(args.date)
             logging.error(msg)
@@ -43,8 +43,7 @@ if __name__ == "__main__":
     reader = PlasmaspherePredictionReader(wp3_output_folder=DATA_PATH)
     plotter = PlasmaspherePlot()
 
-    #TODO Check the format "YYYYMMDDTHHMMSS"
-    video_name = "gfz_plasma_video_{}.mp4".format(plotting_date)
+    video_name = "gfz_plasma_video_{}.mp4".format(plotting_date.strftime("%Y%m%dT%H%M"))
     try:
         logging.info("Reading GFZ Plasmasphere forecast data file...")
         data = reader.read("gfz_potsdam", plotting_date)
