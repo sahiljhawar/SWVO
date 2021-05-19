@@ -5,8 +5,7 @@ import logging
 import shutil
 import sys
 
-# sys.path.append("/PAGER/WP8/data_management/")
-sys.path.append("/home/ruggero/repositories/data_management/")
+sys.path.append("/PAGER/WP8/data_management/")
 
 from data_management.io.wp3.read_plasmasphere import PlasmaspherePredictionReader
 from data_management.plotting.wp3.plasmasphere.plasmasphere_plot import PlasmaspherePlot
