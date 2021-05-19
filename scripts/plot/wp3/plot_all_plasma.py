@@ -2,9 +2,11 @@ import os
 import argparse
 import datetime as dt
 import logging
-
+import shutil
 import sys
-sys.path.append("/PAGER/WP8/data_management/")
+
+# sys.path.append("/PAGER/WP8/data_management/")
+sys.path.append("/home/ruggero/repositories/data_management/")
 
 from data_management.io.wp3.read_plasmasphere import PlasmaspherePredictionReader
 from data_management.plotting.wp3.plasmasphere.plasmasphere_plot import PlasmaspherePlot
@@ -17,7 +19,7 @@ if __name__ == "__main__":
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
                         help="Path to a folder where the data to plot is stored...(be more precise)")
-    parser.add_argument('-logdir', action="store", default="/PAGER/WP3/logs/plasmasphere_plot/", type=str,
+    parser.add_argument('-logdir', action="store", default=None, type=str,
                         help="Log directory if logging is to be enabled.")
 
     args = parser.parse_args()
@@ -43,7 +45,7 @@ if __name__ == "__main__":
     reader = PlasmaspherePredictionReader(wp3_output_folder=DATA_PATH)
     plotter = PlasmaspherePlot()
 
-    video_name = "gfz_plasma_video_{}.mp4".format(plotting_date.strftime("%Y%m%dT%H%M"))
+    video_name = "gfz_plasma_video_{}.mp4".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
     try:
         logging.info("Reading GFZ Plasmasphere forecast data file...")
         data = reader.read("gfz_plasma", plotting_date)
@@ -56,3 +58,6 @@ if __name__ == "__main__":
             "Data for Plasmasphere forecast for date {} not found"
             "...impossible to produce data plot...".format(plotting_date)
         )
+
+    if os.path.isfile(os.path.join(RESULTS_PATH, video_name)):
+        shutil.copy(os.path.join(RESULTS_PATH, video_name), os.path.join(RESULTS_PATH, "gfz_plasma_video_LAST.mp4"))
