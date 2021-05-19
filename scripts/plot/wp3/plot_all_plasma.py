@@ -17,7 +17,7 @@ if __name__ == "__main__":
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
                         help="Path to a folder where the data to plot is stored...(be more precise)")
-    parser.add_argument('-logdir', action="store", default="/PAGER/WP3/logs/plasmasphere/", type=str,
+    parser.add_argument('-logdir', action="store", default="/PAGER/WP3/logs/plasmasphere_plot/", type=str,
                         help="Log directory if logging is to be enabled.")
 
     args = parser.parse_args()
