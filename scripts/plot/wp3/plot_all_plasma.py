@@ -46,7 +46,7 @@ if __name__ == "__main__":
     video_name = "gfz_plasma_video_{}.mp4".format(plotting_date.strftime("%Y%m%dT%H%M"))
     try:
         logging.info("Reading GFZ Plasmasphere forecast data file...")
-        data = reader.read("gfz_potsdam", plotting_date)
+        data = reader.read("gfz_plasma", plotting_date)
         logging.info("...Complete!!")
         logging.info("Plotting and saving plasmasphere forecast video...")
         plotter.plot_output(data, RESULTS_PATH, video_name)
