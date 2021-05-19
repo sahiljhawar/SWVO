@@ -54,4 +54,5 @@ if __name__ == "__main__":
     except TypeError:
         logging.error(
             "Data for Plasmasphere forecast for date {} not found"
-            "...impossible to produce data plot...".format(plotting_date))
+            "...impossible to produce data plot...".format(plotting_date)
+        )
