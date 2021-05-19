@@ -161,15 +161,6 @@ class PlasmaspherePlot(PlotOutput):
         plt.savefig(path)
         plt.close()
 
-    # TODO It would be better that this function does not take care of saving plots of videos, but only generating
-    # TODO them on the fly. Video saving (which according to Stefano the only output needed) can be handled by the
-    # TODO plot calling script.
-
-    # TODO Please add logging here and there in the class. Logging will be taken care on the calling script if
-    # TODO requested, but the logging.info  logging.error and logging.warning need to be put a bit everywhere in the
-    # TODO class
-
-    # TODO Separate temp and output folder.
     @staticmethod
     def plot_output(data, output_folder, video_file_name):
         """
@@ -177,13 +168,12 @@ class PlasmaspherePlot(PlotOutput):
         In case the predicted densities are nan for some date,
         only the Earth and the basic skeleton appear.
 
-        # TODO Add parameter type
         :param data: instance of pandas DataFrame containing the output of the plasmasphere prediction modules
         :type data: instance of pandas DataFrame
         :param output_folder: output folder where to store the video, specify as an absolute path
         :type output_folder: string
         :param video_file_name: filename of the video, with extension .mp4
-        :type video_file_name:
+        :type video_file_name: string
         """
 
         if not isinstance(data, pd.DataFrame):
@@ -241,34 +231,23 @@ class PlasmaspherePlot(PlotOutput):
                                            year, month, day, hour, minute)
                                        )
                           )
-
         logging.info("Finished individual plasmasphere reconstructions generation")
-        # TODO Better find a pythonic solution to create videos (look for python libraries). Calling a subprocess
-        # TODO may lead to more unknown behaviors that we will have to handle anyway...
-        # os.chdir(os.path.abspath(output_folder))
-        # subprocess.call([
-        #     'ffmpeg', '-framerate', '5', '-i', '%*.png', '-vcodec', 'libx265', '-crf', '28', '-pix_fmt', 'yuv420p',
-        #     video_file_name
-        # ])
 
         logging.info("Starting video generation")
         img_array = []
-        for file in glob.glob(os.path.join(temp_folder_path, "*.png")):
+        for file in sorted(glob.glob(os.path.join(temp_folder_path, "*.png"))):
             img = cv2.imread(file)
             height, width, layers = img.shape
             size = (width, height)
             img_array.append(img)
 
-        out = cv2.VideoWriter(os.path.join(output_folder, video_file_name), cv2.VideoWriter_fourcc(*'mp4v'), 5, size)
-
+        out = cv2.VideoWriter(os.path.join(output_folder, video_file_name), cv2.VideoWriter_fourcc(*'mp4v'), 3, size)
         for i in range(len(img_array)):
             out.write(img_array[i])
 
         cv2.destroyAllWindows()
         out.release()
-
         logging.info("Finished video generation and saving")
 
-        # TODO Like this you cancel all the png images in the folder. A bit dangerous...
         for file_name in glob.glob(os.path.join(temp_folder_path, "*.png")):
             os.remove(file_name)
