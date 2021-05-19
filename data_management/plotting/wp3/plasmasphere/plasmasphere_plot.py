@@ -1,6 +1,8 @@
 import os
 import subprocess
 import glob
+import logging
+
 import math
 
 import numpy as np
@@ -10,6 +12,8 @@ from datetime import datetime
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+
+import cv2
 
 from data_management.plotting.plotting_base import PlotOutput
 
@@ -108,7 +112,9 @@ class PlasmaspherePlot(PlotOutput):
 
     def _set_date(self, date):
         if not isinstance(date, datetime):
-            raise ValueError("date must be an instance of a datetime object")
+            msg = "date must be an instance of a datetime object"
+            logging.error(msg)
+            raise ValueError(msg)
         else:
             self.date = date
 
@@ -173,27 +179,50 @@ class PlasmaspherePlot(PlotOutput):
 
         # TODO Add parameter type
         :param data: instance of pandas DataFrame containing the output of the plasmasphere prediction modules
+        :type data: instance of pandas DataFrame
         :param output_folder: output folder where to store the video, specify as an absolute path
+        :type output_folder: string
         :param video_file_name: filename of the video, with extension .mp4
+        :type video_file_name:
         """
 
         if not isinstance(data, pd.DataFrame):
-            raise ValueError("data must be a pandas dataframe")
+            msg = "data must be an instance of a pandas dataframe, " \
+                  "instead it is of type {}".format(type(data))
+            logging.error(msg)
+            raise ValueError(msg)
 
         required_columns = ["L", "MLT", "predicted_densities", "date"]
         for column in required_columns:
             if column not in data.columns:
-                raise ValueError("column {} is missing".format(column))
+                msg = "column {} is missing".format(column)
+                logging.error(msg)
+                raise ValueError(msg)
 
         if not isinstance(data.iloc[0]["date"], datetime):
-            raise ValueError("values of date column must be datetime objects")
+            msg = "values of date column must be datetime objects"
+            logging.error(msg)
+            raise ValueError(msg)
 
         if not os.path.isdir(output_folder):
+            msg = "specified output_folder doesn't exist"
+            logging.error(msg)
             raise ValueError("specified output_folder doesn't exist")
+
+        output_folder = os.path.abspath(output_folder)
 
         if os.path.isfile(os.path.join(output_folder, video_file_name)):
             os.remove(os.path.join(output_folder, video_file_name))
 
+        temp_folder_path = os.path.join(output_folder, "temp/")
+        if os.path.exists(temp_folder_path):
+            temp_folder_files = glob.glob(os.path.join(temp_folder_path, "*.png"))
+            for file in temp_folder_files:
+                os.remove(file)
+        else:
+            os.makedirs(temp_folder_path)
+
+        logging.info("Started individual plasmasphere reconstructions generation")
         dates = pd.to_datetime(data["date"].unique())
         for date in dates:
             df_date = data[data["date"] == date]
@@ -207,19 +236,39 @@ class PlasmaspherePlot(PlotOutput):
             plotter._plot_single_plasmasphere(l_values, mlt_values, density_values, date)
 
             year, month, day, hour, minute = plotter._get_date_components(date)
-            plotter._save(os.path.abspath(os.path.join(output_folder,
-                                                       "./plasmasphere_{}_{}_{}_{}_{}.png".format(
-                                                           year, month, day, hour, minute))))
+            plotter._save(os.path.join(temp_folder_path,
+                                       "./plasmasphere_{}_{}_{}_{}_{}.png".format(
+                                           year, month, day, hour, minute)
+                                       )
+                          )
 
-        os.chdir(os.path.abspath(output_folder))
-
+        logging.info("Finished individual plasmasphere reconstructions generation")
         # TODO Better find a pythonic solution to create videos (look for python libraries). Calling a subprocess
         # TODO may lead to more unknown behaviors that we will have to handle anyway...
-        subprocess.call([
-            'ffmpeg', '-framerate', '5', '-i', '%*.png', '-vcodec', 'libx265', '-crf', '28', '-pix_fmt', 'yuv420p',
-            video_file_name
-        ])
+        # os.chdir(os.path.abspath(output_folder))
+        # subprocess.call([
+        #     'ffmpeg', '-framerate', '5', '-i', '%*.png', '-vcodec', 'libx265', '-crf', '28', '-pix_fmt', 'yuv420p',
+        #     video_file_name
+        # ])
+
+        logging.info("Starting video generation")
+        img_array = []
+        for file in glob.glob(os.path.join(temp_folder_path, "*.png")):
+            img = cv2.imread(file)
+            height, width, layers = img.shape
+            size = (width, height)
+            img_array.append(img)
+
+        out = cv2.VideoWriter(os.path.join(output_folder, video_file_name), cv2.VideoWriter_fourcc(*'mp4v'), 5, size)
+
+        for i in range(len(img_array)):
+            out.write(img_array[i])
+
+        cv2.destroyAllWindows()
+        out.release()
+
+        logging.info("Finished video generation and saving")
 
         # TODO Like this you cancel all the png images in the folder. A bit dangerous...
-        for file_name in glob.glob("*.png"):
+        for file_name in glob.glob(os.path.join(temp_folder_path, "*.png")):
             os.remove(file_name)
