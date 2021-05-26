@@ -1,7 +1,9 @@
 import os
-import subprocess
+
 import glob
 import logging
+
+import subprocess
 
 import math
 
@@ -13,7 +15,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-import cv2
 
 from data_management.plotting.plotting_base import PlotOutput
 
@@ -214,7 +215,7 @@ class PlasmaspherePlot(PlotOutput):
 
         logging.info("Started individual plasmasphere reconstructions generation")
         dates = pd.to_datetime(data["date"].unique())
-        for date in dates:
+        for date in dates[:10]:
             df_date = data[data["date"] == date]
 
             l_values = df_date["L"].values
@@ -234,19 +235,11 @@ class PlasmaspherePlot(PlotOutput):
         logging.info("Finished individual plasmasphere reconstructions generation")
 
         logging.info("Starting video generation")
-        img_array = []
-        for file in sorted(glob.glob(os.path.join(temp_folder_path, "*.png"))):
-            img = cv2.imread(file)
-            height, width, layers = img.shape
-            size = (width, height)
-            img_array.append(img)
-
-        out = cv2.VideoWriter(os.path.join(output_folder, video_file_name), cv2.VideoWriter_fourcc(*'mp4v'), 3, size)
-        for i in range(len(img_array)):
-            out.write(img_array[i])
-
-        cv2.destroyAllWindows()
-        out.release()
+        os.chdir(temp_folder_path)
+        subprocess.call([
+            'ffmpeg', '-framerate', '3', '-i', os.path.join(temp_folder_path, "%*.png"), '-vcodec', 'libx264', '-crf', '28', '-pix_fmt', 'yuv420p',
+            os.path.join(output_folder, video_file_name)
+        ])
         logging.info("Finished video generation and saving")
 
         for file_name in glob.glob(os.path.join(temp_folder_path, "*.png")):
