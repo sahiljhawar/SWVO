@@ -215,7 +215,7 @@ class PlasmaspherePlot(PlotOutput):
 
         logging.info("Started individual plasmasphere reconstructions generation")
         dates = pd.to_datetime(data["date"].unique())
-        for date in dates[:10]:
+        for date in dates:
             df_date = data[data["date"] == date]
 
             l_values = df_date["L"].values
