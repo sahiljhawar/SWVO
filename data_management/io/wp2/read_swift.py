@@ -15,7 +15,7 @@ class SwiftReader(BaseReader):
     which is the current way in which the SWIFT software is configured.
     """
     PROTON_MASS = 1.67262192369e-27
-    DATA_FIELDS = ["proton_density", "speed", "b", "temperature", "bx", "by", "bz"]
+    DATA_FIELDS = ["proton_density", "speed", "b", "temperature", "bx", "by", "bz", "ux", "uy", "uz"]
 
     def __init__(self, wp2_output_folder="/PAGER/WP2/data/outputs/"):
         """
