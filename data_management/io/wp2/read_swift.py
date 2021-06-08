@@ -69,7 +69,8 @@ class SwiftReader(BaseReader):
         n = np.array(data["arrays"]["Rho"]["data"]) / SwiftReader.PROTON_MASS * 1.0e-6
 
         df = pd.DataFrame({"proton_density": n, "speed": speed, "b": b, "temperature": temperature,
-                           "bx": bx, "by": by, "bz": bz}, index=time)
+                           "bx": bx, "by": by, "bz": bz,
+                           "ux": ux, "uy": uy, "uz": uz}, index=time)
         if fields is not None:
             df = df[fields]
         return df
