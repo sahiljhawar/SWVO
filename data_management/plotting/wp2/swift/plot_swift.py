@@ -3,8 +3,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib
 from data_management.plotting.plotting_base import PlotOutput
 
-
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 
 
 class PlotSWIFTOutput(PlotOutput):
@@ -16,8 +15,7 @@ class PlotSWIFTOutput(PlotOutput):
         super().__init__()
 
     @staticmethod
-    def _add_subplot(ax, data, title=None, title_font=9, xlabel_fontsize=10,
-                     ylabel_fontsize=10, ylabel=None, xticks_labels_show=False):
+    def _add_subplot(ax, data, title=None, title_font=9, ylabel_fontsize=10, ylabel=None, xticks_labels_show=False):
 
         ax = data.plot(ax=ax, legend=False, linewidth=3)
         ax.set_title(title, fontsize=title_font)
@@ -38,7 +36,7 @@ class PlotSWIFTOutput(PlotOutput):
         if xticks_labels_show:
             ax.set_xticks(data.index[::12])
             x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
-            ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=xlabel_fontsize)
+            ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
             ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
         else:
             ax.tick_params(axis="x", which="both", bottom=False)
@@ -78,14 +76,3 @@ class PlotSWIFTOutput(PlotOutput):
         PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True)
 
         return fig
-
-
-if __name__ == "__main__":
-    from data_management.io.wp2.read_swift import SwiftReader
-    import datetime as dt
-
-    reader = SwiftReader()
-    data, _ = reader.read(dt.datetime(2021, 6, 1))
-    plotter = PlotSWIFTOutput()
-    fig = plotter.plot_output(data)
-    plt.show()

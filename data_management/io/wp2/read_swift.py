@@ -17,13 +17,13 @@ class SwiftReader(BaseReader):
     PROTON_MASS = 1.67262192369e-27
     DATA_FIELDS = ["proton_density", "speed", "b", "temperature", "bx", "by", "bz", "ux", "uy", "uz"]
 
-    def __init__(self, wp2_output_folder="/PAGER/WP2/data/outputs/"):
+    def __init__(self, wp2_output_folder="/PAGER/WP2/data/outputs/SWIFT/"):
         """
         :param wp2_output_folder: The path to the output folder of WP2 products.
         :type wp2_output_folder: str
         """
         super().__init__()
-        self.data_folder = os.path.join(wp2_output_folder, "SWIFT/")
+        self.data_folder = wp2_output_folder
         self._check_data_folder()
 
     def _check_data_folder(self):
