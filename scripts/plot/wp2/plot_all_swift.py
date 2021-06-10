@@ -6,7 +6,8 @@ import logging
 
 import sys
 
-sys.path.append("/PAGER/WP8/data_management/")
+#sys.path.append("/PAGER/WP8/data_management/")
+sys.path.append("/home/ruggero/repositories/data_management/")
 
 from data_management.io.wp2.read_swift import SwiftReader
 from data_management.plotting.wp2.swift.plot_swift import PlotSWIFTOutput
@@ -43,29 +44,32 @@ if __name__ == "__main__":
     try:
         reader = SwiftReader()
         logging.info("Reading SWIFT original output data file...")
-        data_swift, date = reader.read()
+        data_gsm, data_hgc = reader.read(plotting_date)
+        data_gsm = data_gsm[data_gsm.index >= plotting_date]
         logging.info("...Complete!!")
         logging.info("Plotting and saving SWIFT data plot")
-        plotter.plot_output(data_swift)
+        plotter.plot_output(data_gsm)
         if plotting_date >= date_now:
             plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_LAST.png"))
-        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_{}.png".format(date.strftime("%Y%m%d"))))
+        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_{}.png".format(plotting_date.strftime("%Y%m%d"))))
         logging.info("...Complete!!")
     except TypeError:
         logging.error(
             "Data for SWIFT solar wind for date {} not found..."
             "impossible to produce data plot...".format(plotting_date))
 
+    # TODO Swift bias corrected is produced at the moment only in GSM format, we need to make HGC also available
+    # TODO Unixtime needs to be added in the bias corrected format other wise the reader does not work
     try:
-        reader = SwiftReader("/PAGER/WP2/data/output/SWIFT_BIAS_CORRECTED/")
+        reader = SwiftReader("/PAGER/WP2/data/outputs/SWIFT_BIAS_CORRECTED/")
         logging.info("Reading SWIFT data with bias correction file...")
-        data_swift, date = reader.read()
+        data_gsm, _ = reader.read(plotting_date, file_type="gsm")
         logging.info("...Complete!!")
         logging.info("Plotting and saving SWIFT bias corrected data plot")
-        plotter.plot_output(data_swift)
+        plotter.plot_output(data_gsm)
         if plotting_date >= date_now:
             plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_BIAS_LAST.png"))
-        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_BIAS_{}.png".format(date.strftime("%Y%m%d"))))
+        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_BIAS_{}.png".format(plotting_date.strftime("%Y%m%d"))))
         logging.info("...Complete!!")
     except TypeError:
         logging.error(

@@ -75,7 +75,7 @@ class SwiftReader(BaseReader):
             df = df[fields]
         return df
 
-    def read(self, date=None, fields=None) -> (pd.DataFrame, pd.DataFrame):
+    def read(self, date=None, fields=None, file_type=None) -> (pd.DataFrame, pd.DataFrame):
         """
         This function reads output data from SWIFT and returns it in the form of a tuple of two pandas dataframe,
         each for each coordinate system available, GSM and HGC.
@@ -85,6 +85,8 @@ class SwiftReader(BaseReader):
         :type date: datetime.datetime or None
         :param fields: List of fields to be extracted from the available data.
         :type fields: list or None
+        :param file_type: None if both formats (hgc and gsm) are requested, otherwise "hcg" or "gsm"
+        :type file_type: str or None
         :raises: FileNotFoundError: when one of the data files requested is not found.
                  KeyError: when a field requested is not among available field list
         :return: Tuple of GSM and HGC data as pandas data frames
@@ -100,20 +102,31 @@ class SwiftReader(BaseReader):
                     logging.error(msg)
                     raise KeyError(msg)
 
-        try:
-            gsm_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/gsm*"))[0]
-            data_gsm = SwiftReader._read_single_file(gsm_file, fields)
-        except IndexError:
-            msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
-            logging.error(msg)
-            raise FileNotFoundError(msg)
+        if file_type is None:
+            file_type = ["gsm", "hgc"]
+        else:
+            assert file_type in ["gsm", "hgc"]
 
-        try:
-            hgc_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/hgc*"))[0]
-            data_hgc = SwiftReader._read_single_file(hgc_file, fields)
-        except IndexError:
-            msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
-            logging.error(msg)
-            raise FileNotFoundError(msg)
+        if "gsm" in file_type:
+            try:
+                gsm_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/gsm*"))[0]
+                data_gsm = SwiftReader._read_single_file(gsm_file, fields)
+            except IndexError:
+                msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
+                logging.error(msg)
+                raise FileNotFoundError(msg)
+        else:
+            data_gsm = None
+
+        if "hgc" in file_type:
+            try:
+                hgc_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/hgc*"))[0]
+                data_hgc = SwiftReader._read_single_file(hgc_file, fields)
+            except IndexError:
+                msg = "HGC SWIFT output file for date {} not found...impossible to read".format(date_to_string)
+                logging.error(msg)
+                raise FileNotFoundError(msg)
+        else:
+            data_hgc = None
 
         return data_gsm, data_hgc

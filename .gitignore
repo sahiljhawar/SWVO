@@ -5,3 +5,4 @@ __pycache__/
 *.log
 temp/
 *.mp4
+*.png
