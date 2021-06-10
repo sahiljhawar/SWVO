@@ -6,8 +6,7 @@ import logging
 
 import sys
 
-#sys.path.append("/PAGER/WP8/data_management/")
-sys.path.append("/home/ruggero/repositories/data_management/")
+sys.path.append("/PAGER/WP8/data_management/")
 
 from data_management.io.wp2.read_swift import SwiftReader
 from data_management.plotting.wp2.swift.plot_swift import PlotSWIFTOutput
@@ -58,8 +57,6 @@ if __name__ == "__main__":
             "Data for SWIFT solar wind for date {} not found..."
             "impossible to produce data plot...".format(plotting_date))
 
-    # TODO Swift bias corrected is produced at the moment only in GSM format, we need to make HGC also available
-    # TODO Unixtime needs to be added in the bias corrected format other wise the reader does not work
     try:
         reader = SwiftReader("/PAGER/WP2/data/outputs/SWIFT_BIAS_CORRECTED/")
         logging.info("Reading SWIFT data with bias correction file...")
