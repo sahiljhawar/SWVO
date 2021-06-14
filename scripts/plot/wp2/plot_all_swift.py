@@ -61,6 +61,9 @@ if __name__ == "__main__":
         reader = SwiftReader("/PAGER/WP2/data/outputs/SWIFT_BIAS_CORRECTED/")
         logging.info("Reading SWIFT data with bias correction file...")
         data_gsm, _ = reader.read(plotting_date, file_type="gsm")
+        data_gsm = data_gsm[data_gsm.index >= plotting_date]
+        data_gsm = data_gsm.resample("20T").pad()
+        print (data_gsm)
         logging.info("...Complete!!")
         logging.info("Plotting and saving SWIFT bias corrected data plot")
         plotter.plot_output(data_gsm)

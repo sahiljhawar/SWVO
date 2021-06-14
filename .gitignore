@@ -6,3 +6,6 @@ __pycache__/
 temp/
 *.mp4
 *.png
+*.csv
+*.wdc
+*.dat

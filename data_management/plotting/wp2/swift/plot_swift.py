@@ -26,7 +26,7 @@ class PlotSWIFTOutput(PlotOutput):
 
         # X-AXIS
         def map_dates(x):
-            if x.hour == 0:
+            if (x.hour == 0):
                 return x.strftime("%Y-%m-%d")
             else:
                 return ""
