@@ -10,7 +10,7 @@ class ACERTReader(BaseReader):
     """
     This class reads
     """
-    DATA_FIELDS = ["proton_density", "speed", "bx", "by", "bz", "b"]
+    DATA_FIELDS = ["proton_density", "speed", "bx", "by", "bz", "b", "temperature"]
 
     def __init__(self, ace_output_folder="/PAGER/WP6/data/outputs/RBM_Forecast/realtime_stream/ace_realtime_stream/"):
         """
