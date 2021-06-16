@@ -1,5 +1,5 @@
 from data_management.check.base_file_checker import BaseFileCheck
-from data_management.notifications.email import send_failure_email
+from data_management.notifications.email_notifier import send_failure_email
 
 import datetime as dt
 import glob

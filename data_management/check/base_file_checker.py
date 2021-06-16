@@ -7,7 +7,7 @@ class BaseFileCheck(object):
         self.file_folder = None
         self.subject_email = None
         self.email_recipients = None
-        self.email_sender = Address("PAGER Bot", "pagerbot", "gfz-potsdam.de")
+        self.email_sender = Address("PAGER Bot", "pagerbot", "sec27.de")
 
     @abstractmethod
     def check_files_exists(self, *args):

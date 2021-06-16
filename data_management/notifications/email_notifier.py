@@ -3,8 +3,7 @@ from email.message import EmailMessage
 from email.headerregistry import Address
 
 
-# TODO Develop Address check for security reasons
-def send_failure_email(subject, content, addresses_to, address_from=None):
+def send_failure_email(subject, content, addresses_to=None, address_from=None):
     """
     This function sends emails notification to notify given recipients of a failure in the data generation
     of PAGER pipeline modules. Subject, content and addresses needs to be accurately chosen. An address check will
@@ -33,5 +32,6 @@ def send_failure_email(subject, content, addresses_to, address_from=None):
     msg.set_content(content)
 
     # Send the message via local SMTP server.
-    with smtplib.SMTP('localhost') as s:
-        s.send_message(msg)
+    s = smtplib.SMTP('localhost')
+    s.send_message(msg)
+    s.quit()

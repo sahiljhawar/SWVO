@@ -1,5 +1,5 @@
 from data_management.check.base_file_checker import BaseFileCheck
-from data_management.notifications.email import send_failure_email
+from data_management.notifications.email_notifier import send_failure_email
 from data_management.io.wp2.read_swift import SwiftReader
 
 import datetime as dt
@@ -64,7 +64,7 @@ class SwiftCheck(BaseFileCheck):
             return success, None, None
 
     def check_file_format(self, gsm_file, hgc_file):
-        #TODO To implement this
+        # TODO To implement this
         SwiftReader()
         success = True
         return success
