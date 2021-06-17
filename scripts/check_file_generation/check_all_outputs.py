@@ -83,11 +83,11 @@ if __name__ == "__main__":
     wp3_check_kp(check_date, "l1", model="HP60-FULL-SW-SWAMI-PAGER")
     logging.info("\n")
     # PLASMA
-    wp3_check_plasma(check_date, "ca", notify=False)
-    wp3_check_plasma(check_date, "gfz_plasma", notify=False)
+    wp3_check_plasma(check_date, "ca")
+    wp3_check_plasma(check_date, "gfz_plasma")
     logging.info("\n")
     # WP6
     logging.info("Starting Check for WP6 modules \n")
 
-    wp6_check_rbm_forecast(check_date, notify=False)
-    wp6_check_ring_current(check_date, notify=False)
+    wp6_check_rbm_forecast(check_date)
+    wp6_check_ring_current(check_date)
