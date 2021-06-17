@@ -69,7 +69,7 @@ class SwiftCheck(BaseFileCheck):
         success = True
         return success
 
-    def run_check(self, date=None):
+    def run_check(self, date=None, notify=False):
         """
         It runs a check about existence of given outputs of swift module. If the files are not found
         for a given date provided, it sends an email to a default list of users and notifies them
@@ -80,12 +80,17 @@ class SwiftCheck(BaseFileCheck):
 
         :param date: Date on which to run the check.
         :type date: datetime.datetime
+        :param notify: True if you want to use email notifications, otherwise False
+        :type notify: bool
         """
-        success, gsm_file, hgc_file = self.check_files_exists(date)
+
+        success, gsm_file, hgc_file = self.check_files_exists(date - dt.timedelta(hours=24))
         if not success:
-            logging.info("SWIFT GSM and HGC files for date {} not found...sending notification email".format(date))
-            content = "Output files not generated yet today..."
-            send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
-                               address_from=self.email_sender)
-        if success:
-            logging.info("SWIFT GSM and HGC files for date {} found!!".format(date))
+            logging.warning("SWIFT GSM and HGC files generated on date {} not found...".format(date.date()))
+            if notify:
+                logging.warning("Sending notification email...".format(date.date()))
+                content = "SWIFT output files not generated yet today..."
+                send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
+                                   address_from=self.email_sender)
+        else:
+            logging.info("SWIFT GSM and HGC files for date {} found!!".format(date.date()))

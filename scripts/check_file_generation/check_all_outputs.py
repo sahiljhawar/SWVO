@@ -15,49 +15,52 @@ from data_management.check.wp6.check_rbm_forecast import RBMForecastCheck
 from data_management.check.wp6.check_ring_current import RingCurrentCheck
 
 
-def wp2_check_swift(date):
+def wp2_check_swift(date, notify=True):
     logging.info("Checking SWIFT output... ")
     checker = SwiftCheck()
-    # TODO We check 24 before because of bug on swift code that produces a wrong date (one day before)
-    checker.run_check(date - dt.timedelta(hours=24))
+    checker.run_check(date, notify)
 
 
-def wp3_check_kp(date, product, model=None):
-    logging.info("Checking Kp output for product {}".format(product))
+def wp3_check_kp(date, product, model=None, notify=True):
+    logging.info("Checking Kp output for product {}".format(product.upper()))
     checker = KpDataCheck()
-    checker.run_check(product, model, date)
+    checker.run_check(product, model, date, notify)
 
 
-def wp3_check_plasma(date, product):
-    logging.info("Checking Plasma output for product {}".format(product))
+def wp3_check_plasma(date, product, notify=True):
+    logging.info("Checking Plasma output for product {}".format(product.upper()))
     checker = PlasmaDataCheck()
-    checker.run_check(product, date)
+    checker.run_check(product, date, notify)
 
 
-def wp6_check_rbm_forecast(date):
+def wp6_check_rbm_forecast(date, notify=True):
     logging.info("Checking RBM Forecast output...")
     checker = RBMForecastCheck()
     checker.run_check(date)
 
 
-def wp6_check_ring_current(date):
+def wp6_check_ring_current(date, notify=True):
     logging.info("Checking Ring Current output...")
     checker = RingCurrentCheck()
-    checker.run_check(date)
+    checker.run_check(date, notify)
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
-                        help="Requested date to plot in the format %YYYY%mm%ddT%HH")
+                        help="Requested date to plot in the format %YYYY%mm%ddT%HH to specify the hours or"
+                             "in the format %YYYY%mm%dd with default hour zero")
     parser.add_argument('-logdir', action="store", default=None, type=str,
                         help="Log directory if logging is to be enabled.")
 
     args = parser.parse_args()
 
     if args.date is not None:
-        check_date = args.date + "0000"
+        if "T" not in args.date:
+            check_date = args.date + "T000000"
+        else:
+            check_date = args.date + "0000"
     else:
         check_date = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0).strftime("%Y%m%dT%H%M%S")
 
@@ -66,26 +69,25 @@ if __name__ == "__main__":
         logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
 
     check_date = dt.datetime.strptime(check_date, "%Y%m%dT%H%M%S")
-    logging.info("Start checking outputs for date {}".format(check_date))
+    logging.info("Start checking all outputs for date {} \n".format(check_date))
     # WP2
-    # SWIFT
+    logging.info("Starting Check for WP2 modules \n")
     wp2_check_swift(check_date)
-
+    logging.info("")
     # WP3
-    # KP
+    logging.info("Starting Check for WP3 modules \n")
     wp3_check_kp(check_date, "swpc")
     wp3_check_kp(check_date, "niemegk")
     wp3_check_kp(check_date, "swift")
     wp3_check_kp(check_date, "l1", model="KP-FULL-SW-PAGER")
     wp3_check_kp(check_date, "l1", model="HP60-FULL-SW-SWAMI-PAGER")
-
+    logging.info("\n")
     # PLASMA
-    wp3_check_plasma(check_date, "ca")
-    wp3_check_plasma(check_date, "gfz_plasma")
-
+    wp3_check_plasma(check_date, "ca", notify=False)
+    wp3_check_plasma(check_date, "gfz_plasma", notify=False)
+    logging.info("\n")
     # WP6
-    # RBM Forecast
-    wp6_check_rbm_forecast(check_date)
+    logging.info("Starting Check for WP6 modules \n")
 
-    # Ring Current
-    wp6_check_ring_current(check_date)
+    wp6_check_rbm_forecast(check_date, notify=False)
+    wp6_check_ring_current(check_date, notify=False)
