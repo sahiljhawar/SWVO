@@ -51,7 +51,7 @@ class KpDataCheck(BaseFileCheck):
     def _check_swift_file_exists(self, check_date):
 
         check_date = check_date.replace(minute=0, second=0, microsecond=0)
-        check_date_str = check_date.strftime("%Y-%m-%d_%H:%M:%S")
+        check_date_str = check_date.strftime("%Y%m%dT%H%M%S")
         try:
             file = glob.glob(self.file_folder + "/SWIFT/FORECAST_PAGER_SWIFT_swift_{}.csv".format(check_date_str))[0]
             success = True
@@ -65,7 +65,7 @@ class KpDataCheck(BaseFileCheck):
     def _check_l1_file_exists(self, model, spc, check_date):
 
         check_date = check_date.replace(minute=0, second=0, microsecond=0)
-        check_date_str = check_date.strftime("%Y-%m-%d_%H:%M:%S")
+        check_date_str = check_date.strftime("%Y%m%dT%H%M%S")
         try:
             file = glob.glob(self.file_folder + "/L1_FORECAST/FORECAST_{}_{}_{}.csv".format(model,
                                                                                             spc, check_date_str))[0]

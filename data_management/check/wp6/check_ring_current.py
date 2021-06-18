@@ -53,9 +53,9 @@ class RingCurrentCheck(BaseFileCheck):
         """
         success = self.check_files_exists(date)
         if not success:
-            logging.info("Ring current outputs for date {} not found...".format(date.date()))
+            logging.warning("Ring current outputs for date {} not found...".format(date.date()))
             if notify:
-                logging.info("Sending notification email")
+                logging.warning("Sending notification email")
                 content = "Output files not generated yet today..."
                 send_failure_email(subject=self.subject_email, content=content, addresses_to=self.email_recipients,
                                    address_from=self.email_sender)

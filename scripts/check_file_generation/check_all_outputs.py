@@ -36,7 +36,7 @@ def wp3_check_plasma(date, product, notify=True):
 def wp6_check_rbm_forecast(date, notify=True):
     logging.info("Checking RBM Forecast output...")
     checker = RBMForecastCheck()
-    checker.run_check(date)
+    checker.run_check(date, notify)
 
 
 def wp6_check_ring_current(date, notify=True):
@@ -52,6 +52,8 @@ if __name__ == "__main__":
                         help="Requested date to plot in the format %YYYY%mm%ddT%HH to specify the hours or"
                              "in the format %YYYY%mm%dd with default hour zero")
     parser.add_argument('-logdir', action="store", default=None, type=str,
+                        help="Log directory if logging is to be enabled.")
+    parser.add_argument('-notify', action="store", default=False, type=bool,
                         help="Log directory if logging is to be enabled.")
 
     args = parser.parse_args()
@@ -72,22 +74,22 @@ if __name__ == "__main__":
     logging.info("Start checking all outputs for date {} \n".format(check_date))
     # WP2
     logging.info("Starting Check for WP2 modules \n")
-    wp2_check_swift(check_date)
+    wp2_check_swift(check_date, notify=args.notify)
     logging.info("")
     # WP3
     logging.info("Starting Check for WP3 modules \n")
-    wp3_check_kp(check_date, "swpc")
-    wp3_check_kp(check_date, "niemegk")
-    wp3_check_kp(check_date, "swift")
-    wp3_check_kp(check_date, "l1", model="KP-FULL-SW-PAGER")
-    wp3_check_kp(check_date, "l1", model="HP60-FULL-SW-SWAMI-PAGER")
+    wp3_check_kp(check_date, "swpc", notify=args.notify)
+    wp3_check_kp(check_date, "niemegk", notify=args.notify)
+    wp3_check_kp(check_date, "swift", notify=args.notify)
+    wp3_check_kp(check_date, "l1", model="KP-FULL-SW-PAGER", notify=args.notify)
+    wp3_check_kp(check_date, "l1", model="HP60-FULL-SW-SWAMI-PAGER", notify=args.notify)
     logging.info("\n")
     # PLASMA
-    wp3_check_plasma(check_date, "ca")
-    wp3_check_plasma(check_date, "gfz_plasma")
+    wp3_check_plasma(check_date, "ca", notify=args.notify)
+    wp3_check_plasma(check_date, "gfz_plasma", notify=args.notify)
     logging.info("\n")
     # WP6
     logging.info("Starting Check for WP6 modules \n")
 
-    wp6_check_rbm_forecast(check_date)
-    wp6_check_ring_current(check_date)
+    wp6_check_rbm_forecast(check_date, notify=args.notify)
+    wp6_check_ring_current(check_date, notify=args.notify)

@@ -37,7 +37,8 @@ class PlasmaDataCheck(BaseFileCheck):
 
     def _check_plasma_file_exists(self, check_date):
 
-        check_date = check_date.replace(minute=0, second=0, microsecond=0)
+        # TODO we subtract one hour because the file takes time to be produced and otherwise we do not find it
+        check_date = check_date.replace(minute=0, second=0, microsecond=0) - dt.timedelta(hours=1)
         check_date_str = check_date.strftime("%Y-%m-%d-%H-%M")
         try:
             file = glob.glob(self.file_folder + "/GFZ_PLASMA/plasmasphere_density_{}.csv".format(check_date_str))[0]

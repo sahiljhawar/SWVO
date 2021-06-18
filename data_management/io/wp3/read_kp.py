@@ -44,8 +44,6 @@ class KPReader(BaseReader):
 
         :return: Tuple of data in pandas.DataFrame format and datetime.datetime of the date extracted from the file.
         """
-        # TODO Attention model_name Needs to be specified in the case of L1 source at the moment we cannot do that
-
         last_file = None
         if requested_date is None:
             start_date = dt.datetime(1900, 1, 1)
@@ -68,7 +66,7 @@ class KPReader(BaseReader):
                 try:
                     date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
                 except ValueError:
-                    date = dt.datetime.strptime("_".join(date.split("_")[-2:]), "%Y-%m-%d_%H:%M:%S")
+                    date = dt.datetime.strptime("_".join(date.split("_")[-2:]), "%Y%m%dT%H%M%S")
                 if (requested_date >= date) and (requested_date - date < time_delta):
                     if (model_name is not None) and (model_name not in file):
                         continue
