@@ -11,7 +11,7 @@ sys.path.append(os.path.join(LOCAL_PATH, "../../../../"))
 from data_management.io.wp3.read_kp import KPReader
 
 
-class TestReadSWIFT(object):
+class TestReadKp(object):
 
     @mock.patch("data_management.io.wp3.read_kp.KPReader._check_data_folder", return_value=None, autospec=True)
     def test_init_folder_found(self, mocker):
@@ -30,13 +30,18 @@ class TestReadSWIFT(object):
         except FileNotFoundError:
             assert True
 
+    @mock.patch("os.path.exists", return_value=True, autospec=True)
+    def test_check_data_folder_ok(self, mocker):
+        reader = KPReader()
+        assert reader._check_data_folder() is None
+
     KP = pd.DataFrame(index=pd.date_range(start="2021-01-01", end="2021-01-01 23:59", freq="3H"))
     KP["kp"] = np.random.randint(0, 9, len(KP))
 
     @mock.patch("data_management.io.wp3.read_kp.KPReader._read_single_file",
                 return_value=(KP, dt.datetime(2021, 1, 1)), autospec=True)
     @mock.patch("data_management.io.wp3.read_kp.KPReader._check_data_folder", return_value=None, autospec=True)
-    def test_read_no_date_file_found(self, mocker, mocker2):
+    def test_read_standard(self, mocker, mocker2):
         reader = KPReader()
         for source in ["niemegk", "swpc", "l1", "swift"]:
             data, timestamp_data = reader.read(source, requested_date=None)
