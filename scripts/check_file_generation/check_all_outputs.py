@@ -80,16 +80,16 @@ if __name__ == "__main__":
     logging.info("Starting Check for WP3 modules \n")
     wp3_check_kp(check_date, "swpc", notify=args.notify)
     wp3_check_kp(check_date, "niemegk", notify=args.notify)
-    wp3_check_kp(check_date, "swift", notify=args.notify)
-    wp3_check_kp(check_date, "l1", model="KP-FULL-SW-PAGER", notify=args.notify)
-    wp3_check_kp(check_date, "l1", model="HP60-FULL-SW-SWAMI-PAGER", notify=args.notify)
+    wp3_check_kp(check_date - dt.timedelta(hours=1), "swift", notify=args.notify)
+    wp3_check_kp(check_date - dt.timedelta(hours=1), "l1", model="KP-FULL-SW-PAGER", notify=args.notify)
+    wp3_check_kp(check_date - dt.timedelta(hours=1), "l1", model="HP60-FULL-SW-SWAMI-PAGER", notify=args.notify)
     logging.info("\n")
     # PLASMA
     wp3_check_plasma(check_date, "ca", notify=args.notify)
-    wp3_check_plasma(check_date, "gfz_plasma", notify=args.notify)
+    wp3_check_plasma(check_date - dt.timedelta(hours=1), "gfz_plasma", notify=args.notify)
     logging.info("\n")
     # WP6
     logging.info("Starting Check for WP6 modules \n")
 
-    wp6_check_rbm_forecast(check_date, notify=args.notify)
+    wp6_check_rbm_forecast(check_date - dt.timedelta(hours=1), notify=args.notify)
     wp6_check_ring_current(check_date, notify=args.notify)
