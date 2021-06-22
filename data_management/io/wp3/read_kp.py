@@ -66,7 +66,7 @@ class KPReader(BaseReader):
                 try:
                     date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
                 except ValueError:
-                    date = dt.datetime.strptime("_".join(date.split("_")[-2:]), "%Y%m%dT%H%M%S")
+                    date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%dT%H%M%S")
                 if (requested_date >= date) and (requested_date - date < time_delta):
                     if (model_name is not None) and (model_name not in file):
                         continue
