@@ -21,12 +21,3 @@ COPY ./scripts/plot/ /data_management/scripts/plot/
 
 RUN conda create --name pager python=3.8
 RUN /opt/conda/envs/pager/bin/pip install -r /data_management/scripts/plot/requirements.txt
-RUN cd /data_management/docker/
-
-#CMD ["bash /data_management/docker/plot_all_docker.sh"]
-
-
-
-
-
-
