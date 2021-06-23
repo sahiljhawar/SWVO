@@ -44,45 +44,41 @@ class KPReader(BaseReader):
 
         :return: Tuple of data in pandas.DataFrame format and datetime.datetime of the date extracted from the file.
         """
-        last_file = None
+        file_to_read = None
         if requested_date is None:
-            start_date = dt.datetime(1900, 1, 1)
-            for file in glob.glob(folder):
-                date = file.split("/")[-1]
-                date = date.split(".")[0]
-                date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
+            requested_date = dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0)
 
-                if date > start_date:
+        date_found = None
+        for file in glob.glob(folder):
+            date = file.split("/")[-1]
+            date = date.split(".")[0]
+            try:
+                date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
+                hours = False
+            except ValueError:
+                date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%dT%H%M%S")
+                hours = True
+
+            if (not hours) and (requested_date.replace(hour=0) == date):
+                file_to_read = file
+                date_found = date
+            else:
+                if requested_date == date:
                     if (model_name is not None) and (model_name not in file):
                         continue
-                    last_file = file
-                    start_date = date
-        else:
-            start_date = requested_date
-            time_delta = dt.timedelta(days=10000)
-            for file in glob.glob(folder):
-                date = file.split("/")[-1]
-                date = date.split(".")[0]
-                try:
-                    date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
-                except ValueError:
-                    date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%dT%H%M%S")
-                if (requested_date >= date) and (requested_date - date < time_delta):
-                    if (model_name is not None) and (model_name not in file):
-                        continue
-                    last_file = file
-                    time_delta = requested_date - date
+                    file_to_read = file
+                    date_found = date
 
         try:
             if not header:
                 # TODO Attention, this is not valid for hp or other indexes
-                df = pd.read_csv(last_file, names=["t", "kp"])
+                df = pd.read_csv(file_to_read, names=["t", "kp"])
             else:
-                df = pd.read_csv(last_file)
+                df = pd.read_csv(file_to_read)
             df["t"] = pd.to_datetime(df["t"])
             df.index = df["t"]
             df.drop(["t"], 1, inplace=True)
-            return df, start_date
+            return df, date_found
         except FileNotFoundError:
             logging.error("File not found in folder {}...".format(folder))
             return None, None
