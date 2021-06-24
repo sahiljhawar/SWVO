@@ -2,10 +2,12 @@ import os
 import argparse
 import datetime as dt
 import logging
-
+import inspect
 import sys
 
-sys.path.append("/PAGER/WP8/data_management/")
+LOCAL_PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+sys.path.append(os.path.join(LOCAL_PATH, "../../../"))
 
 from data_management.formats.wp3.kp_formats import RawFormat
 from data_management.io.wp3.read_kp import KPReader

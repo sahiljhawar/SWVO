@@ -3,9 +3,11 @@ import argparse
 import datetime as dt
 import logging
 import shutil
+import inspect
 import sys
 
-sys.path.append("/PAGER/WP8/data_management/")
+LOCAL_PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+sys.path.append(os.path.join(LOCAL_PATH, "../../../"))
 
 from data_management.io.wp3.read_plasmasphere import PlasmaspherePredictionReader
 from data_management.plotting.wp3.plasmasphere.plasmasphere_plot import PlasmaspherePlot

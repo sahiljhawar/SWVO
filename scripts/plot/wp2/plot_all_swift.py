@@ -3,10 +3,11 @@ import argparse
 import datetime as dt
 import matplotlib.pyplot as plt
 import logging
-
+import inspect
 import sys
 
-sys.path.append("/PAGER/WP8/data_management/")
+LOCAL_PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+sys.path.append(os.path.join(LOCAL_PATH, "../../../"))
 
 from data_management.io.wp2.read_swift import SwiftReader
 from data_management.plotting.wp2.swift.plot_swift import PlotSWIFTOutput
