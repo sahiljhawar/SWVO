@@ -20,7 +20,7 @@ class PlotKpOutput(PlotOutput):
         color = []
         for i in range(len(data)):
             if data[key][i] < 4:
-                color.append([0.0, 1.0, 0.0, 1.0])
+                color.append([0.0, 0.5, 0.0, 1.0])
             elif data[key][i] == 4:
                 color.append([204 / 255.0, 204 / 255.0, 0.0, 1.0])
             elif data[key][i] > 4:
