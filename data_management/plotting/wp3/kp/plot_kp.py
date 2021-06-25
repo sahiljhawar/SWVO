@@ -20,11 +20,11 @@ class PlotKpOutput(PlotOutput):
         color = []
         for i in range(len(data)):
             if data[key][i] < 4:
-                color.append('g')
+                color.append([0.0, 1.0, 0.0, 1.0])
             elif data[key][i] == 4:
                 color.append([204 / 255.0, 204 / 255.0, 0.0, 1.0])
             elif data[key][i] > 4:
-                color.append('r')
+                color.append([1.0, 0.0, 0.0, 1.0])
             elif data[key][i] >= 9.5:
                 color.append([0.0, 0.0, 0.0, 0.1])
         return color
@@ -35,7 +35,7 @@ class PlotKpOutput(PlotOutput):
                      ylabel=r"$K_{p}$"):
         # PLOT
         bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
-        ax = data.plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=[bar_colors],
+        ax = data.plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
                        align="edge", width=0.9, legend=False)
         # TITLE
         ax.set_title(title, fontsize=title_font)

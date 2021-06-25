@@ -21,5 +21,5 @@ RUN mkdir results/
 
 RUN conda create --name pager python=3.8
 RUN /opt/conda/envs/pager/bin/pip install -r /data_management/scripts/plot/requirements.txt
-RUN apt-get update --fix-missing 
-RUN apt-get install ffmpeg
+RUN apt-get update --fix-missing -y 
+RUN apt-get install -y ffmpeg
