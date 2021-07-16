@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     try:
         reader = SwiftReader()
-        logging.info("Reading SWIFT original output data file...")
+        logging.info("Reading AWSOM-based SWIFT original output data file...")
         data_gsm, data_hgc = reader.read(plotting_date)
         data_gsm = data_gsm[data_gsm.index >= plotting_date]
         logging.info("...Complete!!")
@@ -53,9 +53,9 @@ if __name__ == "__main__":
             plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_LAST.png"))
         plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_{}.png".format(plotting_date.strftime("%Y%m%d"))))
         logging.info("...Complete!!")
-    except TypeError:
+    except (TypeError, FileNotFoundError):
         logging.error(
-            "Data for SWIFT solar wind for date {} not found..."
+            "Data for AWSOM-based SWIFT solar wind for date {} not found..."
             "impossible to produce data plot...".format(plotting_date))
 
     try:
@@ -71,7 +71,24 @@ if __name__ == "__main__":
             plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_BIAS_LAST.png"))
         plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_GFZ_BIAS_{}.png".format(plotting_date.strftime("%Y%m%d"))))
         logging.info("...Complete!!")
-    except TypeError:
+    except (TypeError, FileNotFoundError):
         logging.error(
             "Data for SWIFT solar wind with bias correction for date {} not found..."
+            "impossible to produce data plot...".format(plotting_date))
+
+    try:
+        reader = SwiftReader(wp2_output_folder="/PAGER/WP2/data/outputs/SWIFT_DEF/")
+        logging.info("Reading DEF-based SWIFT original output data file...")
+        data_gsm, data_hgc = reader.read(plotting_date)
+        data_gsm = data_gsm[data_gsm.index >= plotting_date]
+        logging.info("...Complete!!")
+        logging.info("Plotting and saving SWIFT data plot")
+        plotter.plot_output(data_gsm)
+        if plotting_date >= date_now:
+            plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_DEF_GFZ_LAST.png"))
+        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_DEF_GFZ_{}.png".format(plotting_date.strftime("%Y%m%d"))))
+        logging.info("...Complete!!")
+    except (TypeError, FileNotFoundError):
+        logging.error(
+            "Data for DEF-based SWIFT solar wind for date {} not found..."
             "impossible to produce data plot...".format(plotting_date))
