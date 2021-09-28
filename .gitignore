@@ -9,3 +9,6 @@ temp/
 *.csv
 *.wdc
 *.dat
+build/
+dist/
+data_management.egg-info/
