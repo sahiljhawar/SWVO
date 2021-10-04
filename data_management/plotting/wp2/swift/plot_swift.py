@@ -15,9 +15,10 @@ class PlotSWIFTOutput(PlotOutput):
         super().__init__()
 
     @staticmethod
-    def _add_subplot(ax, data, title=None, title_font=9, ylabel_fontsize=10, ylabel=None, xticks_labels_show=False):
+    def _add_subplot(ax, data, title=None, title_font=9, ylabel_fontsize=10, ylabel=None, xticks_labels_show=False,
+                     line_width=3, color='blue'):
 
-        ax = data.plot(ax=ax, legend=False, linewidth=3)
+        ax = data.plot(ax=ax, legend=False, linewidth=line_width, color=color)
         ax.set_title(title, fontsize=title_font)
 
         # Y-AXIS
@@ -26,7 +27,7 @@ class PlotSWIFTOutput(PlotOutput):
 
         # X-AXIS
         def map_dates(x):
-            if (x.hour == 0):
+            if x.hour == 0:
                 return x.strftime("%Y-%m-%d")
             else:
                 return ""
@@ -74,5 +75,32 @@ class PlotSWIFTOutput(PlotOutput):
         PlotSWIFTOutput._add_subplot(axis["ax2"], speed, ylabel=r"$|U|(km/s)$")
         PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$")
         PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True)
+        return fig
 
+    @staticmethod
+    def plot_ensemble_output(data):
+        """
+        This function plots output data for SWIFT ensemble solar wind variables.
+
+        :param data: This is the standard output format of SWIFT Ensemble products read by SWIFTEnsembleReader class.
+        :type data: list of pandas.DataFrame
+        :return: A figure object of type matplotlib.figure.Figure containing the produced plot
+        """
+        fig = plt.figure(figsize=(10, 10))
+        gs = gridspec.GridSpec(4, 1)
+        gs.update(left=0.1, right=0.9, wspace=0.05, hspace=0.1)
+        axis = {}
+        for i in range(4):
+            axis["ax{}".format(i + 1)] = plt.subplot(gs[i, 0])
+
+        for d in data:
+            density = d["proton_density"]
+            speed = d["speed"]
+            b = d["b"]
+            temperature = d["temperature"]
+
+            PlotSWIFTOutput._add_subplot(axis["ax1"], density, ylabel=r"$N_{p}(cm^{-3})$", line_width=1, color="b")
+            PlotSWIFTOutput._add_subplot(axis["ax2"], speed, ylabel=r"$|U|(km/s)$", line_width=1)
+            PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$", line_width=1)
+            PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, line_width=1)
         return fig
