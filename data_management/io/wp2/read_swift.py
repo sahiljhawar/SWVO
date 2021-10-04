@@ -130,3 +130,69 @@ class SwiftReader(BaseReader):
             data_hgc = None
 
         return data_gsm, data_hgc
+
+
+class SwiftEnsembleReader(SwiftReader):
+    def __init__(self, wp2_output_folder="/PAGER/WP2/data/outputs/SWIFT_ENSEMBLE/"):
+        """
+        :param wp2_output_folder: The path to the output folder of WP2 products.
+        :type wp2_output_folder: str
+        """
+        super().__init__()
+        self.data_folder = wp2_output_folder
+        self._check_data_folder()
+
+    def _get_ensemble_number(self, date_string):
+        paths = glob.glob(os.path.join(self.data_folder, date_string + "*/task*"))
+        return len(paths)
+
+    def read(self, date=None, fields=None, file_type=None):
+        if date is None:
+            date = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        date_to_string = date.strftime("%Y%m%d")
+
+        if fields is not None:
+            for f in fields:
+                if f not in SwiftReader.DATA_FIELDS:
+                    msg = "Requested field from SWIFT data not available..."
+                    logging.error(msg)
+                    raise KeyError(msg)
+
+        if file_type is None:
+            file_type = ["gsm", "hgc"]
+        else:
+            assert file_type in ["gsm", "hgc"]
+
+        n_ensemble = self._get_ensemble_number(date_string=date_to_string)
+
+        gsm_s = []
+        hgc_s = []
+
+        for n in range(n_ensemble):
+            if "gsm" in file_type:
+                try:
+                    gsm_file = glob.glob(os.path.join(self.data_folder,
+                                                      date_to_string + "*/task{}/SWIFT/gsm*".format(n)))[0]
+                    data_gsm = SwiftReader._read_single_file(gsm_file, fields)
+                except IndexError:
+                    msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
+                    logging.error(msg)
+                    raise FileNotFoundError(msg)
+            else:
+                data_gsm = None
+            gsm_s.append(data_gsm)
+
+            if "hgc" in file_type:
+                try:
+                    hgc_file = glob.glob(os.path.join(self.data_folder,
+                                                      date_to_string + "*/task{}/SWIFT/hgc*".format(n)))[0]
+                    data_hgc = SwiftReader._read_single_file(hgc_file, fields)
+                except IndexError:
+                    msg = "HGC SWIFT output file for date {} not found...impossible to read".format(date_to_string)
+                    logging.error(msg)
+                    raise FileNotFoundError(msg)
+            else:
+                data_hgc = None
+            hgc_s.append(data_hgc)
+
+        return gsm_s, hgc_s
