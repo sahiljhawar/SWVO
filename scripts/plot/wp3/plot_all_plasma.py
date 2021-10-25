@@ -38,7 +38,9 @@ if __name__ == "__main__":
 
     if args.logdir is not None:
         log_file = "wp3_plot_all_plasma_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
-        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
+        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
+                            datefmt="%Y-%m-%d %H:%M:%S",
+                            format="%(asctime)s;%(levelname)s;%(message)s")
 
     RESULTS_PATH = args.output
     DATA_PATH = args.input

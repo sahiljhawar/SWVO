@@ -3,12 +3,6 @@ import argparse
 import datetime as dt
 import matplotlib.pyplot as plt
 import logging
-import inspect
-import sys
-
-LOCAL_PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-sys.path.append(os.path.join(LOCAL_PATH, "../../../"))
-
 
 from data_management.io.wp3.read_kp import KPReader
 from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
@@ -39,7 +33,9 @@ if __name__ == "__main__":
 
     if args.logdir is not None:
         log_file = "wp3_plot_all_kp_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
-        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
+        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
+                            datefmt="%Y-%m-%d %H:%M:%S",
+                            format="%(asctime)s;%(levelname)s;%(message)s")
 
     RESULTS_PATH = args.output
     DATA_PATH = args.input

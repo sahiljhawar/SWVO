@@ -13,6 +13,8 @@ if __name__ == "__main__":
                         help="Requested date to plot in the format %YYYY%mm%dd")
     parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/", type=str,
                         help="Path to a folder where to store the produced figures")
+    parser.add_argument('-input', action="store", default="/PAGER/WP2/data/outputs/", type=str,
+                        help="Path to a folder where the data to plot is stored...(be more precise)")
     parser.add_argument('-logdir', action="store", default=None, type=str,
                         help="Log directory if logging is to be enabled.")
 
@@ -31,7 +33,9 @@ if __name__ == "__main__":
 
     if args.logdir is not None:
         log_file = "wp2_plot_all_swift_gfz_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
-        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
+        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
+                            datefmt="%Y-%m-%d %H:%M:%S",
+                            format="%(asctime)s;%(levelname)s;%(message)s")
 
     RESULTS_PATH = args.output
     plotter = PlotSWIFTOutput()
@@ -54,7 +58,7 @@ if __name__ == "__main__":
             "impossible to produce data plot...".format(plotting_date))
 
     try:
-        reader = SwiftReader("/PAGER/WP2/data/outputs/SWIFT_BIAS_CORRECTED/")
+        reader = SwiftReader(wp2_output_folder=os.path.join(args.input, "SWIFT_BIAS_CORRECTED/"))
         logging.info("Reading SWIFT data with bias correction file...")
         data_gsm, _ = reader.read(plotting_date, file_type="gsm")
         data_gsm = data_gsm[data_gsm.index >= plotting_date]
@@ -72,7 +76,7 @@ if __name__ == "__main__":
             "impossible to produce data plot...".format(plotting_date))
 
     try:
-        reader = SwiftReader(wp2_output_folder="/PAGER/WP2/data/outputs/SWIFT_DEF/")
+        reader = SwiftReader(wp2_output_folder=os.path.join(args.input, "SWIFT_DEF/"))
         logging.info("Reading DEF-based SWIFT original output data file...")
         data_gsm, data_hgc = reader.read(plotting_date)
         data_gsm = data_gsm[data_gsm.index >= plotting_date]

@@ -77,7 +77,7 @@ class KPReader(BaseReader):
                 df = pd.read_csv(file_to_read)
             df["t"] = pd.to_datetime(df["t"])
             df.index = df["t"]
-            df.drop(["t"], 1, inplace=True)
+            df.drop(labels=["t"], axis=1, inplace=True)
             return df, date_found
         except FileNotFoundError:
             logging.error("File not found in folder {}...".format(folder))
