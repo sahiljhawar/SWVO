@@ -2,11 +2,6 @@ import argparse
 import logging
 import os
 import datetime as dt
-import sys
-import inspect
-
-LOCAL_PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-sys.path.append(os.path.join(LOCAL_PATH, "../../"))
 
 from data_management.check.wp2.check_swift import SwiftCheck
 from data_management.check.wp3.check_kp import KpDataCheck
@@ -51,6 +46,8 @@ if __name__ == "__main__":
     parser.add_argument('-date', action="store", default=None, type=str,
                         help="Requested date to plot in the format %YYYY%mm%ddT%HH to specify the hours or"
                              "in the format %YYYY%mm%dd with default hour zero")
+    parser.add_argument('-input', action="store", default=None, type=str,
+                        help="Not used yet")
     parser.add_argument('-logdir', action="store", default=None, type=str,
                         help="Log directory if logging is to be enabled.")
     parser.add_argument('-notify', action="store", default=False, type=bool,
@@ -68,7 +65,9 @@ if __name__ == "__main__":
 
     if args.logdir is not None:
         log_file = "wp8_output_checker_{}.log".format(check_date)
-        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO)
+        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
+                            datefmt="%Y-%m-%d %H:%M:%S",
+                            format="%(asctime)s;%(levelname)s;%(message)s")
 
     check_date = dt.datetime.strptime(check_date, "%Y%m%dT%H%M%S")
     logging.info("Start checking all outputs for date {} \n".format(check_date))
