@@ -21,7 +21,7 @@ while getopts he:l:o:i: flag
 do
 	case "${flag}" in
 	        e) PYTHON_ENV=${OPTARG};;
-	        l) pargs+=("-log" "${OPTARG}");;
+	        l) pargs+=("-logdir" "${OPTARG}");;
 	        o) pargs+=("-output" "${OPTARG}");;
 	        i) pargs+=("-input" "${OPTARG}");;
 	        h) Help ;;
@@ -40,10 +40,10 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 cd "$SCRIPT_DIR" || exit
-source activate "$PYTHON_ENV"
+source activate "$PYTHON_ENV" || conda activate "$PYTHON_ENV"
 
-python ../scripts/plot/wp2/plot_all_swift.py "${pargs[@]}" -recurrent 0
-python ../scripts/plot/wp3/plot_all_kp.py "${pargs[@]}" -recurrent 0
-python ../scripts/plot/wp3/plot_all_plasma.py "${pargs[@]}" -recurrent 0
+python ../scripts/plot/wp2/plot_all_swift.py "${pargs[@]}" #-recurrent 0
+python ../scripts/plot/wp3/plot_all_kp.py "${pargs[@]}" #-recurrent 0
+python ../scripts/plot/wp3/plot_all_plasma.py "${pargs[@]}" #-recurrent 0
 
 
