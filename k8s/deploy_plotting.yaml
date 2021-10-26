@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data_management_plotting_routines
+spec:
+  selector:
+    matchLabels:
+      app: data_management_plotting_routines
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: data_management_plotting_routines
+    spec:
+      containers:
+      - name: data_management_plotting_routines
+        image: kub1:5000/data-management:latest
+        command: ["bash plot_entrypoint.sh"]
+        env:
+          - name: RECURRENT
+            value: "1"
+        volumeMounts:
+           - name: host-volume
+             mountPath: /PAGER
+        ports:
+        - containerPort: 80
+      volumes:
+        - name: host-volume
+          hostPath:
+            path: /home/ruggero/PAGER
+            type: Directory
