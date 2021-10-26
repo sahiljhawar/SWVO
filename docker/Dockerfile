@@ -20,8 +20,10 @@ RUN mkdir scripts/check_file_generation
 COPY ./scripts/plot/ /scripts/plot/
 COPY ./scripts/check_file_generation/ /scripts/check_file_generation/
 COPY ./docker/plot_entrypoint.sh /
+COPY ./docker/check_entrypoint.sh /
 RUN chmod 777 -R scripts
 RUN chmod 777 plot_entrypoint.sh
+RUN chmod 777 check_entrypoint.sh
 
 RUN conda create --name data_management python=3.8
 SHELL ["conda", "run", "-n", "data_management", "/bin/bash", "-c"]
