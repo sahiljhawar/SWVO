@@ -12,6 +12,7 @@ COPY ./data_management/ data_management/data_management/
 COPY ./install.sh data_management/
 COPY ./setup.py data_management/
 COPY ./requirements.txt data_management/
+RUN chmod 777 -R data_management
 
 RUN mkdir scripts/
 RUN mkdir scripts/plot
@@ -19,6 +20,8 @@ RUN mkdir scripts/check_file_generation
 COPY ./scripts/plot/ /scripts/plot/
 COPY ./scripts/check_file_generation/ /scripts/check_file_generation/
 COPY ./docker/plot_entrypoint.sh /
+RUN chmod 777 -R scripts
+RUN chmod 777 plot_entrypoint.sh
 
 RUN conda create --name data_management python=3.8
 SHELL ["conda", "run", "-n", "data_management", "/bin/bash", "-c"]
