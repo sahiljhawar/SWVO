@@ -58,6 +58,6 @@ then
   GROUPID="65534"
 fi
 
-docker run --rm -v "$DATA_FOLDER":/PAGER --net=host -u=$USERID:$GROUPID --env RECURRENT="$RECURRENT" \
+docker run -d --rm -v "$DATA_FOLDER":/PAGER --net=host -u=$USERID:$GROUPID --env RECURRENT="$RECURRENT" \
        --entrypoint="./check_entrypoint.sh" "$IMAGE"
 
