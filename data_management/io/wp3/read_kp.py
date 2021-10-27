@@ -108,10 +108,9 @@ class KPReader(BaseReader):
             data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date)
         elif source == "l1":
             data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"),
-                                                          requested_date, header=True, model_name=model_name)
+                                                          requested_date, model_name=model_name)
         elif source == "swift":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"),
-                                                          requested_date, header=True)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
