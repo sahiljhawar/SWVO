@@ -1,24 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: data_management_check_routines
+  name: data-management-check-routines
 spec:
   selector:
     matchLabels:
-      app: data_management_check_routines
+      app: data-management-check-routines
   replicas: 1
   template:
     metadata:
       labels:
-        app: data_management_check_routines
+        app: data-management-check-routines
     spec:
       containers:
-      - name: data_management_plotting_routines
+      - name: data-management-plotting-routines
         image: kub1:5000/data-management:latest
-        command: ["bash check_entrypoint.sh"]
+        command: ["./check_entrypoint.sh"]
         env:
           - name: RECURRENT
             value: "1"
+          - name: LOG_DIR
+            value: "/PAGER/WP8/logs/"
         volumeMounts:
            - name: host-volume
              mountPath: /PAGER

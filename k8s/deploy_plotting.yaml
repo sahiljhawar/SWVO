@@ -1,24 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: data_management_plotting_routines
+  name: data-management-plotting-routines
 spec:
   selector:
     matchLabels:
-      app: data_management_plotting_routines
+      app: data-management-plotting-routines
   replicas: 1
   template:
     metadata:
       labels:
-        app: data_management_plotting_routines
+        app: data-management-plotting-routines
     spec:
       containers:
-      - name: data_management_plotting_routines
+      - name: data-management-plotting-routines
         image: kub1:5000/data-management:latest
-        command: ["bash plot_entrypoint.sh"]
+        command: ["./plot_entrypoint.sh"]
         env:
           - name: RECURRENT
             value: "1"
+          - name: LOG_DIR
+            value: "/PAGER/WP8/logs/"
         volumeMounts:
            - name: host-volume
              mountPath: /PAGER
