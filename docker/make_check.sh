@@ -3,7 +3,7 @@
 Help() {
 cat << EOF
 
-   Usage: make_check.sh [-I IMAGE] [-d DATA_FOLDER] [-r RECURRENT] [-U USERID] [-G GROUPID] [-C CHECK]
+   Usage: make_check.sh [-I IMAGE] [-d DATA_FOLDER] [-r RECURRENT] [-U USERID] [-G GROUPID] [-C CHECK] [- l LOG_DIR]
 
    This script uses a docker container to generate a forecast using swift solar wind data as input. The machine learning
    model is build using the geoforecast library and saved.
@@ -16,13 +16,14 @@ cat << EOF
        -C CHECK         If specified, you perform only one specific plot (not working at the moment, all are produced)
        -U USERID       The user id which writes files in the bind volume.
        -G GROUPID      The group id to which the written files belong to.
-
+       -l LOG_DIR      (optional)
 EOF
 }
 
 RECURRENT=0
 CHECK=
-while getopts hI:d:r:C:U:G: flag
+LOG_DIR=
+while getopts hI:d:r:C:U:G:l: flag
 do
 	case "${flag}" in
 	        I) IMAGE=${OPTARG};;
@@ -31,6 +32,7 @@ do
 	        C) CHECK=${OPTARG};;
 	        U) USERID=${OPTARG};;
 	        G) GROUPID=${OPTARG};;
+	        l) LOG_DIR=${OPTARG};;
 	        h) Help ;;
 	        *) exit;;
     esac
@@ -59,5 +61,6 @@ then
 fi
 
 docker run -d --rm -v "$DATA_FOLDER":/PAGER --net=host -u=$USERID:$GROUPID --env RECURRENT="$RECURRENT" \
+       --env LOG_DIR="$LOG_DIR" \
        --entrypoint="./check_entrypoint.sh" "$IMAGE"
 

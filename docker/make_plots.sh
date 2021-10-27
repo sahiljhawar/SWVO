@@ -3,7 +3,7 @@
 Help() {
 cat << EOF
 
-   Usage: make_plots.sh [-I IMAGE] [-d DATA_FOLDER] [-r RECURRENT] [-U USERID] [-G GROUPID] [-P PLOT]
+   Usage: make_plots.sh [-I IMAGE] [-d DATA_FOLDER] [-r RECURRENT] [-U USERID] [-G GROUPID] [-P PLOT] [- l LOG_DIR]
 
    This script uses a docker container to generate a forecast using swift solar wind data as input. The machine learning
    model is build using the geoforecast library and saved.
@@ -16,13 +16,15 @@ cat << EOF
        -P PLOT         If specified, you perform only one specific plot (not working at the moment, all are produced)
        -U USERID       The user id which writes files in the bind volume.
        -G GROUPID      The group id to which the written files belong to.
+       -l LOG_DIR      (optional)
 
 EOF
 }
 
 RECURRENT=0
 PLOT=
-while getopts hI:d:r:P:U:G: flag
+LOG_DIR=
+while getopts hI:d:r:P:U:G:l: flag
 do
 	case "${flag}" in
 	        I) IMAGE=${OPTARG};;
@@ -31,6 +33,7 @@ do
 	        P) PLOT=${OPTARG};;
 	        U) USERID=${OPTARG};;
 	        G) GROUPID=${OPTARG};;
+	        l) LOG_DIR=${OPTARG};;
 	        h) Help ;;
 	        *) exit;;
     esac
@@ -58,5 +61,5 @@ then
   GROUPID="65534"
 fi
 
-docker run -d --rm -v "$DATA_FOLDER":/PAGER -u=$USERID:$GROUPID --env RECURRENT="$RECURRENT" \
+docker run -d --rm -v "$DATA_FOLDER":/PAGER -u=$USERID:$GROUPID --env RECURRENT="$RECURRENT" --env LOG_DIR="$LOG_DIR" \
        --entrypoint="./plot_entrypoint.sh" "$IMAGE"
