@@ -50,11 +50,11 @@ if __name__ == "__main__":
                         help="Not used yet")
     parser.add_argument('-logdir', action="store", default=None, type=str,
                         help="Log directory if logging is to be enabled.")
-    parser.add_argument('-notify', action="store", default=False, type=bool,
-                        help="Log directory if logging is to be enabled.")
+    parser.add_argument('-notify', action="store", default=0, type=int,
+                        help="")
 
     args = parser.parse_args()
-
+    notify = bool(args.notify)
     if args.date is not None:
         if "T" not in args.date:
             check_date = args.date + "T000000"
@@ -77,18 +77,18 @@ if __name__ == "__main__":
     logging.info("")
     # WP3
     logging.info("Starting Check for WP3 modules \n")
-    wp3_check_kp(check_date, "swpc", notify=args.notify)
-    wp3_check_kp(check_date, "niemegk", notify=args.notify)
+    wp3_check_kp(check_date, "swpc", notify=notify)
+    wp3_check_kp(check_date, "niemegk", notify=notify)
     wp3_check_kp(check_date - dt.timedelta(hours=1), "swift", notify=args.notify)
-    wp3_check_kp(check_date - dt.timedelta(hours=1), "l1", model="KP-FULL-SW-PAGER", notify=args.notify)
-    wp3_check_kp(check_date - dt.timedelta(hours=1), "l1", model="HP60-FULL-SW-SWAMI-PAGER", notify=args.notify)
+    wp3_check_kp(check_date - dt.timedelta(hours=1), "l1", model="KP-FULL-SW-PAGER", notify=notify)
+    wp3_check_kp(check_date - dt.timedelta(hours=1), "l1", model="HP60-FULL-SW-SWAMI-PAGER", notify=notify)
     logging.info("\n")
     # PLASMA
-    wp3_check_plasma(check_date, "ca", notify=args.notify)
-    wp3_check_plasma(check_date - dt.timedelta(hours=1), "gfz_plasma", notify=args.notify)
+    wp3_check_plasma(check_date, "ca", notify=notify)
+    wp3_check_plasma(check_date - dt.timedelta(hours=1), "gfz_plasma", notify=notify)
     logging.info("\n")
     # WP6
     logging.info("Starting Check for WP6 modules \n")
 
-    wp6_check_rbm_forecast(check_date - dt.timedelta(hours=1), notify=args.notify)
-    wp6_check_ring_current(check_date, notify=args.notify)
+    wp6_check_rbm_forecast(check_date - dt.timedelta(hours=1), notify=notify)
+    wp6_check_ring_current(check_date, notify=notify)

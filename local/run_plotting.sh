@@ -42,8 +42,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd "$SCRIPT_DIR" || exit
 source activate "$PYTHON_ENV" || conda activate "$PYTHON_ENV"
 
-python ../scripts/plot/wp2/plot_all_swift.py "${pargs[@]}" #-recurrent 0
-python ../scripts/plot/wp3/plot_all_kp.py "${pargs[@]}" #-recurrent 0
-python ../scripts/plot/wp3/plot_all_plasma.py "${pargs[@]}" #-recurrent 0
+python ../scripts/plot/wp2/plot_all_swift.py "${pargs[@]}"
+python ../scripts/plot/wp3/plot_all_kp.py "${pargs[@]}"
+python ../scripts/plot/wp3/plot_all_plasma.py "${pargs[@]}"
 
 

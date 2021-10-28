@@ -21,6 +21,8 @@ spec:
             value: "1"
           - name: LOG_DIR
             value: "/PAGER/WP8/logs/"
+          - name: NOTIFY
+            value: "0"
         volumeMounts:
            - name: host-volume
              mountPath: /PAGER

@@ -235,7 +235,7 @@ class PlasmaspherePlot(PlotOutput):
 
         logging.info("Starting video generation")
         os.chdir(temp_folder_path)
-        subprocess.call([
+        subprocess.check_call([
             'ffmpeg', '-framerate', '3', '-i', os.path.join(temp_folder_path, "%*.png"), '-vcodec', 'libx264', '-crf',
             '28', '-pix_fmt', 'yuv420p',
             os.path.join(output_folder, video_file_name)
