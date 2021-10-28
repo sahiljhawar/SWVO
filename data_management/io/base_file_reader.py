@@ -8,3 +8,7 @@ class BaseReader(object):
     @abstractmethod
     def read(self, *args):
         raise NotImplementedError
+
+    @abstractmethod
+    def _check_data_folder(self):
+        raise NotImplementedError

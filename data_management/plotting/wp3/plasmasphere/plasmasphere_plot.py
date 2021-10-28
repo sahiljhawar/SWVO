@@ -15,7 +15,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-
 from data_management.plotting.plotting_base import PlotOutput
 
 basepath = os.path.dirname(__file__)
@@ -170,35 +169,35 @@ class PlasmaspherePlot(PlotOutput):
         only the Earth and the basic skeleton appear.
 
         :param data: instance of pandas DataFrame containing the output of the plasmasphere prediction modules
-        :type data: instance of pandas DataFrame
+        :type data: pandas.DataFrame
         :param output_folder: output folder where to store the video, specify as an absolute path
-        :type output_folder: string
+        :type output_folder: str
         :param video_file_name: filename of the video, with extension .mp4
-        :type video_file_name: string
+        :type video_file_name: str
         """
 
         if not isinstance(data, pd.DataFrame):
             msg = "data must be an instance of a pandas dataframe, " \
                   "instead it is of type {}".format(type(data))
             logging.error(msg)
-            raise ValueError(msg)
+            raise TypeError(msg)
 
-        required_columns = ["L", "MLT", "predicted_densities", "date"]
+        required_columns = ["L", "MLT", "predicted_densities", "t"]
         for column in required_columns:
             if column not in data.columns:
                 msg = "column {} is missing".format(column)
                 logging.error(msg)
                 raise ValueError(msg)
 
-        if not isinstance(data.iloc[0]["date"], datetime):
+        if not isinstance(data.iloc[0]["t"], datetime):
             msg = "values of date column must be datetime objects"
             logging.error(msg)
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         if not os.path.isdir(output_folder):
             msg = "specified output_folder doesn't exist"
             logging.error(msg)
-            raise ValueError("specified output_folder doesn't exist")
+            raise FileNotFoundError(msg)
 
         output_folder = os.path.abspath(output_folder)
 
@@ -214,14 +213,14 @@ class PlasmaspherePlot(PlotOutput):
             os.makedirs(temp_folder_path)
 
         logging.info("Started individual plasmasphere reconstructions generation")
-        dates = pd.to_datetime(data["date"].unique())
+        dates = pd.to_datetime(data["t"].unique())
         for date in dates:
-            df_date = data[data["date"] == date]
+            df_date = data[data["t"] == date]
 
             l_values = df_date["L"].values
             mlt_values = df_date["MLT"].values
             density_values = df_date["predicted_densities"].values
-            date = df_date.iloc[0]["date"]
+            date = df_date.iloc[0]["t"]
 
             plotter = PlasmaspherePlot()
             plotter._plot_single_plasmasphere(l_values, mlt_values, density_values, date)
@@ -237,7 +236,8 @@ class PlasmaspherePlot(PlotOutput):
         logging.info("Starting video generation")
         os.chdir(temp_folder_path)
         subprocess.call([
-            'ffmpeg', '-framerate', '3', '-i', os.path.join(temp_folder_path, "%*.png"), '-vcodec', 'libx264', '-crf', '28', '-pix_fmt', 'yuv420p',
+            'ffmpeg', '-framerate', '3', '-i', os.path.join(temp_folder_path, "%*.png"), '-vcodec', 'libx264', '-crf',
+            '28', '-pix_fmt', 'yuv420p',
             os.path.join(output_folder, video_file_name)
         ])
         logging.info("Finished video generation and saving")

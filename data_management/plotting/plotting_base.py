@@ -7,5 +7,5 @@ class PlotOutput(object):
 
     @staticmethod
     @abstractmethod
-    def plot_output(data):
+    def plot_output(*args):
         raise NotImplementedError

@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib
+import pandas as pd
+import logging
 from data_management.plotting.plotting_base import PlotOutput
-
 
 matplotlib.use('Agg')
 
@@ -78,6 +79,12 @@ class PlotKpOutput(PlotOutput):
         :type data: pandas.DataFrame
         :return: A figure object of type matplotlib.figure.Figure containing the produced plot
         """
+
+        if not isinstance(data, pd.DataFrame):
+            msg = "data must be an instance of a pandas dataframe, instead it is of type {}".format(type(data))
+            logging.error(msg)
+            raise TypeError(msg)
+
         # Todo This is a hack, still working on it
         cadence = (data.index[1] - data.index[0]).seconds // 3600
         if cadence == 3:
