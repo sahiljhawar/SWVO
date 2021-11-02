@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
                         help="Requested date to plot in the format %YYYY%mm%dd")
-    parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/plasmasphere/", type=str,
+    parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/plasma/", type=str,
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
                         help="Path to a folder where the data to plot is stored...(be more precise)")

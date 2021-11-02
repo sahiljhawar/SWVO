@@ -28,9 +28,10 @@ class PlasmaspherePlot(PlotOutput):
 
         self.figure = None
         self.ax = None
-        self.colour_map = mpl.colors.ListedColormap(
-            np.load(os.path.abspath(os.path.join(basepath, './my_cmap.npy')))
-        )
+        #self.colour_map = mpl.colors.ListedColormap(
+        #    np.load(os.path.abspath(os.path.join(basepath, './my_cmap.npy')))
+        #)
+        self.colour_map = mpl.colors.ListedColormap(np.load(os.path.abspath(os.path.join("/PAGER/WP8/data_management/data_management/plotting/wp3/plasmasphere", 'my_cmap.npy'))))
 
     @staticmethod
     def _get_date_components(date):
@@ -193,7 +194,7 @@ class PlasmaspherePlot(PlotOutput):
             msg = "values of date column must be datetime objects"
             logging.error(msg)
             raise TypeError(msg)
-
+        print(output_folder)
         if not os.path.isdir(output_folder):
             msg = "specified output_folder doesn't exist"
             logging.error(msg)
