@@ -36,7 +36,7 @@ class PlotKpOutput(PlotOutput):
                      ylabel=r"$K_{p}$"):
         # PLOT
         bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
-        ax = data.plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
+        ax = data["kp"].plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
                        align="edge", width=0.9, legend=False)
         # TITLE
         ax.set_title(title, fontsize=title_font)
