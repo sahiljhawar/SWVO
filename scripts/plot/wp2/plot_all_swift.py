@@ -22,7 +22,8 @@ if __name__ == "__main__":
 
     date_now = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
     if args.date is None:
-        plotting_date = date_now
+        # We are plotting the date before since SWIFT produces outputs with delayed date
+        plotting_date = date_now - dt.timedelta(hours=24)
     else:
         try:
             plotting_date = dt.datetime.strptime(args.date, "%Y%m%d")
