@@ -4,13 +4,13 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import logging
 
-from data_management.io.wp2.read_swift import SwiftReader
+from data_management.io.wp2.read_swift import SwiftReader, SwiftEnsembleReader
 from data_management.plotting.wp2.swift.plot_swift import PlotSWIFTOutput
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
-                        help="Requested date to plot in the format %YYYY%mm%dd")
+                        help="Requested date to plot in the format %YYYY%mm%dd or %YYYY%mm%dd%HH")
     parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/", type=str,
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP2/data/outputs/", type=str,
@@ -27,10 +27,15 @@ if __name__ == "__main__":
     else:
         try:
             plotting_date = dt.datetime.strptime(args.date, "%Y%m%d")
-        except TypeError:
-            msg = "Provided date {} not in correct format %Y%m%d. Aborting...".format(args.date)
-            logging.error(msg)
-            raise RuntimeError(msg)
+        except ValueError:
+            try:
+                plotting_date = dt.datetime.strptime(args.date, "%Y%m%d%H")
+            except ValueError:
+                msg = "Provided date {} not in correct format %Y%m%d nor %Y%m%d%H . Aborting...".format(args.date)
+                logging.error(msg)
+                raise RuntimeError(msg)
+
+    plotting_date = plotting_date.replace(hour=0)
 
     if args.logdir is not None:
         log_file = "wp2_plot_all_swift_gfz_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
@@ -91,4 +96,22 @@ if __name__ == "__main__":
     except (TypeError, FileNotFoundError):
         logging.error(
             "Data for DEF-based SWIFT solar wind for date {} not found..."
+            "impossible to produce data plot...".format(plotting_date))
+
+    try:
+        reader = SwiftEnsembleReader(wp2_output_folder=os.path.join(args.input, "SWIFT_ENSEMBLE/"))
+        logging.info("Reading DEF-based SWIFT Ensemble original output data file...")
+        data_gsm, data_hgc = reader.read(plotting_date)
+        for i, _ in enumerate(data_gsm):
+            data_gsm[i] = data_gsm[i][data_gsm[i].index >= plotting_date]
+        logging.info("...Complete!!")
+        logging.info("Plotting and saving SWIFT Ensemble data plot")
+        plotter.plot_ensemble_output(data_gsm)
+        if plotting_date >= date_now:
+            plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_DEF_ENSEMBLE_GFZ_LAST.png"))
+        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_DEF_ENSEMBLE_GFZ_{}.png".format(plotting_date.strftime("%Y%m%d"))))
+        logging.info("...Complete!!")
+    except (TypeError, FileNotFoundError):
+        logging.error(
+            "Data for DEF-based SWIFT Ensemble solar wind for date {} not found..."
             "impossible to produce data plot...".format(plotting_date))
