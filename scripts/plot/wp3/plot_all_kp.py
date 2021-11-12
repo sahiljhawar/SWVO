@@ -10,7 +10,7 @@ from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
-                        help="Requested date to plot in the format %YYYY%mm%dd")
+                        help="Requested date to plot in the format %YYYY%mm%dd%HH")
     parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/", type=str,
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
@@ -25,9 +25,9 @@ if __name__ == "__main__":
         plotting_date = date_now
     else:
         try:
-            plotting_date = dt.datetime.strptime(args.date, "%Y%m%d")
-        except TypeError:
-            msg = "Provided date {} not in correct format %Y%m%d. Aborting...".format(args.date)
+            plotting_date = dt.datetime.strptime(args.date, "%Y%m%d%H")
+        except ValueError:
+            msg = "Provided date {} not in correct format %Y%m%d%H. Aborting...".format(args.date)
             logging.error(msg)
             raise RuntimeError(msg)
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             plotter.plot_output(data_l1)
             if plotting_date >= date_now:
                 plt.savefig(os.path.join(RESULTS_PATH, "L1_LAST_{}.png".format(model_name)))
-            plt.savefig(os.path.join(RESULTS_PATH, "L1_{}_{}.png".format(date.strftime("%Y%m%d"), model_name)))
+            plt.savefig(os.path.join(RESULTS_PATH, "L1_{}_{}.png".format(date.strftime("%Y%m%dT%H%M%S"), model_name)))
             logging.info("...Complete!!")
         except TypeError:
             logging.error(
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         plotter.plot_output(data_swift)
         if plotting_date >= date_now:
             plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_LAST.png"))
-        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_{}.png".format(date.strftime("%Y%m%d"))))
+        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_{}.png".format(date.strftime("%Y%m%dT%H%M%S"))))
         logging.info("...Complete!!")
     except TypeError:
         logging.error(

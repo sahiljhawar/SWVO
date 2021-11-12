@@ -10,7 +10,7 @@ from data_management.plotting.wp3.plasmasphere.plasmasphere_plot import Plasmasp
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
-                        help="Requested date to plot in the format %YYYY%mm%dd")
+                        help="Requested date to plot in the format %YYYY%mm%dd%HH")
     parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/plasma/", type=str,
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
@@ -25,9 +25,9 @@ if __name__ == "__main__":
         plotting_date = date_now
     else:
         try:
-            plotting_date = dt.datetime.strptime(args.date, "%Y%m%d")
-        except TypeError:
-            msg = "Provided date {} not in correct format %Y%m%d. Aborting...".format(args.date)
+            plotting_date = dt.datetime.strptime(args.date, "%Y%m%d%H")
+        except ValueError:
+            msg = "Provided date {} not in correct format %Y%m%d%H. Aborting...".format(args.date)
             logging.error(msg)
             raise RuntimeError(msg)
 
