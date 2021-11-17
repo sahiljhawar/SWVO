@@ -194,7 +194,7 @@ class PlasmaspherePlot(PlotOutput):
             msg = "values of date column must be datetime objects"
             logging.error(msg)
             raise TypeError(msg)
-        print(output_folder)
+
         if not os.path.isdir(output_folder):
             msg = "specified output_folder doesn't exist"
             logging.error(msg)

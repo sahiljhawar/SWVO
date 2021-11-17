@@ -2,13 +2,16 @@ import os
 import argparse
 import datetime as dt
 import logging
+import matplotlib.pyplot as plt
+import matplotlib
 
-from data_management.formats.wp3.kp_formats import RawFormat
 from data_management.io.wp3.read_kp import KPReader
+from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-date', action="store", default=None, type=str,
+    parser.add_argument('-date', action="store", default="2021110400", type=str,
                         help="Requested date to plot in the format %YYYY%mm%dd%HH")
     parser.add_argument('-output', action="store", default="/PAGER/WP3/data/products/", type=str,
                         help="Path to a folder where to store the produced figures")
@@ -24,14 +27,14 @@ if __name__ == "__main__":
         product_date = date_now
     else:
         try:
-            product_date = dt.datetime.strptime(args.date, "%Y-%m-%d")
+            product_date = dt.datetime.strptime(args.date, "%Y%m%d%H")
         except TypeError:
-            msg = "Provided date {} not in correct format %Y-%m-%d. Aborting...".format(args.date)
+            msg = "Provided date {} not in correct format %Y%m%d%H. Aborting...".format(args.date)
             logging.error(msg)
             raise RuntimeError(msg)
 
     if args.logdir is not None:
-        log_file = "wp3_kp_products_{}.log".format(product_date.strftime("%Y%m%dT%H%M%S"))
+        log_file = "wp3_evaluate_kp_l1_{}.log".format(product_date.strftime("%Y%m%dT%H%M%S"))
         logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
                             datefmt="%Y-%m-%d %H:%M:%S",
                             format="%(asctime)s;%(levelname)s;%(message)s")
@@ -39,16 +42,19 @@ if __name__ == "__main__":
     RESULTS_PATH = args.output
 
     reader = KPReader(args.input)
-    for model in ["KP-FULL-SW-PAGER", "HP60-FULL-SW-SWAMI-PAGER"]:
-        data, _ = reader.read(source="l1", requested_date=product_date, model_name=model)
+    data_l1, _ = reader.read(source="l1", requested_date=product_date, model_name="KP-FULL-SW-PAGER")
+    data_niemegk, _ = reader.read(source="niemegk", requested_date=product_date)
 
-        wdc_path = os.path.join(args.output, "FORECAST_{}_{}_{}.wdc".format(model, "dscovr_rt",
-                                                                            product_date.strftime("%Y%m%dT%H%M%S")))
-        omni_path = os.path.join(args.output, "FORECAST_{}_{}_{}.dat".format(model, "dscovr_rt",
-                                                                             product_date.strftime("%Y%m%dT%H%M%S")))
-        RawFormat.wdc(data, wdc_path)
-        RawFormat.omniweb(data, omni_path)
-        wdc_path = os.path.join(args.output, "FORECAST_{}_{}_LAST.wdc".format(model, "dscovr_rt"))
-        omni_path = os.path.join(args.output, "FORECAST_{}_{}_LAST.dat".format(model, "dscovr_rt"))
-        RawFormat.wdc(data, wdc_path)
-        RawFormat.omniweb(data, omni_path)
+    plotter = PlotKpOutput()
+
+    fig_l1, ax1 = plotter.plot_output(data_l1)
+    fig_niemegk, ax2 = plotter.plot_output(data_niemegk)
+
+    fig, axes = plt.subplots(nrows=2, ncols=1)
+    axes[0] = ax1
+    axes[1] = ax2
+
+    plt.savefig("prova.png")
+
+
+
