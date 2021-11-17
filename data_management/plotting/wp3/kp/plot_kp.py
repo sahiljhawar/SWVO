@@ -70,7 +70,7 @@ class PlotKpOutput(PlotOutput):
         return ax
 
     @staticmethod
-    def plot_output(data):
+    def plot_output(data, ax=None):
         """
         This function plots output data for Kp and other geomagnetic index products. The plot format is at the moment
         fixed.
@@ -92,8 +92,9 @@ class PlotKpOutput(PlotOutput):
         else:
             label = "H_{p}"
 
-        fig = plt.figure(figsize=(15, 8))
-        ax = fig.add_subplot(1, 1, 1)
+        if ax is None:
+            fig = plt.figure(figsize=(15, 8))
+            ax = fig.add_subplot(1, 1, 1)
         ax = PlotKpOutput._add_subplot(ax, data=data[["kp"]], title=None, ylabel=r'${}$'.format(label))
 
         red_patch = patches.Patch(color='red', label=r'${}$ > 4'.format(label))
@@ -104,5 +105,6 @@ class PlotKpOutput(PlotOutput):
                   handles=[green_patch, yellow_patch, red_patch, transparent_patch],
                   ncol=4, fontsize="x-large", shadow=True)
 
-        fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7, wspace=None, hspace=0.6)
-        return fig
+        if ax is None:
+            fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7, wspace=None, hspace=0.6)
+        return ax

@@ -4,6 +4,8 @@ import datetime as dt
 import logging
 import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.gridspec as gridspec
+
 
 from data_management.io.wp3.read_kp import KPReader
 from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
@@ -47,14 +49,19 @@ if __name__ == "__main__":
 
     plotter = PlotKpOutput()
 
-    fig_l1, ax1 = plotter.plot_output(data_l1)
-    fig_niemegk, ax2 = plotter.plot_output(data_niemegk)
+    fig = plt.figure(figsize=(15, 8))
+    gs = gridspec.GridSpec(2, 1)
 
-    fig, axes = plt.subplots(nrows=2, ncols=1)
-    axes[0] = ax1
-    axes[1] = ax2
+    ax1 = plt.subplot(gs[0, 0])
+    ax2 = plt.subplot(gs[1, 0])
+
+    gs.update(left=0.1, right=0.9, wspace=0.05, hspace=0.1)
+
+
+
+    plotter.plot_output(data_l1, ax1)
+    plotter.plot_output(data_niemegk, ax2)
 
     plt.savefig("prova.png")
-
 
 
