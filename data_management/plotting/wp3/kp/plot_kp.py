@@ -37,7 +37,7 @@ class PlotKpOutput(PlotOutput):
         # PLOT
         bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
         ax = data["kp"].plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
-                       align="edge", width=0.9, legend=False)
+                             align="edge", width=0.9, legend=False)
         # TITLE
         ax.set_title(title, fontsize=title_font)
 
@@ -70,7 +70,7 @@ class PlotKpOutput(PlotOutput):
         return ax
 
     @staticmethod
-    def plot_output(data, ax=None):
+    def plot_output(data, ax=None, legend=True):
         """
         This function plots output data for Kp and other geomagnetic index products. The plot format is at the moment
         fixed.
@@ -101,9 +101,11 @@ class PlotKpOutput(PlotOutput):
         yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'${}$ = 4'.format(label))
         green_patch = patches.Patch(color='green', label=r'${}$ < 4'.format(label))
         transparent_patch = patches.Patch(color=[0, 0, 0, 0.1], label='Data not available')
-        ax.legend(bbox_to_anchor=(0., 1., 0.84, .275),
-                  handles=[green_patch, yellow_patch, red_patch, transparent_patch],
-                  ncol=4, fontsize="x-large", shadow=True)
+
+        if legend:
+            ax.legend(bbox_to_anchor=(0., 1., 0.84, .275),
+                      handles=[green_patch, yellow_patch, red_patch, transparent_patch],
+                      ncol=4, fontsize="x-large", shadow=True)
 
         if ax is None:
             fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7, wspace=None, hspace=0.6)

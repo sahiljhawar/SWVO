@@ -3,12 +3,21 @@ import argparse
 import datetime as dt
 import logging
 import matplotlib.pyplot as plt
-import matplotlib
 import matplotlib.gridspec as gridspec
-
+import pandas as pd
 
 from data_management.io.wp3.read_kp import KPReader
 from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
+
+
+def combine_niemegk_forecasts(reader, product_date):
+    data_niemegk1, _ = reader.read(source="niemegk", requested_date=product_date)
+    data_niemegk2, _ = reader.read(source="niemegk", requested_date=product_date + dt.timedelta(days=2))
+    data_niemegk3, _ = reader.read(source="niemegk", requested_date=product_date + dt.timedelta(days=2))
+    data_niemegk2 = data_niemegk2[data_niemegk2.index > max(data_niemegk1.index)]
+    data_niemegk3 = data_niemegk3[data_niemegk3.index > max(data_niemegk2.index)]
+    data = pd.concat([data_niemegk1, data_niemegk2, data_niemegk3], axis=0)
+    return data
 
 
 if __name__ == "__main__":
@@ -45,7 +54,13 @@ if __name__ == "__main__":
 
     reader = KPReader(args.input)
     data_l1, _ = reader.read(source="l1", requested_date=product_date, model_name="KP-FULL-SW-PAGER")
-    data_niemegk, _ = reader.read(source="niemegk", requested_date=product_date)
+    data_niemegk = combine_niemegk_forecasts(reader, product_date)
+
+    data_niemegk = data_niemegk[data_niemegk.index >= min(data_l1.index)]
+    data_niemegk = data_niemegk[data_niemegk.index <= max(data_l1.index)]
+
+    data_l1 = data_l1[data_l1.index >= min(data_niemegk.index)]
+    data_l1 = data_l1[data_l1.index <= max(data_niemegk.index)]
 
     plotter = PlotKpOutput()
 
@@ -55,13 +70,11 @@ if __name__ == "__main__":
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[1, 0])
 
-    gs.update(left=0.1, right=0.9, wspace=0.05, hspace=0.1)
-
-
+    gs.update(left=0.1, right=0.9, wspace=0.05, hspace=0.4)
 
     plotter.plot_output(data_l1, ax1)
-    plotter.plot_output(data_niemegk, ax2)
+    plotter.plot_output(data_niemegk, ax2, legend=False)
+
+    ax1.set_xlabel("", fontsize=15, labelpad=10)
 
     plt.savefig("prova.png")
-
-
