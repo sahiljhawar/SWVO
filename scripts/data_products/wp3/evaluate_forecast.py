@@ -44,6 +44,11 @@ if __name__ == "__main__":
             logging.error(msg)
             raise RuntimeError(msg)
 
+    if product_date.hour % 3 != 0:
+        product_date = product_date.replace(hour=int(product_date.hour / 3) * 3)
+        logging.warning("Comparison with Niemegk nowcast can be done only with dates that have"
+                        "hours multiple of three. Setting date time for current comparison to {}".format(product_date))
+
     if args.logdir is not None:
         log_file = "wp3_evaluate_kp_l1_{}.log".format(product_date.strftime("%Y%m%dT%H%M%S"))
         logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
@@ -53,28 +58,28 @@ if __name__ == "__main__":
     RESULTS_PATH = args.output
 
     reader = KPReader(args.input)
-    data_l1, _ = reader.read(source="l1", requested_date=product_date, model_name="KP-FULL-SW-PAGER")
-    data_niemegk = combine_niemegk_forecasts(reader, product_date)
 
+    model_name = "KP-FULL-SW-PAGER"
+
+    data_l1, _ = reader.read(source="l1", requested_date=product_date, model_name=model_name)
+    data_niemegk = combine_niemegk_forecasts(reader, product_date)
     data_niemegk = data_niemegk[data_niemegk.index >= min(data_l1.index)]
     data_niemegk = data_niemegk[data_niemegk.index <= max(data_l1.index)]
-
     data_l1 = data_l1[data_l1.index >= min(data_niemegk.index)]
     data_l1 = data_l1[data_l1.index <= max(data_niemegk.index)]
 
-    plotter = PlotKpOutput()
-
     fig = plt.figure(figsize=(15, 8))
     gs = gridspec.GridSpec(2, 1)
-
     ax1 = plt.subplot(gs[0, 0])
     ax2 = plt.subplot(gs[1, 0])
-
     gs.update(left=0.1, right=0.9, wspace=0.05, hspace=0.4)
+
+    plotter = PlotKpOutput()
 
     plotter.plot_output(data_l1, ax1)
     plotter.plot_output(data_niemegk, ax2, legend=False)
 
     ax1.set_xlabel("", fontsize=15, labelpad=10)
 
-    plt.savefig("prova.png")
+    product_date = product_date.strftime("%Y%m%dT%H%M%S")
+    plt.savefig(os.path.join(args.output, "L1vsNiemegk_{}_{}.png".format(model_name, product_date)))

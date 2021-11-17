@@ -77,7 +77,12 @@ class PlotKpOutput(PlotOutput):
 
         :param data: This is the standard output format of Kp products read by KpReader class.
         :type data: pandas.DataFrame
-        :return: A figure object of type matplotlib.figure.Figure containing the produced plot
+        :param ax: An Axes object in the case the plot needs to be combined with other figures outside of the class
+                   otherwise pass None.
+        :type ax: matplotlib.axes.Axes or None
+        :param legend: If True the default legend of the plot is kept, otherwise it is not plotted.
+        :type legend: bool
+        :return: An Axes object
         """
 
         if not isinstance(data, pd.DataFrame):
@@ -109,4 +114,5 @@ class PlotKpOutput(PlotOutput):
 
         if ax is None:
             fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7, wspace=None, hspace=0.6)
+
         return ax
