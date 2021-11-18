@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     date_now = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
     if args.date is None:
-        plotting_date = date_now
+        plotting_date = date_now - dt.timedelta(hours=1)
     else:
         try:
             plotting_date = dt.datetime.strptime(args.date, "%Y%m%d%H")
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     video_name = "gfz_plasma_video_{}.mp4".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
     try:
         logging.info("Reading GFZ Plasmasphere forecast data file...")
-        data = reader.read("gfz_plasma", plotting_date - dt.timedelta(hours=1))
+        data = reader.read("gfz_plasma", plotting_date)
         logging.info("...Complete!!")
         logging.info("Plotting and saving plasmasphere forecast video...")
         plotter.plot_output(data, RESULTS_PATH, video_name)
