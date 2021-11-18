@@ -150,7 +150,7 @@ class PlasmaspherePlot(PlotOutput):
         self._set_axes_ticks_labels()
 
         self.ax.set_title(
-            "{}".format(self.date.strftime("%Y-%m-%d, %H:%M")),
+            "{} UTC".format(self.date.strftime("%Y-%m-%d, %H:%M")),
             fontdict={'fontweight': 'bold'})
 
         self._add_colour_bar()
