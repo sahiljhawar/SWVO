@@ -4,6 +4,7 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import logging
 import pandas as pd
+import matplotlib.patches as patches
 
 from data_management.io.wp3.read_kp import KPReader
 from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
@@ -28,7 +29,7 @@ def read_niemegk_data(start_date, final_date):
     return data
 
 
-def read_forecast_data(start_date, final_date, horizon, source, model_name=None):
+def read_forecast_data(start_date, final_date, horizon, source, model_name="KP-FULL-SW-PAGER"):
     reader = KPReader()
     values = []
     dates = []
@@ -36,11 +37,11 @@ def read_forecast_data(start_date, final_date, horizon, source, model_name=None)
     while True:
         if start_date + dt.timedelta(hours=3 * i) > final_date:
             break
-        data_forecast, _ = reader.read(source, start_date + dt.timedelta(hours=3 * i), model_name="KP-FULL-SW-PAGER")
+        data_forecast, _ = reader.read(source, start_date + dt.timedelta(hours=3 * i - horizon), model_name=model_name)
         forecast_value = data_forecast[data_forecast.index == start_date +
-                                       dt.timedelta(hours=3 * i + horizon)]["kp"].values[0]
+                                       dt.timedelta(hours=3 * i)]["kp"].values[0]
         values.append(forecast_value)
-        dates.append(start_date + dt.timedelta(hours=(3 * i + horizon)))
+        dates.append(start_date + dt.timedelta(hours=(3 * i)))
         i += 1
     return pd.DataFrame({"kp": values}, index=dates)
 
@@ -82,13 +83,77 @@ if __name__ == "__main__":
     final = dt.datetime(2021, 11, 5)
 
     df_niemegk = read_niemegk_data(start, final)
-    df_forecast = read_forecast_data(start, final, source="l1", horizon=0)
+    horizon = 6
+    df_forecast = read_forecast_data(start, final, source="l1", horizon=horizon)
+
+    df_niemegk = df_niemegk[df_niemegk.index >= min(df_forecast.index)]
+    df_niemegk = df_niemegk[df_niemegk.index <= max(df_forecast.index)]
+    df_forecast = df_forecast[df_forecast.index >= min(df_niemegk.index)]
+    df_forecast = df_forecast[df_forecast.index <= max(df_niemegk.index)]
 
     plotter = PlotKpOutput()
     fig = plt.figure(figsize=(15, 8))
     ax = fig.add_subplot(1, 1, 1)
+    fig.subplots_adjust(left=0.08, bottom=0.15, right=0.95, top=0.9, wspace=None, hspace=0.6)
+
+    green_patch = patches.Patch(color=[0.0, 0.5, 0.0, 1.0], label="Kp Nowcast")
+    red_patch = patches.Patch(color=[0.5, 0.0, 0.0, 1.0], label="Kp Forecast")
+
+    ax.legend(bbox_to_anchor=(0., 1., 0.84, .275),
+              handles=[green_patch, red_patch],
+              ncol=2, fontsize="xx-large", shadow=True)
+
+    color_niemegk = []
+    for i in range(len(df_niemegk)):
+        color_niemegk.append([0.0, 0.5, 0.0, 1.0])
+
+    color_forecast = []
+    for i in range(len(df_forecast)):
+        color_forecast.append([0.5, 0.0, 0.0, 1.0])
+
     PlotKpOutput._add_subplot(ax, data=df_niemegk[["kp"]], title=None, width=0.5,
-                                   ylabel=r'${}$'.format("K_{p}"), align="center")
+                              ylabel=r'${}$'.format("K_{p}"), align="center",
+                              bar_colors=color_niemegk)
     PlotKpOutput._add_subplot(ax, data=df_forecast[["kp"]], title=None, width=0.5,
-                                   ylabel=r'${}$'.format("K_{p}"), alpha=1.0)
-    plt.savefig("./Horizon0_comparison.png")
+                              ylabel=r'${}$'.format("K_{p}"), alpha=0.9, bar_colors=color_forecast)
+
+    plt.savefig("./Horizon{}_comparison.png".format(horizon))
+
+    fig2 = plt.figure(figsize=(15, 8))
+    ax2 = fig2.add_subplot(1, 1, 1)
+    fig2.subplots_adjust(left=0.08, bottom=0.15, right=0.95, top=0.9, wspace=None, hspace=0.6)
+
+    df_total = pd.DataFrame(index=df_niemegk.index)
+    df_total["Kp Nowcast"] = df_niemegk["kp"]
+    df_total["Kp Forecast"] = df_forecast["kp"]
+
+    ax2 = df_total.plot(drawstyle="steps-post", linewidth=3, ax=ax2, style=['-', '--'],
+                        color=['g', 'r'])
+
+    plt.legend(prop={'size': 20})
+    # Y-AXIS
+    ax2.set_ylim((-0.1, 9.1))
+    y_labels = [i for i in range(10) if i % 2 == 0]
+    ax2.set_yticks(y_labels)
+    ax2.tick_params(axis="y", labelsize=20, direction='in')
+    ax2.set_ylabel(r"$K_{p}$", fontsize=20, rotation=90, labelpad=15)
+    #first_hour = df_niemegk.index[0].hour
+
+    # def map_dates(x):
+    #    if (x.hour - first_hour) % 6 != 0:
+    #        return ""
+    #    elif ((x.hour - first_hour) % 6 == 0) and (x.hour == first_hour):
+    #        return x.strftime("%H:%M\n%d %b")
+    #    else:
+    #        return x.strftime("%H:%M")
+
+    ax2.set_xlabel("Time (UTC)", fontsize=15, labelpad=10)
+
+    # x_labels = list(df_niemegk.index.map(lambda x: map_dates(x)))
+
+    plt.xticks(fontsize=14)
+
+    # GRID
+    ax2.grid(True, axis='y', linestyle='dashed')
+
+    plt.savefig("./Horizon{}_step.png".format(horizon))

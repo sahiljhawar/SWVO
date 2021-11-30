@@ -33,9 +33,10 @@ class PlotKpOutput(PlotOutput):
     @staticmethod
     def _add_subplot(ax, data, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
                      ylabel_fontsize=20, ylim=(-0.1, 9.1), width=0.9, align="edge", alpha=None,
-                     ylabel=r"$K_{p}$"):
+                     ylabel=r"$K_{p}$", bar_colors=None):
         # PLOT
-        bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
+        if bar_colors is None:
+            bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
         ax = data["kp"].plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
                              align=align, width=width, legend=False, alpha=alpha)
         # TITLE
