@@ -12,37 +12,38 @@ from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
 
 def read_niemegk_data(start_date, final_date):
     reader = KPReader()
-    i = 0
+    index = 0
     data = []
     while True:
-        data_niemegk, _ = reader.read("niemegk", start_date + dt.timedelta(days=2 + i))
+        data_niemegk, _ = reader.read("niemegk", start_date + dt.timedelta(days=2 + index))
         if data_niemegk is not None:
-            if i > 0:
+            if index > 0:
                 data_niemegk = data_niemegk[data_niemegk.index > max(data[-1].index)]
             data.append(data_niemegk)
             if max(data_niemegk.index) > final_date:
                 break
-        i += 1
+        index += 1
     data = pd.concat(data, axis=0)
     data = data[data.index <= final_date]
     data = data[data.index >= start_date]
     return data
 
 
-def read_forecast_data(start_date, final_date, horizon, source, model_name="KP-FULL-SW-PAGER"):
+def read_forecast_data(start_date, final_date, horizon, source, model_name):
     reader = KPReader()
     values = []
     dates = []
-    i = 0
+    index = 0
     while True:
-        if start_date + dt.timedelta(hours=3 * i) > final_date:
+        if start_date + dt.timedelta(hours=3 * index) > final_date:
             break
-        data_forecast, _ = reader.read(source, start_date + dt.timedelta(hours=3 * i - horizon), model_name=model_name)
+        data_forecast, _ = reader.read(source, start_date + dt.timedelta(hours=3 * index - horizon),
+                                       model_name=model_name)
         forecast_value = data_forecast[data_forecast.index == start_date +
-                                       dt.timedelta(hours=3 * i)]["kp"].values[0]
+                                       dt.timedelta(hours=3 * index)]["kp"].values[0]
         values.append(forecast_value)
-        dates.append(start_date + dt.timedelta(hours=(3 * i)))
-        i += 1
+        dates.append(start_date + dt.timedelta(hours=(3 * index)))
+        index += 1
     return pd.DataFrame({"kp": values}, index=dates)
 
 
@@ -50,10 +51,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
                         help="Requested date to plot in the format %YYYY%mm%dd%HH")
-    parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/", type=str,
+    parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/comparison/", type=str,
                         help="Path to a folder where to store the produced figures")
     parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
                         help="Path to a folder where the data to plot is stored...(be more precise)")
+    parser.add_argument('-model', action="store", default="KP-FULL-SW-PAGER", type=str,
+                        help="Kp model name")
+    parser.add_argument('-horizon', action="store", default=None, type=int,
+                        help="Forecast horizon for Kp as integer multiple of 3 starting from 0")
     parser.add_argument('-logdir', action="store", default=None, type=str,
                         help="Log directory if logging is to be enabled.")
 
@@ -83,8 +88,7 @@ if __name__ == "__main__":
     final = dt.datetime(2021, 11, 5)
 
     df_niemegk = read_niemegk_data(start, final)
-    horizon = 6
-    df_forecast = read_forecast_data(start, final, source="l1", horizon=horizon)
+    df_forecast = read_forecast_data(start, final, source="l1", horizon=args.horizon, model_name=args.model)
 
     df_niemegk = df_niemegk[df_niemegk.index >= min(df_forecast.index)]
     df_niemegk = df_niemegk[df_niemegk.index <= max(df_forecast.index)]
@@ -117,7 +121,7 @@ if __name__ == "__main__":
     PlotKpOutput._add_subplot(ax, data=df_forecast[["kp"]], title=None, width=0.5,
                               ylabel=r'${}$'.format("K_{p}"), alpha=0.9, bar_colors=color_forecast)
 
-    plt.savefig("./Horizon{}_comparison.png".format(horizon))
+    plt.savefig(os.path.join(args.output, "Comparison_Bar_Kpmodel_{}_hor_{}.png".format(args.model, args.horizon)))
 
     fig2 = plt.figure(figsize=(15, 8))
     ax2 = fig2.add_subplot(1, 1, 1)
@@ -137,23 +141,8 @@ if __name__ == "__main__":
     ax2.set_yticks(y_labels)
     ax2.tick_params(axis="y", labelsize=20, direction='in')
     ax2.set_ylabel(r"$K_{p}$", fontsize=20, rotation=90, labelpad=15)
-    #first_hour = df_niemegk.index[0].hour
-
-    # def map_dates(x):
-    #    if (x.hour - first_hour) % 6 != 0:
-    #        return ""
-    #    elif ((x.hour - first_hour) % 6 == 0) and (x.hour == first_hour):
-    #        return x.strftime("%H:%M\n%d %b")
-    #    else:
-    #        return x.strftime("%H:%M")
-
     ax2.set_xlabel("Time (UTC)", fontsize=15, labelpad=10)
-
-    # x_labels = list(df_niemegk.index.map(lambda x: map_dates(x)))
-
     plt.xticks(fontsize=14)
-
-    # GRID
     ax2.grid(True, axis='y', linestyle='dashed')
 
-    plt.savefig("./Horizon{}_step.png".format(horizon))
+    plt.savefig(os.path.join(args.output, "Comparison_Step_Kpmodel_{}_hor_{}.png".format(args.model, args.horizon)))
