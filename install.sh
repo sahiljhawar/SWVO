@@ -23,15 +23,13 @@ done
 
 if [ -z "$PYTHON_ENV" ]
 then
-  echo "You need to provide a name for a python environment (option -e). Exiting..."
-  exit 1
+  echo "Environment name not provided, installing data_management in current environment"
+else
+  echo "Installing data_management as a package for environment", $PYTHON_ENV
+  source activate "$PYTHON_ENV" || conda activate "$PYTHON_ENV"
 fi
 
-echo Installing PAGER data_management library into system into existing environment "$PYTHON_ENV"
 echo
-
-source activate "$PYTHON_ENV" || conda activate "$PYTHON_ENV"
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 cd "$SCRIPT_DIR" || exit
