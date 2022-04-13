@@ -120,16 +120,43 @@ class KPReader(BaseReader):
         return data, data_timestamp
 
 
-class KPEnsembleReader(BaseReader):
-    def __init__(self, wp3_output_folder="/PAGER/WP3/data/outputs/"):
+class KPEnsembleReader(KPReader):
+    def __init__(self, wp3_output_folder):
         """
-        :param wp3_output_folder: The path to data outputs for WP3. It needs to contain sub-folders with individual
-                                  products (e.g. SWPC, SWIFT).
+        :param wp3_output_folder: The path to data outputs for WP3
         :type wp3_output_folder: str
         """
         super().__init__()
         self.data_folder = wp3_output_folder
-        single_reader = KPReader(wp3_output_folder=self.data_folder)
-        single_reader._check_data_folder()
+        self._check_data_folder()
 
-    def read(self, requested_date, model_name):
+    @staticmethod
+    def _read_single_file(folder, requested_date=None, header=False, model_name=None) -> (list, str):
+        if requested_date is None:
+            requested_date = dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0)
+
+        str_date = requested_date.strftime("%Y%m%dT%H%M%S")
+        file_list = glob.glob(folder + model_name + "_" + str_date + "*ensemble*.csv")
+
+        data = []
+        for file in file_list:
+            if not header:
+                df = pd.read_csv(file, names=["t", "kp"])
+            else:
+                df = pd.read_csv(file)
+            df["t"] = pd.to_datetime(df["t"])
+            df.index = df["t"]
+            df.drop(labels=["t"], axis=1, inplace=True)
+            data.append(df)
+
+        if len(data) == 0:
+            msg = "No Kp ensemble file found for requested date {}".format(requested_date)
+            logging.warning(msg)
+            return None, None
+        else:
+            return data, requested_date
+
+    def read(self, model_name, requested_date=None, *args) -> (list, str):
+        data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT_ENSEMBLE/*"),
+                                                      requested_date, header=True)
+        return data, data_timestamp
