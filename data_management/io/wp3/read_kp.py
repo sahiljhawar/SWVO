@@ -110,10 +110,26 @@ class KPReader(BaseReader):
             data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"),
                                                           requested_date, model_name=model_name, header=True)
         elif source == "swift":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date, header=True)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date,
+                                                          header=True)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
             raise RuntimeError(msg)
 
         return data, data_timestamp
+
+
+class KPEnsembleReader(BaseReader):
+    def __init__(self, wp3_output_folder="/PAGER/WP3/data/outputs/"):
+        """
+        :param wp3_output_folder: The path to data outputs for WP3. It needs to contain sub-folders with individual
+                                  products (e.g. SWPC, SWIFT).
+        :type wp3_output_folder: str
+        """
+        super().__init__()
+        self.data_folder = wp3_output_folder
+        single_reader = KPReader(wp3_output_folder=self.data_folder)
+        single_reader._check_data_folder()
+
+    def read(self, requested_date, model_name):
