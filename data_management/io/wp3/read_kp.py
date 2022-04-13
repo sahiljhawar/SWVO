@@ -121,15 +121,23 @@ class KPReader(BaseReader):
 
 
 class KPEnsembleReader(KPReader):
-    def __init__(self, wp3_output_folder):
+    """
+    Reader class for Kp ensemble forecast from WP3 PAGER project. It is tailored to swift ensemble forecast
+    based Kp forecast.
+    """
+
+    def __init__(self, wp3_output_folder, ensemble_sub_folder="SWIFT_ENSEMBLE"):
         """
         :param wp3_output_folder: The path to data outputs for WP3
         :type wp3_output_folder: str
+        :param ensemble_sub_folder: Sub-folder with data from ensemble forecast
+        :type ensemble_sub_folder: str
         """
         super().__init__(wp3_output_folder)
+        self.ensemble_sub_folder = ensemble_sub_folder
 
     @staticmethod
-    def _read_single_file(folder, requested_date=None, header=False, model_name=None) -> (list, str):
+    def _read_ensemble_files(folder, requested_date=None, header=False, model_name=None) -> (list, str):
         if requested_date is None:
             requested_date = dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0)
 
@@ -155,6 +163,6 @@ class KPEnsembleReader(KPReader):
             return data, requested_date
 
     def read(self, model_name, requested_date=None, *args) -> (list, str):
-        data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT_ENSEMBLE/*"),
-                                                      requested_date, header=False, model_name=model_name)
+        data, data_timestamp = self._read_ensemble_files(os.path.join(self.data_folder, self.ensemble_sub_folder, "/*"),
+                                                         requested_date, header=False, model_name=model_name)
         return data, data_timestamp
