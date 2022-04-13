@@ -126,9 +126,7 @@ class KPEnsembleReader(KPReader):
         :param wp3_output_folder: The path to data outputs for WP3
         :type wp3_output_folder: str
         """
-        super().__init__()
-        self.data_folder = wp3_output_folder
-        self._check_data_folder()
+        super().__init__(wp3_output_folder)
 
     @staticmethod
     def _read_single_file(folder, requested_date=None, header=False, model_name=None) -> (list, str):
@@ -158,5 +156,5 @@ class KPEnsembleReader(KPReader):
 
     def read(self, model_name, requested_date=None, *args) -> (list, str):
         data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT_ENSEMBLE/*"),
-                                                      requested_date, header=True)
+                                                      requested_date, header=False, model_name=model_name)
         return data, data_timestamp
