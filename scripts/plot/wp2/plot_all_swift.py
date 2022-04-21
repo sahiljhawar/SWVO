@@ -61,7 +61,6 @@ if __name__ == "__main__":
                             format="%(asctime)s;%(levelname)s;%(message)s")
 
     recurrent = bool(args.recurrent)
-    RESULTS_PATH = args.output
     plotter = PlotSWIFTOutput()
 
     while True:
@@ -82,9 +81,9 @@ if __name__ == "__main__":
                 logging.info("Plotting and saving SWIFT Ensemble data plot")
                 plotter.plot_ensemble_output(data_gsm)
                 if plotting_date >= date_now:
-                    plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_DEF_ENSEMBLE_GFZ_LAST.png"))
+                    plt.savefig(os.path.join(args.output, "SWIFT_DEF_ENSEMBLE_GFZ_LAST.png"))
                 plt.savefig(
-                    os.path.join(RESULTS_PATH,
+                    os.path.join(args.output,
                                  "SWIFT_DEF_ENSEMBLE_GFZ_{}.png".format(plotting_date.strftime("%Y%m%d"))))
                 logging.info("...Complete!!")
             except (TypeError, FileNotFoundError):

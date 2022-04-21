@@ -21,6 +21,18 @@ spec:
             value: "1"
           - name: LOG_DIR
             value: "/PAGER/WP8/logs/"
+          - name: PYTHON_ENV
+            value: "PAGER_env"
+          - name: SLEEP_TIME_MINUTES
+            value: "10"
+          - name: WP2_OUTPUT_FOLDER
+            value: "/"
+          - name: WP2_FIGURE_FOLDER
+            value: "/"
+          - name: WP3_OUTPUT_FOLDER
+            value: "/"
+          - name: WP3_FIGURE_FOLDER
+              value: "/"
         volumeMounts:
            - name: host-volume
              mountPath: /PAGER
