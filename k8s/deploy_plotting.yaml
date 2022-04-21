@@ -12,6 +12,20 @@ spec:
       labels:
         app: data-management-plotting-routines
     spec:
+      securityContext:
+        runAsUser: 18382
+        runAsGroup: 18386
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 139.17.1.2
+          - 139.17.1.7
+        searches:
+          - gfz-potsdam.de
+        options:
+          - name: ndots
+            value: "2"
+          - name: edns0
       containers:
       - name: data-management-plotting-routines
         image: kub1:5000/data-management:latest
@@ -20,26 +34,54 @@ spec:
           - name: RECURRENT
             value: "1"
           - name: LOG_DIR
-            value: "/PAGER/WP8/logs/"
+            valueFrom:
+              configMapKeyRef:
+                name: pager-data-configuration
+                key: wp8_log_folder
           - name: PYTHON_ENV
             value: "PAGER_env"
           - name: SLEEP_TIME_MINUTES
             value: "10"
           - name: WP2_OUTPUT_FOLDER
-            value: "/"
+            valueFrom:
+              configMapKeyRef:
+                name: pager-data-configuration
+                key: wp2_output_folder
           - name: WP2_FIGURE_FOLDER
-            value: "/"
+            valueFrom:
+              configMapKeyRef:
+                name: pager-data-configuration
+                key: wp2_figure_folder
           - name: WP3_OUTPUT_FOLDER
-            value: "/"
+            valueFrom:
+              configMapKeyRef:
+                name: pager-data-configuration
+                key: wp3_output_folder
           - name: WP3_FIGURE_FOLDER
-              value: "/"
+            valueFrom:
+              configMapKeyRef:
+                name: pager-data-configuration
+                key: wp3_figure_folder
         volumeMounts:
-           - name: host-volume
-             mountPath: /PAGER
+          - name: wp3-storage
+            mountPath: /PAGER/WP3/
+          - name: wp2-storage
+            mountPath: /PAGER/WP2/
+          - name: wp8-storage
+              mountPath: /PAGER/WP8/
         ports:
         - containerPort: 80
       volumes:
-        - name: host-volume
-          hostPath:
-            path: /home/ruggero/PAGER
-            type: Directory
+        - name: wp8-storage
+          persistentVolumeClaim:
+            claimName: nfs-pvc-wp8-rwx
+        - name: wp3-storage
+          persistentVolumeClaim:
+            claimName: nfs-pvc-wp3-rwx
+        - name: wp2-storage
+          persistentVolumeClaim:
+            claimName: nfs-pvc-wp2-rwx
+        - name: config
+          configMap:
+            name: pager-data-configuration
+
