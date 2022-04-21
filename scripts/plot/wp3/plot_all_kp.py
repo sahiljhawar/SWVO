@@ -11,12 +11,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-date', action="store", default=None, type=str,
                         help="Requested date to plot in the format %YYYY%mm%dd%HH")
-    parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/", type=str,
+    parser.add_argument('-output', action="store", default=None, type=str,
                         help="Path to a folder where to store the produced figures")
-    parser.add_argument('-input', action="store", default="/PAGER/WP3/data/outputs/", type=str,
+    parser.add_argument('-input', action="store", default=None, type=str,
                         help="Path to a folder where the data to plot is stored...(be more precise)")
-    parser.add_argument('-logdir', action="store", default=None, type=str,
+    parser.add_argument('-log', action="store", default=None, type=str,
                         help="Log directory if logging is to be enabled.")
+    parser.add_argument('-recurrent', action="store", default=None, type=int,
+                        help="True if you want to keep running, False if you want to run it only once")
+    parser.add_argument('-sleep', action="store", default=None, type=int,
+                        help="Time for the script to sleep in minutes")
 
     args = parser.parse_args()
 
@@ -31,9 +35,9 @@ if __name__ == "__main__":
             logging.error(msg)
             raise RuntimeError(msg)
 
-    if args.logdir is not None:
+    if args.log is not None:
         log_file = "wp3_plot_all_kp_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
-        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
+        logging.basicConfig(filename=os.path.join(args.log, log_file), level=logging.INFO,
                             datefmt="%Y-%m-%d %H:%M:%S",
                             format="%(asctime)s;%(levelname)s;%(message)s")
 
@@ -85,18 +89,19 @@ if __name__ == "__main__":
         except TypeError:
             logging.error(
                 "Data for L1 Kp forecast for date {} and model {} not found...impossible to produce data plot...".format(plotting_date, model_name))
- 
-    try:
-        logging.info("Reading SWIFT Kp forecast data file...")
-        data_swift, date = reader.read("swift", plotting_date)
-        logging.info("...Complete!!")
-        logging.info("Plotting and saving SWIFT Kp forecast data...")
-        plotter.plot_output(data_swift)
-        if plotting_date >= date_now:
-            plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_LAST.png"))
-        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_{}.png".format(date.strftime("%Y%m%dT%H%M%S"))))
-        logging.info("...Complete!!")
-    except TypeError:
-        logging.error(
-            "Data for SWIFT Kp forecast for date {} not found...impossible to produce data plot...".format(
-                plotting_date))
+
+
+#    try:
+#        logging.info("Reading SWIFT Kp forecast data file...")
+#        data_swift, date = reader.read("swift", plotting_date)
+#        logging.info("...Complete!!")
+#        logging.info("Plotting and saving SWIFT Kp forecast data...")
+#        plotter.plot_output(data_swift)
+#        if plotting_date >= date_now:
+#            plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_LAST.png"))
+#        plt.savefig(os.path.join(RESULTS_PATH, "SWIFT_{}.png".format(date.strftime("%Y%m%dT%H%M%S"))))
+#        logging.info("...Complete!!")
+#    except TypeError:
+#        logging.error(
+#            "Data for SWIFT Kp forecast for date {} not found...impossible to produce data plot...".format(
+#                plotting_date))
