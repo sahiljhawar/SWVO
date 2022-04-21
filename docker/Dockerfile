@@ -1,10 +1,13 @@
-FROM continuumio/miniconda:latest
+FROM continuumio/miniconda3:latest
 
 LABEL maintainer="ruggero.vasile@gfz-potsdam.de"
 LABEL version="beta"
 LABEL description="Docker image to run routines for data management of PAGER project"
 
 SHELL ["/bin/bash", "-c"]
+RUN apt-get update
+RUN apt-get install -y gcc
+RUN apt-get install -y gfortran
 
 RUN mkdir data_management
 RUN mkdir data_management/data_management/
@@ -25,10 +28,9 @@ RUN chmod 777 -R scripts
 RUN chmod 777 plot_entrypoint.sh
 RUN chmod 777 check_entrypoint.sh
 
-RUN conda create --name data_management python=3.8
-SHELL ["conda", "run", "-n", "data_management", "/bin/bash", "-c"]
-
-RUN bash data_management/install.sh
+RUN conda create --name PAGER_env python=3.9
+#SHELL ["conda", "run", "-n", "data_management", "/bin/bash", "-c"]
+RUN bash data_management/install.sh -e PAGER_env
 
 RUN apt-get update --allow-releaseinfo-change
 RUN apt-get update --fix-missing -y
