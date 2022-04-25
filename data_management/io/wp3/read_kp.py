@@ -86,7 +86,7 @@ class KPReader(BaseReader):
             logging.error("No file found for requested date {}".format(requested_date))
             return None, None
 
-    def read(self, source, requested_date=None, model_name=None) -> tuple:
+    def read(self, source, requested_date=None, model_name=None, header=False) -> tuple:
         """
         This function reads one of the available PAGER Kp forecast products.
 
@@ -96,6 +96,8 @@ class KPReader(BaseReader):
         :type requested_date: datetime.datetime or None
         :param model_name:
         :type model_name: str
+        :param header:
+        :type header: bool
         :raises: RuntimeError: This exception is raised if the sources of data requested is not among
                  the available ones.
 
@@ -103,15 +105,17 @@ class KPReader(BaseReader):
         """
 
         if source == "niemegk":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "NIEMEGK/*"), requested_date)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "NIEMEGK/*"), requested_date,
+                                                          header=header)
         elif source == "swpc":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date)
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date,
+                                                          header=header)
         elif source == "l1":
             data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"),
-                                                          requested_date, model_name=model_name, header=True)
+                                                          requested_date, model_name=model_name, header=header)
         elif source == "swift":
             data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date,
-                                                          header=True)
+                                                          header=header)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
@@ -162,7 +166,7 @@ class KPEnsembleReader(KPReader):
         else:
             return data, requested_date
 
-    def read(self, model_name, requested_date=None, *args) -> (list, str):
+    def read(self, model_name, requested_date=None, header=False, *args) -> (list, str):
         data, data_timestamp = self._read_ensemble_files(os.path.join(self.data_folder, self.ensemble_sub_folder, "/*"),
-                                                         requested_date, header=False, model_name=model_name)
+                                                         requested_date, header=header, model_name=model_name)
         return data, data_timestamp
