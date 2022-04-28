@@ -7,8 +7,9 @@ variables:
   REGISTER: localhost
 
 before_script:
-  - cd /builds/pager-wp8/data_management/
-  - bash install.sh
+  pip install numpy
+  #- cd /builds/pager-wp8/data_management/
+  #- bash install.sh
 
 stages:
   - unit-tests
@@ -23,7 +24,7 @@ unittest:
   script:
     - cd /builds/pager-wp8/data_management/tests/unittests
     - echo "Running unittests for data_management"
-    - pytest .
+   # - pytest .
   #rules:
   #  - if: $CI_COMMIT_BRANCH == $PRE_RELEASE_BRANCH
 
