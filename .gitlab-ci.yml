@@ -1,0 +1,31 @@
+---
+image: python:slim
+
+variables:
+  PRODUCTION_BRANCH: PAGER-production
+  PRE_RELEASE_BRANCH: PAGER-dev
+  REGISTER: localhost
+
+before_script:
+  - cd /builds/pager-wp3/data_management/
+  - bash install.sh -e PAGER-env
+
+stages:
+  - unit-tests
+  - integration-tests
+  - test-build
+  - deployment
+
+unittest:
+  stage: unit-tests
+  tags:
+    - Deployment
+  script:
+    - source activate PAGER-env
+    - cd /builds/pager-wp3/data_management/tests/unittests
+    - echo "Running unittests for data_management"
+    - pytest .
+  #rules:
+  #  - if: $CI_COMMIT_BRANCH == $PRE_RELEASE_BRANCH
+
+
