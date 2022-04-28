@@ -1,5 +1,5 @@
 ---
-image: python:latest
+image: continuum/minoconda3:latest
 
 variables:
   PRODUCTION_BRANCH: PAGER-production
