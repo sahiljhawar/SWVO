@@ -7,7 +7,7 @@ variables:
   REGISTER: localhost
 
 before_script:
-  - cd /builds/pager-wp3/data_management/
+  - cd /builds/pager-wp8/data_management/
   - bash install.sh -e PAGER-env
 
 stages:
@@ -22,7 +22,7 @@ unittest:
     - Deployment
   script:
     - source activate PAGER-env
-    - cd /builds/pager-wp3/data_management/tests/unittests
+    - cd /builds/pager-wp8/data_management/tests/unittests
     - echo "Running unittests for data_management"
     - pytest .
   #rules:
