@@ -1,5 +1,5 @@
 ---
-image: continuum/miniconda3:latest
+image: continuumio/miniconda3:latest
 
 variables:
   PRODUCTION_BRANCH: PAGER-production
