@@ -1,5 +1,5 @@
 ---
-image: python:slim
+image: python:latest
 
 variables:
   PRODUCTION_BRANCH: PAGER-production
@@ -8,7 +8,7 @@ variables:
 
 before_script:
   - cd /builds/pager-wp8/data_management/
-  - bash install.sh -e PAGER-env
+  - bash install.sh
 
 stages:
   - unit-tests
@@ -21,7 +21,6 @@ unittest:
   tags:
     - Deployment
   script:
-    - source activate PAGER-env
     - cd /builds/pager-wp8/data_management/tests/unittests
     - echo "Running unittests for data_management"
     - pytest .
