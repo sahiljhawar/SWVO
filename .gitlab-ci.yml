@@ -7,11 +7,11 @@ variables:
   REGISTER: localhost
 
 before_script:
-  #- pip install numpy
   - cd /builds/pager-wp8/data_management/
-  - pip install -r requirements.txt
-  - python setup.py install
-  - python setup.py develop
+  - bash install.sh
+  #- pip install -r requirements.txt
+  #- python setup.py install
+  #- python setup.py develop
 
 stages:
   - unit-tests
