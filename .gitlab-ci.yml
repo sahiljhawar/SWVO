@@ -10,6 +10,8 @@ before_script:
   #- pip install numpy
   - cd /builds/pager-wp8/data_management/
   - pip install -r requirements.txt
+  - python setup.py install
+  - python setup.py develop
 
 stages:
   - unit-tests
@@ -24,7 +26,7 @@ unittest:
   script:
     - cd /builds/pager-wp8/data_management/tests/unittests
     - echo "Running unittests for data_management"
-   # - pytest .
+    - pytest .
   #rules:
   #  - if: $CI_COMMIT_BRANCH == $PRE_RELEASE_BRANCH
 
