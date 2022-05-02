@@ -10,22 +10,22 @@ from data_management.io.wp3.read_kp import KPReader
 from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
 
 
-def read_niemegk_data(start_date, final_date):
+def read_niemegk_data(s_date, e_date):
     reader = KPReader()
     index = 0
     data = []
     while True:
-        data_niemegk, _ = reader.read("niemegk", start_date + dt.timedelta(days=2 + index))
+        data_niemegk, _ = reader.read("niemegk", s_date)
         if data_niemegk is not None:
             if index > 0:
                 data_niemegk = data_niemegk[data_niemegk.index > max(data[-1].index)]
             data.append(data_niemegk)
-            if max(data_niemegk.index) > final_date:
+            if max(data_niemegk.index) > e_date:
                 break
         index += 1
     data = pd.concat(data, axis=0)
-    data = data[data.index <= final_date]
-    data = data[data.index >= start_date]
+    data = data[data.index <= e_date]
+    data = data[data.index >= s_date]
     return data
 
 
@@ -39,6 +39,7 @@ def read_forecast_data(start_date, final_date, horizon, source, model_name):
             break
         data_forecast, _ = reader.read(source, start_date + dt.timedelta(hours=3 * index - horizon),
                                        model_name=model_name)
+        print (start_date)
         forecast_value = data_forecast[data_forecast.index == start_date +
                                        dt.timedelta(hours=3 * index)]["kp"].values[0]
         values.append(forecast_value)
@@ -49,7 +50,9 @@ def read_forecast_data(start_date, final_date, horizon, source, model_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-date', action="store", default=None, type=str,
+    parser.add_argument('-start_date', action="store", default=None, type=str,
+                        help="Requested date to plot in the format %YYYY%mm%dd%HH")
+    parser.add_argument('-end_date', action="store", default=None, type=str,
                         help="Requested date to plot in the format %YYYY%mm%dd%HH")
     parser.add_argument('-output', action="store", default="/PAGER/WP3/data/figures/comparison/", type=str,
                         help="Path to a folder where to store the produced figures")
@@ -59,36 +62,45 @@ if __name__ == "__main__":
                         help="Kp model name")
     parser.add_argument('-horizon', action="store", default=None, type=int,
                         help="Forecast horizon for Kp as integer multiple of 3 starting from 0")
-    parser.add_argument('-logdir', action="store", default=None, type=str,
-                        help="Log directory if logging is to be enabled.")
+    #parser.add_argument('-logdir', action="store", default=None, type=str,
+    #                    help="Log directory if logging is to be enabled.")
 
     args = parser.parse_args()
 
     date_now = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
-    if args.date is None:
-        plotting_date = date_now
+    if (args.start_date is None) or (args.end_date is None):
+        start_date = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0) - dt.timedelta(hours=24)
+        end_date = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        logging.warning("One or more dates not provide. Using default current date for an interval of one day")
     else:
         try:
-            plotting_date = dt.datetime.strptime(args.date, "%Y%m%d%H")
+            start_date = dt.datetime.strptime(args.start_date, "%Y%m%d%H")
+            end_date = dt.datetime.strptime(args.end_date, "%Y%m%d%H")
+            assert args.end_date > args.start_date
         except ValueError:
-            msg = "Provided date {} not in correct format %Y%m%d%H. Aborting...".format(args.date)
+            msg = "At least one of the provided dates {} not in correct format %Y%m%d%H. Aborting...".format(args.date)
             logging.error(msg)
             raise RuntimeError(msg)
+        except AssertionError:
+            msg = "End date {} is smaller of start date {}. Aborting...".format(args.end_date, args.start_date)
+            logging.error(msg)
+            raise AssertionError(msg)
 
-    if args.logdir is not None:
-        log_file = "wp3_plot_all_kp_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
-        logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
-                            datefmt="%Y-%m-%d %H:%M:%S",
-                            format="%(asctime)s;%(levelname)s;%(message)s")
+
+    #if args.logdir is not None:
+    #    log_file = "wp3_plot_all_kp_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
+    #    logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
+    #                        datefmt="%Y-%m-%d %H:%M:%S",
+    #                        format="%(asctime)s;%(levelname)s;%(message)s")
 
     RESULTS_PATH = args.output
     DATA_PATH = args.input
 
-    start = dt.datetime(2021, 11, 2)
-    final = dt.datetime(2021, 11, 5)
+    #start = dt.datetime(2021, 11, 2)
+    #final = dt.datetime(2021, 11, 5)
 
-    df_niemegk = read_niemegk_data(start, final)
-    df_forecast = read_forecast_data(start, final, source="l1", horizon=args.horizon, model_name=args.model)
+    df_niemegk = read_niemegk_data(start_date, end_date)
+    df_forecast = read_forecast_data(start_date, end_date, source="l1", horizon=args.horizon, model_name=args.model)
 
     df_niemegk = df_niemegk[df_niemegk.index >= min(df_forecast.index)]
     df_niemegk = df_niemegk[df_niemegk.index <= max(df_forecast.index)]
