@@ -10,12 +10,12 @@ from data_management.io.wp3.read_kp import KPReader
 from data_management.plotting.wp3.kp.plot_kp import PlotKpOutput
 
 
-def read_niemegk_data(s_date, e_date):
-    reader = KPReader()
+def read_niemegk_data(s_date, e_date, input_folder):
+    reader = KPReader(input_folder)
     index = 0
     data = []
     while True:
-        data_niemegk, _ = reader.read("niemegk", s_date)
+        data_niemegk, _ = reader.read("niemegk", s_date + dt.timedelta(days=index), header=False)
         if data_niemegk is not None:
             if index > 0:
                 data_niemegk = data_niemegk[data_niemegk.index > max(data[-1].index)]
@@ -29,22 +29,21 @@ def read_niemegk_data(s_date, e_date):
     return data
 
 
-def read_forecast_data(start_date, final_date, horizon, source, model_name):
-    reader = KPReader()
+def read_forecast_data(s_date, e_date, horizon, source, model_name, input_folder):
+    reader = KPReader(input_folder)
     values = []
     dates = []
     index = 0
     while True:
-        if start_date + dt.timedelta(hours=3 * index) > final_date:
-            break
-        data_forecast, _ = reader.read(source, start_date + dt.timedelta(hours=3 * index - horizon),
-                                       model_name=model_name)
-        print (start_date)
-        forecast_value = data_forecast[data_forecast.index == start_date +
+        data_forecast, _ = reader.read(source, s_date + dt.timedelta(hours=3 * index - horizon), model_name=model_name,
+                                       header=False)
+        forecast_value = data_forecast[data_forecast.index == s_date +
                                        dt.timedelta(hours=3 * index)]["kp"].values[0]
         values.append(forecast_value)
-        dates.append(start_date + dt.timedelta(hours=(3 * index)))
+        dates.append(s_date + dt.timedelta(hours=(3 * index)))
         index += 1
+        if s_date + dt.timedelta(hours=3 * index) > e_date:
+            break
     return pd.DataFrame({"kp": values}, index=dates)
 
 
@@ -62,7 +61,7 @@ if __name__ == "__main__":
                         help="Kp model name")
     parser.add_argument('-horizon', action="store", default=None, type=int,
                         help="Forecast horizon for Kp as integer multiple of 3 starting from 0")
-    #parser.add_argument('-logdir', action="store", default=None, type=str,
+    # parser.add_argument('-log', action="store", default=None, type=str,
     #                    help="Log directory if logging is to be enabled.")
 
     args = parser.parse_args()
@@ -86,8 +85,7 @@ if __name__ == "__main__":
             logging.error(msg)
             raise AssertionError(msg)
 
-
-    #if args.logdir is not None:
+    # if args.logdir is not None:
     #    log_file = "wp3_plot_all_kp_{}.log".format(plotting_date.strftime("%Y%m%dT%H%M%S"))
     #    logging.basicConfig(filename=os.path.join(args.logdir, log_file), level=logging.INFO,
     #                        datefmt="%Y-%m-%d %H:%M:%S",
@@ -96,11 +94,9 @@ if __name__ == "__main__":
     RESULTS_PATH = args.output
     DATA_PATH = args.input
 
-    #start = dt.datetime(2021, 11, 2)
-    #final = dt.datetime(2021, 11, 5)
-
-    df_niemegk = read_niemegk_data(start_date, end_date)
-    df_forecast = read_forecast_data(start_date, end_date, source="l1", horizon=args.horizon, model_name=args.model)
+    df_niemegk = read_niemegk_data(start_date, end_date, DATA_PATH)
+    df_forecast = read_forecast_data(start_date, end_date, source="l1", horizon=args.horizon, model_name=args.model,
+                                     input_folder=DATA_PATH)
 
     df_niemegk = df_niemegk[df_niemegk.index >= min(df_forecast.index)]
     df_niemegk = df_niemegk[df_niemegk.index <= max(df_forecast.index)]
