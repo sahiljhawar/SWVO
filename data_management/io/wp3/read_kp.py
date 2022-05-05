@@ -146,7 +146,7 @@ class KPEnsembleReader(KPReader):
             requested_date = dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0)
 
         str_date = requested_date.strftime("%Y%m%dT%H%M%S")
-        file_list = glob.glob(folder + "/*" + model_name + "_" + str_date + "*ensemble*.csv")
+        file_list = glob.glob(folder + "/*" + model_name + "_*" + str_date + "*ensemble*.csv")
 
         data = []
         for file in file_list:
