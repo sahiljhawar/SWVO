@@ -16,12 +16,12 @@ class KPReader(BaseReader):
     def __init__(self, wp3_output_folder):
         """
         :param wp3_output_folder: The path to data outputs for WP3. It needs to contain sub-folders with individual
-                                  products (e.g. SWPC, SWIFT).
+                                  products (e.g. SWPC, NIEMEGK).
         :type wp3_output_folder: str
         """
         super().__init__()
-        self._check_data_folder()
         self.data_folder = wp3_output_folder
+        self._check_data_folder()
 
     def _check_data_folder(self):
         if not os.path.exists(self.data_folder):
