@@ -10,18 +10,18 @@ from data_management.io.base_file_reader import BaseReader
 class KPReader(BaseReader):
     """
     Reader class for Kp products from WP3 PAGER project. It reads data from different sources of Kp data,
-    e.g. SWPC forecast, SWIFT based and L1 real time based forecasts, as well as GFZ Niemegk nowcast.
+    e.g. SWPC forecast, NIEMEGK nowcast and L1 real time based forecasts.
     """
 
-    def __init__(self, wp3_output_folder="/PAGER/WP3/data/outputs/"):
+    def __init__(self, wp3_output_folder):
         """
         :param wp3_output_folder: The path to data outputs for WP3. It needs to contain sub-folders with individual
                                   products (e.g. SWPC, SWIFT).
         :type wp3_output_folder: str
         """
         super().__init__()
-        self.data_folder = wp3_output_folder
         self._check_data_folder()
+        self.data_folder = wp3_output_folder
 
     def _check_data_folder(self):
         if not os.path.exists(self.data_folder):
@@ -137,8 +137,7 @@ class KPEnsembleReader(KPReader):
         :param ensemble_sub_folder: Sub-folder with data from ensemble forecast
         :type ensemble_sub_folder: str
         """
-        super().__init__(wp3_output_folder)
-        self.ensemble_sub_folder = ensemble_sub_folder
+        super().__init__(os.path.join(wp3_output_folder, ensemble_sub_folder))
 
     @staticmethod
     def _read_ensemble_files(folder, requested_date=None, header=False, model_name=None) -> (list, str):
@@ -167,6 +166,6 @@ class KPEnsembleReader(KPReader):
             return data, requested_date
 
     def read(self, model_name, requested_date=None, header=False, *args) -> (list, str):
-        data, data_timestamp = self._read_ensemble_files(os.path.join(self.data_folder, self.ensemble_sub_folder),
-                                                         requested_date, header=header, model_name=model_name)
+        data, data_timestamp = self._read_ensemble_files(self.data_folder, requested_date,
+                                                         header=header, model_name=model_name)
         return data, data_timestamp

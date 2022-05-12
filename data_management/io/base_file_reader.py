@@ -3,12 +3,12 @@ from abc import abstractmethod
 
 class BaseReader(object):
     def __init__(self):
-        pass
+        self.data_folder = None
 
     @abstractmethod
     def read(self, *args):
-        raise NotImplementedError
+        raise NotImplementedError("Read method for Base Reader not implemented.")
 
     @abstractmethod
     def _check_data_folder(self):
-        raise NotImplementedError
+        raise NotImplementedError("Check data folder method for Base Reader not implemented.")

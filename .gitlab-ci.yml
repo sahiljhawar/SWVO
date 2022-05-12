@@ -33,7 +33,7 @@ integrationtest:
   tags:
     - Deployment
   script:
-    - cd /builds/pager-wp8/data_management/tests/unittests
+    - cd /builds/pager-wp8/data_management/tests/integration_tests
     - echo "Running integration for data_management"
     - pytest .
   rules:
