@@ -25,7 +25,7 @@ if [ -z "$PYTHON_ENV" ]
 then
   echo "Environment name not provided, installing data_management in current environment"
 else
-  echo "Installing data_management as a package for environment: " $PYTHON_ENV
+  echo "Installing data_management as a package for environment: " "$PYTHON_ENV"
   source activate "$PYTHON_ENV" || conda activate "$PYTHON_ENV"
 fi
 

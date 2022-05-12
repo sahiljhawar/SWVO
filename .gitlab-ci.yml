@@ -1,5 +1,4 @@
 ---
-# Need to use alternative to this image. A basic python image with venv should make the job
 image: continuumio/miniconda3:latest
 
 variables:
@@ -10,6 +9,9 @@ variables:
 before_script:
   - cd /builds/pager-wp8/data_management/
   - bash install.sh
+  #- pip install -r requirements.txt
+  #- python setup.py install
+  #- python setup.py develop
 
 stages:
   - unit-tests
@@ -25,3 +27,7 @@ unittest:
     - cd /builds/pager-wp8/data_management/tests/unittests
     - echo "Running unittests for data_management"
     - pytest .
+  #rules:
+  #  - if: $CI_COMMIT_BRANCH == $PRE_RELEASE_BRANCH
+
+
