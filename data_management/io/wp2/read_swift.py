@@ -17,13 +17,13 @@ class SwiftReader(BaseReader):
     PROTON_MASS = 1.67262192369e-27
     DATA_FIELDS = ["proton_density", "speed", "b", "temperature", "bx", "by", "bz", "ux", "uy", "uz"]
 
-    def __init__(self, wp2_output_folder="/PAGER/WP2/data/outputs/SWIFT/"):
+    def __init__(self, wp2_output_folder, sub_folder="SWIFT"):
         """
         :param wp2_output_folder: The path to the output folder of WP2 products.
         :type wp2_output_folder: str
         """
         super().__init__()
-        self.data_folder = wp2_output_folder
+        self.data_folder = os.path.join(wp2_output_folder, sub_folder)
         self._check_data_folder()
 
     def _check_data_folder(self):
@@ -133,13 +133,14 @@ class SwiftReader(BaseReader):
 
 
 class SwiftEnsembleReader(SwiftReader):
-    def __init__(self, wp2_output_folder="/PAGER/WP2/data/outputs/SWIFT_ENSEMBLE/"):
+    def __init__(self, wp2_output_folder, sub_folder="SWIFT_ENSEMBLE"):
         """
         :param wp2_output_folder: The path to the output folder of WP2 products.
         :type wp2_output_folder: str
+        :param sub_folder: The sub-folder containing the SWIFT_ENSEMBLE outputs
+        :type sub_folder: str
         """
-        super().__init__()
-        self.data_folder = wp2_output_folder
+        super().__init__(wp2_output_folder, sub_folder)
         self._check_data_folder()
 
     def _get_ensemble_number(self, date_string):

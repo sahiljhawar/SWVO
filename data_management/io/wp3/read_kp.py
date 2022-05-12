@@ -49,7 +49,7 @@ class KPReader(BaseReader):
             requested_date = dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0)
 
         date_found = None
-        for file in glob.glob(folder):
+        for file in glob.glob(folder + "/*"):
             date = file.split("/")[-1]
             date = date.split(".")[0]
             try:
@@ -90,12 +90,12 @@ class KPReader(BaseReader):
         """
         This function reads one of the available PAGER Kp forecast products.
 
-        :param source: The source of Kp product requested. Choose among "niemegk", "swift", "swpc" and "l1"
+        :param source: The source of Kp product requested. Choose among "niemegk", "swpc" and "l1"
         :type source: str
         :param requested_date: Requested data for data to read. If None it reads data from the latest file produced.
         :type requested_date: datetime.datetime or None
         :param model_name:
-        :type model_name: str
+        :type model_name: str or None
         :param header:
         :type header: bool
         :raises: RuntimeError: This exception is raised if the sources of data requested is not among
@@ -105,17 +105,15 @@ class KPReader(BaseReader):
         """
 
         if source == "niemegk":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "NIEMEGK/*"), requested_date,
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "NIEMEGK"), requested_date,
                                                           header=header)
         elif source == "swpc":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWPC/*"), requested_date,
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWPC"), requested_date,
                                                           header=header)
         elif source == "l1":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST/*"),
-                                                          requested_date, model_name=model_name, header=header)
-        elif source == "swift":
-            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "SWIFT/*"), requested_date,
-                                                          header=header)
+            assert model_name is not None
+            data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST"), requested_date,
+                                                          model_name=model_name, header=header)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
@@ -130,14 +128,14 @@ class KPEnsembleReader(KPReader):
     based Kp forecast.
     """
 
-    def __init__(self, wp3_output_folder, ensemble_sub_folder="SWIFT_ENSEMBLE"):
+    def __init__(self, wp3_output_folder, sub_folder="SWIFT_ENSEMBLE"):
         """
         :param wp3_output_folder: The path to data outputs for WP3
         :type wp3_output_folder: str
-        :param ensemble_sub_folder: Sub-folder with data from ensemble forecast
-        :type ensemble_sub_folder: str
+        :param sub_folder: Sub-folder with data from ensemble forecast
+        :type sub_folder: str
         """
-        super().__init__(os.path.join(wp3_output_folder, ensemble_sub_folder))
+        super().__init__(os.path.join(wp3_output_folder, sub_folder))
 
     @staticmethod
     def _read_ensemble_files(folder, requested_date=None, header=False, model_name=None) -> (list, str):
