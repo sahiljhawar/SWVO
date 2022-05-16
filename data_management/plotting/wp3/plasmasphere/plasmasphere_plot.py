@@ -17,21 +17,22 @@ import matplotlib.ticker as mticker
 
 from data_management.plotting.plotting_base import PlotOutput
 
-basepath = os.path.dirname(__file__)
-
 
 class PlasmaspherePlot(PlotOutput):
 
-    def __init__(self):
+    def __init__(self, path_c_map=None):
 
         super().__init__()
 
         self.figure = None
         self.ax = None
-        #self.colour_map = mpl.colors.ListedColormap(
-        #    np.load(os.path.abspath(os.path.join(basepath, './my_cmap.npy')))
-        #)
-        self.colour_map = mpl.colors.ListedColormap(np.load(os.path.abspath(os.path.join("/PAGER/WP8/data_management/data_management/plotting/wp3/plasmasphere", 'my_cmap.npy'))))
+        if path_c_map is None:
+            base_path = os.path.dirname(__file__)
+            self.path_c_map = os.path.abspath(os.path.join(base_path, 'my_cmap.npy'))
+        else:
+            self.path_c_map = path_c_map
+
+        self.colour_map = mpl.colors.ListedColormap(np.load(self.path_c_map))
 
     @staticmethod
     def _get_date_components(date):
@@ -122,7 +123,8 @@ class PlasmaspherePlot(PlotOutput):
     def _set_figure(self, fig):
         self.figure = fig
 
-    def _nan_presence(self, density_values):
+    @staticmethod
+    def _nan_presence(density_values):
         if np.sum(np.isnan(density_values)):
             return True
 
@@ -158,7 +160,8 @@ class PlasmaspherePlot(PlotOutput):
         self.figure.subplots_adjust(left=0.07, right=0.8)
         plt.tight_layout()
 
-    def _save(self, path):
+    @staticmethod
+    def _save(path):
         plt.savefig(path)
         plt.close()
 
