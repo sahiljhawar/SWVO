@@ -27,7 +27,8 @@ class DSCOVRRTReader(BaseReader):
 
     def _check_data_folder(self):
         if not os.path.exists(self.data_folder):
-            msg = "Data folder for WP2 DSCOVR REAL-TIME solar wind output not found...impossible to retrieve data."
+            msg = "Data folder {} for WP2 DSCOVR REAL-TIME solar wind output not found...impossible to retrieve data.".format(
+                self.data_folder)
             logging.error(msg)
             raise FileNotFoundError(msg)
 

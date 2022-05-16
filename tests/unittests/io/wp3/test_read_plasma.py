@@ -1,13 +1,8 @@
 from unittest import mock
-import os
-import inspect
-import sys
 import pandas as pd
 import numpy as np
 import datetime as dt
 
-LOCAL_PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-sys.path.append(os.path.join(LOCAL_PATH, "../../../../"))
 from data_management.io.wp3.read_plasmasphere import PlasmaspherePredictionReader
 
 
