@@ -1,13 +1,8 @@
 from unittest import mock
-import os
-import inspect
-import sys
 import pandas as pd
 import numpy as np
 import datetime as dt
 
-LOCAL_PATH = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-sys.path.append(os.path.join(LOCAL_PATH, "../../../../"))
 from data_management.io.wp3.read_plasmasphere import PlasmaspherePredictionReader
 
 
@@ -16,8 +11,9 @@ class TestReadPlasma(object):
     @mock.patch("data_management.io.wp3.read_plasmasphere.PlasmaspherePredictionReader._check_data_folder",
                 return_value=None, autospec=True)
     def test_init_folder_found(self, mocker):
+        folder = "/not/existing/path/"
         try:
-            PlasmaspherePredictionReader()
+            PlasmaspherePredictionReader(folder)
             assert True
         except FileNotFoundError:
             assert False
@@ -25,15 +21,17 @@ class TestReadPlasma(object):
     @mock.patch("data_management.io.wp3.read_plasmasphere.PlasmaspherePredictionReader._check_data_folder",
                 autospec=True, side_effect=FileNotFoundError())
     def test_init_folder_not_found(self, mocker):
+        folder = "/not/existing/path/"
         try:
-            PlasmaspherePredictionReader()
+            PlasmaspherePredictionReader(folder)
             assert False
         except FileNotFoundError:
             assert True
 
     @mock.patch("os.path.exists", return_value=True, autospec=True)
     def test_check_data_folder_ok(self, mocker):
-        reader = PlasmaspherePredictionReader()
+        folder = "/not/existing/path/"
+        reader = PlasmaspherePredictionReader(folder)
         assert reader._check_data_folder() is None
 
     PLASMA = pd.DataFrame(index=pd.date_range(start="2021-01-01", end="2021-01-01 23:59", freq="3H"))
@@ -47,7 +45,8 @@ class TestReadPlasma(object):
     @mock.patch("data_management.io.wp3.read_plasmasphere.PlasmaspherePredictionReader._check_data_folder",
                 return_value=None, autospec=True)
     def test_read_standard(self, mocker, mocker2):
-        reader = PlasmaspherePredictionReader()
+        folder = "/not/existing/path/"
+        reader = PlasmaspherePredictionReader(folder)
         data, timestamp_data = reader.read("gfz_plasma", requested_date=None)
         for field in ["L", "MLT", "t"]:
             assert field in data
