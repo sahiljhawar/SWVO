@@ -11,6 +11,8 @@ from email.headerregistry import Address
 
 
 class RingCurrentCheck(BaseFileCheck, ABC):
+    RC_FILE_TEMPLATE_NAME = "VERB4D_RC_Forecast"
+
     def __init__(self, wp6_data_folder, product_sub_folder):
         super().__init__()
         self.wp_folder = wp6_data_folder
@@ -34,14 +36,15 @@ class RingCurrentCheck(BaseFileCheck, ABC):
 
     def check_files_exists(self, check_date):
         time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        file_list = sorted(glob.glob(os.path.join(self.wp_folder, self.product_sub_folder) + "/*"))
+        file_list = sorted(glob.glob(
+            os.path.join(self.wp_folder, self.product_sub_folder) + "/{}*".format(self.RC_FILE_TEMPLATE_NAME)))
         for file in file_list:
-            date = RingCurrentCheck._extract_date_from_file(file)
+            date = self._extract_date_from_file(file)
             if date == time_to_check:
                 return True
         return False
 
-    def run_check(self, date=None, notify=False):
+    def run_check(self, date, notify=False):
         """
         It runs a check about existence of given outputs of ring current module. If the files are not found
         for a given date provided, it sends an email to a default list of users and notifies them
@@ -65,3 +68,4 @@ class RingCurrentCheck(BaseFileCheck, ABC):
                                    address_from=self.email_sender)
         else:
             logging.info("Ring Current outputs for date {} found!!".format(date.date()))
+
