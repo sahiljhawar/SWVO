@@ -1,16 +1,18 @@
+from abc import ABC
+
 from data_management.check.base_file_checker import BaseFileCheck
 from data_management.notifications.email_notifier import send_failure_email
 
-import datetime as dt
 import glob
 import logging
 from email.headerregistry import Address
 
 
-class PlasmaDataCheck(BaseFileCheck):
-    def __init__(self):
+class PlasmaDataCheck(BaseFileCheck, ABC):
+    def __init__(self, wp3_data_folder, product_sub_folder):
         super().__init__()
-        self.file_folder = "/PAGER/WP3/data/outputs/"
+        self.wp_folder = wp3_data_folder
+        self.product_sub_folder = product_sub_folder
         self.subject_email = "PAGER WP3, Plasmasphere Module, DATA FAILURE..."
         self.email_recipients = self._get_email_recipients()
 
@@ -26,7 +28,7 @@ class PlasmaDataCheck(BaseFileCheck):
         check_date = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
         check_date_str = check_date.strftime("%Y-%m-%d")
         try:
-            file = glob.glob(self.file_folder + "/CA/plasmapause_{}.csv".format(check_date_str))[0]
+            file = glob.glob(self.wp_folder + "/CA/plasmapause_{}.csv".format(check_date_str))[0]
             success = True
             logging.info("Carpenter Anderson Plasmapause for date {} found!!".format(check_date.date()))
         except IndexError:
@@ -40,7 +42,7 @@ class PlasmaDataCheck(BaseFileCheck):
         check_date = check_date.replace(minute=0, second=0, microsecond=0)
         check_date_str = check_date.strftime("%Y-%m-%d-%H-%M")
         try:
-            file = glob.glob(self.file_folder + "/GFZ_PLASMA/plasmasphere_density_{}.csv".format(check_date_str))[0]
+            file = glob.glob(self.wp_folder + "/GFZ_PLASMA/plasmasphere_density_{}.csv".format(check_date_str))[0]
             success = True
             logging.info("Plasma density for date {} found!!".format(check_date))
         except IndexError:

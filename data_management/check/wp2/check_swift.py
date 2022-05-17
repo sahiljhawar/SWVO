@@ -9,9 +9,10 @@ from email.headerregistry import Address
 
 
 class SwiftCheck(BaseFileCheck):
-    def __init__(self):
+    def __init__(self, wp2_data_folder, product_sub_folder):
         super().__init__()
-        self.file_folder = "/PAGER/WP2/data/outputs/SWIFT/"
+        self.wp_folder = wp2_data_folder
+        self.product_sub_folder = product_sub_folder
         self.subject_email = "PAGER WP2, SWIFT Module, DATA FAILURE..."
         self.email_recipients = self._get_email_recipients()
 
@@ -33,7 +34,7 @@ class SwiftCheck(BaseFileCheck):
             time_to_check = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        folder_list = glob.glob(self.file_folder + "*")
+        folder_list = glob.glob(self.wp_folder + "*")
 
         correct_folder = None
         for folder in folder_list:
@@ -65,7 +66,7 @@ class SwiftCheck(BaseFileCheck):
 
     def check_file_format(self, gsm_file, hgc_file):
         # TODO To implement this
-        SwiftReader()
+        SwiftReader(self.wp_folder)
         success = True
         return success
 
@@ -97,9 +98,8 @@ class SwiftCheck(BaseFileCheck):
 
 
 class SwiftEnsembleCheck(SwiftCheck):
-    def __init__(self):
-        super().__init__()
-        self.file_folder = "/PAGER/WP2/data/outputs/SWIFT_ENSEMBLE/"
+    def __init__(self, wp2_data_folder, product_sub_folder):
+        super().__init__(wp2_data_folder, product_sub_folder)
         self.subject_email = "PAGER WP2, SWIFT ENSEMBLE Module, DATA FAILURE..."
         self.email_recipients = self._get_email_recipients()
 
@@ -108,7 +108,7 @@ class SwiftEnsembleCheck(SwiftCheck):
             time_to_check = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        folder_list = glob.glob(self.file_folder + "*")
+        folder_list = glob.glob(self.wp_folder + "*")
 
         correct_folder = None
         for folder in folder_list:

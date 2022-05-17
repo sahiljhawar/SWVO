@@ -1,16 +1,21 @@
+from abc import ABC
+
 from data_management.check.base_file_checker import BaseFileCheck
 from data_management.notifications.email_notifier import send_failure_email
 
 import datetime as dt
+import os
 import glob
 import logging
 from email.headerregistry import Address
 
 
-class RBMForecastCheck(BaseFileCheck):
-    def __init__(self):
+class RBMForecastCheck(BaseFileCheck, ABC):
+    def __init__(self, wp6_data_folder="/PAGER/WP6/data/outputs/",
+                 product_sub_folder="/RBM_Forecast/rbm_forecast/fullMat/*/Archive/"):
         super().__init__()
-        self.file_folder = "/PAGER/WP6/data/outputs/RBM_Forecast/rbm_forecast/fullMat/*/Archive/"
+        self.wp_folder = wp6_data_folder
+        self.product_sub_folder = product_sub_folder
         self.subject_email = "PAGER WP6, RBM Forecast Module, DATA FAILURE..."
         self.email_recipients = self._get_email_recipients()
 
@@ -33,7 +38,7 @@ class RBMForecastCheck(BaseFileCheck):
     def check_files_exists(self, check_date):
 
         time_to_check = check_date.replace(minute=0, second=0, microsecond=0)
-        file_list = glob.glob(self.file_folder + "*")
+        file_list = glob.glob(os.path.join(self.wp_folder, self.product_sub_folder) + "*")
         for file in file_list:
             date = RBMForecastCheck._extract_date_from_file(file)
             if date == time_to_check:

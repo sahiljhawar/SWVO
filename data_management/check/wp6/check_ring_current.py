@@ -1,3 +1,5 @@
+from abc import ABC
+
 from data_management.check.base_file_checker import BaseFileCheck
 from data_management.notifications.email_notifier import send_failure_email
 
@@ -7,10 +9,11 @@ import logging
 from email.headerregistry import Address
 
 
-class RingCurrentCheck(BaseFileCheck):
-    def __init__(self):
+class RingCurrentCheck(BaseFileCheck, ABC):
+    def __init__(self, wp6_data_folder, product_sub_folder):
         super().__init__()
-        self.file_folder = "/PAGER/WP6/data/outputs/RingCurrent/"
+        self.wp_folder = wp6_data_folder
+        self.product_sub_folder = product_sub_folder
         self.subject_email = "PAGER WP6, Ring Current Module, DATA FAILURE..."
         self.email_recipients = self._get_email_recipients()
 
@@ -30,7 +33,7 @@ class RingCurrentCheck(BaseFileCheck):
 
     def check_files_exists(self, check_date):
         time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        file_list = glob.glob(self.file_folder + "*")
+        file_list = glob.glob(self.wp_folder + "*")
         for file in file_list:
             date = RingCurrentCheck._extract_date_from_file(file)
             if date == time_to_check:
