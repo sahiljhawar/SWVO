@@ -38,7 +38,7 @@ class RBMForecastCheck(BaseFileCheck, ABC):
     def check_files_exists(self, check_date):
 
         time_to_check = check_date.replace(minute=0, second=0, microsecond=0)
-        file_list = glob.glob(os.path.join(self.wp_folder, self.product_sub_folder) + "*")
+        file_list = glob.glob(os.path.join(self.wp_folder, self.product_sub_folder) + "/*")
         for file in file_list:
             date = RBMForecastCheck._extract_date_from_file(file)
             if date == time_to_check:

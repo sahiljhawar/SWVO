@@ -4,6 +4,7 @@ from data_management.check.base_file_checker import BaseFileCheck
 from data_management.notifications.email_notifier import send_failure_email
 
 import datetime as dt
+import os
 import glob
 import logging
 from email.headerregistry import Address
@@ -33,7 +34,7 @@ class RingCurrentCheck(BaseFileCheck, ABC):
 
     def check_files_exists(self, check_date):
         time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        file_list = glob.glob(self.wp_folder + "*")
+        file_list = sorted(glob.glob(os.path.join(self.wp_folder, self.product_sub_folder) + "/*"))
         for file in file_list:
             date = RingCurrentCheck._extract_date_from_file(file)
             if date == time_to_check:
