@@ -4,6 +4,7 @@ from data_management.io.wp2.read_swift import SwiftReader
 
 import datetime as dt
 import glob
+import os
 import logging
 from email.headerregistry import Address
 
@@ -34,7 +35,7 @@ class SwiftCheck(BaseFileCheck):
             time_to_check = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        folder_list = glob.glob(self.wp_folder + "*")
+        folder_list = glob.glob(os.path.join(self.wp_folder, self.product_sub_folder) + "/*")
 
         correct_folder = None
         for folder in folder_list:
@@ -108,7 +109,7 @@ class SwiftEnsembleCheck(SwiftCheck):
             time_to_check = dt.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             time_to_check = check_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        folder_list = glob.glob(self.wp_folder + "*")
+        folder_list = glob.glob(os.path.join(self.wp_folder, self.product_sub_folder) + "/*")
 
         correct_folder = None
         for folder in folder_list:
