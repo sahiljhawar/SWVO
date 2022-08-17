@@ -137,10 +137,9 @@ class PlasmaspherePlot(PlotOutput):
                                figsize=fig_size)
         self.figure = fig
         self.ax = ax
-
         angle_values = PlasmaspherePlot._mlt_to_angle(mlt_values)
 
-        if not self._nan_presence(density_values):
+        if not PlasmaspherePlot._nan_presence(density_values):
             self._plot_plasma_density(
                 angle_values,
                 l_values,
@@ -225,26 +224,34 @@ class PlasmaspherePlot(PlotOutput):
             mlt_values = df_date["MLT"].values
             density_values = df_date["predicted_densities"].values
             date = df_date.iloc[0]["t"]
+            if not PlasmaspherePlot._nan_presence(density_values):
+                plotter = PlasmaspherePlot()
+                plotter._plot_single_plasmasphere(l_values, mlt_values, density_values, date)
 
-            plotter = PlasmaspherePlot()
-            plotter._plot_single_plasmasphere(l_values, mlt_values, density_values, date)
-
-            year, month, day, hour, minute = plotter._get_date_components(date)
-            plotter._save(os.path.join(temp_folder_path,
-                                       "./plasmasphere_{}_{}_{}_{}_{}.png".format(
-                                           year, month, day, hour, minute)
-                                       )
-                          )
+                year, month, day, hour, minute = plotter._get_date_components(date)
+                plotter._save(os.path.join(temp_folder_path,
+                                           "./plasmasphere_{}_{}_{}_{}_{}.png".format(
+                                               year, month, day, hour, minute)
+                                           )
+                              )
+                logging.info("for date {} plot has been generated".format(date))
+            else:
+                logging.warning("for date {} the predictions were NaN and "
+                                "the plot has not been generated".format(date))
         logging.info("Finished individual plasmasphere reconstructions generation")
 
         logging.info("Starting video generation")
-        os.chdir(temp_folder_path)
-        subprocess.check_call([
-            'ffmpeg', '-framerate', '3', '-i', os.path.join(temp_folder_path, "%*.png"), '-vcodec', 'libx264', '-crf',
-            '28', '-pix_fmt', 'yuv420p',
-            os.path.join(output_folder, video_file_name)
-        ])
-        logging.info("Finished video generation and saving")
 
-        for file_name in glob.glob(os.path.join(temp_folder_path, "*.png")):
-            os.remove(file_name)
+        if not len(os.listdir(temp_folder_path)) == 0:
+            os.chdir(temp_folder_path)
+            subprocess.check_call([
+                'ffmpeg', '-framerate', '3', '-i', os.path.join(temp_folder_path, "%*.png"), '-vcodec', 'libx264', '-crf',
+                '28', '-pix_fmt', 'yuv420p',
+                os.path.join(output_folder, video_file_name)
+            ])
+            logging.info("Finished video generation and saving")
+
+            for file_name in glob.glob(os.path.join(temp_folder_path, "*.png")):
+                os.remove(file_name)
+        else:
+            logging.info("All predictions were Nan and no movie has been generated")
