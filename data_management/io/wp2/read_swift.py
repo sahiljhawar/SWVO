@@ -166,7 +166,7 @@ class SwiftEnsembleReader(SwiftReader):
 
         n_ensemble = self._get_ensemble_number(date_string=date_to_string)
 
-        logging.info("Found {} SWIFT tasks folders...".format(n))
+        logging.info("Found {} SWIFT tasks folders...".format(n_ensemble))
         gsm_s = []
         hgc_s = []
 
@@ -192,10 +192,9 @@ class SwiftEnsembleReader(SwiftReader):
                 except IndexError:
                     msg = "HGC SWIFT output file for date {} and task {} not found...impossible to read".format(date_to_string, n)
                     logging.warning(msg)
-                    data_hcg = None
+                    data_hgc = None
             else:
                 data_hgc = None
             hgc_s.append(data_hgc)
 
         return gsm_s, hgc_s
-
