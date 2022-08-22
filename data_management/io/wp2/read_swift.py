@@ -17,7 +17,7 @@ class SwiftReader(BaseReader):
     PROTON_MASS = 1.67262192369e-27
     DATA_FIELDS = ["proton_density", "speed", "b", "temperature", "bx", "by", "bz", "ux", "uy", "uz"]
 
-    def __init__(self, wp2_output_folder, sub_folder="SWIFT"):
+    def __init__(self, wp2_output_folder, sub_folder):
         """
         :param wp2_output_folder: The path to the output folder of WP2 products.
         :type wp2_output_folder: str
@@ -142,7 +142,6 @@ class SwiftEnsembleReader(SwiftReader):
         :type sub_folder: str
         """
         super().__init__(wp2_output_folder, sub_folder)
-        self._check_data_folder()
 
     def _get_ensemble_number(self, date_string):
         paths = glob.glob(os.path.join(self.data_folder, date_string + "*/task*"))
@@ -167,6 +166,7 @@ class SwiftEnsembleReader(SwiftReader):
 
         n_ensemble = self._get_ensemble_number(date_string=date_to_string)
 
+        logging.info("Found {} SWIFT tasks folders...".format(n))
         gsm_s = []
         hgc_s = []
 
@@ -177,9 +177,9 @@ class SwiftEnsembleReader(SwiftReader):
                                                       date_to_string + "*/task{}/SWIFT/gsm*".format(n)))[0]
                     data_gsm = SwiftReader._read_single_file(gsm_file, fields)
                 except IndexError:
-                    msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
-                    logging.error(msg)
-                    raise FileNotFoundError(msg)
+                    msg = "GSM SWIFT output file for date {} and task {} not found...impossible to read".format(date_to_string, n)
+                    logging.warning(msg)
+                    data_gsm = None
             else:
                 data_gsm = None
             gsm_s.append(data_gsm)
@@ -190,11 +190,12 @@ class SwiftEnsembleReader(SwiftReader):
                                                       date_to_string + "*/task{}/SWIFT/hgc*".format(n)))[0]
                     data_hgc = SwiftReader._read_single_file(hgc_file, fields)
                 except IndexError:
-                    msg = "HGC SWIFT output file for date {} not found...impossible to read".format(date_to_string)
-                    logging.error(msg)
-                    raise FileNotFoundError(msg)
+                    msg = "HGC SWIFT output file for date {} and task {} not found...impossible to read".format(date_to_string, n)
+                    logging.warning(msg)
+                    data_hcg = None
             else:
                 data_hgc = None
             hgc_s.append(data_hgc)
 
         return gsm_s, hgc_s
+
