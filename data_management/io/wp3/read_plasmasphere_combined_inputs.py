@@ -32,7 +32,7 @@ class PlasmasphereCombinedInputsReader(BaseReader):
                                                        str(date.hour).zfill(2),
                                                        str(date.minute).zfill(2))
         if source == "solar_wind":
-            file_name = "kp_{}-{}-{}-{}-{}.csv".format(date.year,
+            file_name = "solar_wind_{}-{}-{}-{}-{}.csv".format(date.year,
                                                        str(date.month).zfill(2),
                                                        str(date.day).zfill(2),
                                                        str(date.hour).zfill(2),
