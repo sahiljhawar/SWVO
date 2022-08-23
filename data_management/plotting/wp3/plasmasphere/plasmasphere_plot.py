@@ -14,6 +14,7 @@ from datetime import datetime
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import matplotlib.dates as mdates
 
 from data_management.plotting.plotting_base import PlotOutput
 
@@ -129,7 +130,7 @@ class PlasmaspherePlot(PlotOutput):
             return True
 
     def _plot_single_plasmasphere(self, l_values, mlt_values, density_values, date,
-                                  fig_size=(4, 4)):
+                                  fig_size=(4, 4), df_kp=None, df_solar_wind=None):
 
         self._set_date(date)
 
@@ -155,8 +156,43 @@ class PlasmaspherePlot(PlotOutput):
             fontdict={'fontweight': 'bold'})
 
         self._add_colour_bar()
+        if df_kp is not None and df_solar_wind is not None:
 
-        self.figure.subplots_adjust(left=0.07, right=0.8)
+            self.ax_kp = self.figure.add_subplot(4, 1, 1)
+            self.ax_kp.set_title('Kp input')
+            locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
+            formatter = mdates.ConciseDateFormatter(locator)
+            self.ax_kp.xaxis.set_major_locator(locator)
+            self.ax_kp.xaxis.set_major_formatter(formatter)
+            self.ax_kp.plot(df_kp["t"], df_kp["kp"])
+
+
+            self.ax_solar_wind_Bz = self.figure.add_subplot(4, 1, 2)
+            self.ax_solar_wind_Bz.set_title('Solar wind Bz')
+            locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
+            formatter = mdates.ConciseDateFormatter(locator)
+            self.ax_solar_wind_Bz.xaxis.set_major_locator(locator)
+            self.ax_solar_wind_Bz.xaxis.set_major_formatter(formatter)
+            self.ax_solar_wind_Bz.plot(df_solar_wind["t"], df_solar_wind["Bz"])
+
+            self.ax_solar_wind_speed = self.figure.add_subplot(4, 1, 2)
+            self.ax_solar_wind_speed.set_title('Solar wind speed')
+            locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
+            formatter = mdates.ConciseDateFormatter(locator)
+            self.ax_solar_wind_speed.xaxis.set_major_locator(locator)
+            self.ax_solar_wind_speed.xaxis.set_major_formatter(formatter)
+            self.ax_solar_wind_speed.plot(df_solar_wind["t"], df_solar_wind["speed"])
+
+            self.ax_solar_wind_proton_density = self.figure.add_subplot(4, 1, 3)
+            self.ax_solar_wind_proton_density.set_title("Solar wind proton density")
+            locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
+            formatter = mdates.ConciseDateFormatter(locator)
+            self.ax_solar_wind_proton_density.xaxis.set_major_locator(locator)
+            self.ax_solar_wind_proton_density.xaxis.set_major_formatter(formatter)
+            self.ax_solar_wind_proton_density.plot(df_solar_wind["t"], df_solar_wind["proton_density"])
+
+        else:
+            self.figure.subplots_adjust(left=0.07, right=0.8)
         plt.tight_layout()
 
     @staticmethod
@@ -165,7 +201,7 @@ class PlasmaspherePlot(PlotOutput):
         plt.close()
 
     @staticmethod
-    def plot_output(data, output_folder, video_file_name):
+    def plot_output(data, output_folder, video_file_name, kp_inputs=None, solar_wind_inputs=None):
         """
         It produces a video form the output of the plasmasphere predictions.
         In case the predicted densities are nan for some date,
@@ -225,8 +261,17 @@ class PlasmaspherePlot(PlotOutput):
             density_values = df_date["predicted_densities"].values
             date = df_date.iloc[0]["t"]
             if not PlasmaspherePlot._nan_presence(density_values):
+                df_kp_date = None
+                solar_wind_date = None
+                if kp_inputs is not None and solar_wind_inputs is not None:
+                    df_kp_date = kp_inputs[kp_inputs["date_of_run"] == date]
+                    solar_wind_date = solar_wind_inputs[solar_wind_inputs["date_of_run"] == date]
+
                 plotter = PlasmaspherePlot()
-                plotter._plot_single_plasmasphere(l_values, mlt_values, density_values, date)
+                plotter._plot_single_plasmasphere(l_values, mlt_values,
+                                                  density_values, date,
+                                                  df_kp=df_kp_date,
+                                                  df_solar_wind=solar_wind_date)
 
                 year, month, day, hour, minute = plotter._get_date_components(date)
                 plotter._save(os.path.join(temp_folder_path,
