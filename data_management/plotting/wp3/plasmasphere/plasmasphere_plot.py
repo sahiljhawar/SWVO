@@ -130,13 +130,14 @@ class PlasmaspherePlot(PlotOutput):
             return True
 
     def _plot_single_plasmasphere(self, l_values, mlt_values, density_values, date,
-                                  fig_size=(4, 4), df_kp=None, df_solar_wind=None):
+                                  fig_size=(16, 8), df_kp=None, df_solar_wind=None):
 
         self._set_date(date)
-
-        fig, ax = plt.subplots(subplot_kw=dict(projection='polar'),
-                               figsize=fig_size)
+        fig = plt.figure(figsize=fig_size)
         self.figure = fig
+        grid = fig.add_gridspec(4, 3)
+        ax = self.figure.add_subplot(grid[:, 0], projection='polar')
+
         self.ax = ax
         angle_values = PlasmaspherePlot._mlt_to_angle(mlt_values)
 
@@ -158,38 +159,46 @@ class PlasmaspherePlot(PlotOutput):
         self._add_colour_bar()
         if df_kp is not None and df_solar_wind is not None:
 
-            self.ax_kp = self.figure.add_subplot(4, 1, 1)
-            self.ax_kp.set_title('Kp input')
+            self.ax_kp = self.figure.add_subplot(grid[0, 1:3])
+            self.ax_kp.set_title('Kp')
             locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_kp.xaxis.set_major_locator(locator)
             self.ax_kp.xaxis.set_major_formatter(formatter)
             self.ax_kp.plot(df_kp["t"], df_kp["kp"])
+            self.ax_kp.set_ylabel("Kp")
+            self.ax_kp.set_xlabel("Time")
 
 
-            self.ax_solar_wind_Bz = self.figure.add_subplot(4, 1, 2)
+            self.ax_solar_wind_Bz = self.figure.add_subplot(grid[1, 1:3])
             self.ax_solar_wind_Bz.set_title('Solar wind Bz')
             locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_solar_wind_Bz.xaxis.set_major_locator(locator)
             self.ax_solar_wind_Bz.xaxis.set_major_formatter(formatter)
             self.ax_solar_wind_Bz.plot(df_solar_wind["t"], df_solar_wind["Bz"])
+            self.ax_solar_wind_Bz.set_ylabel("Bz")
+            self.ax_solar_wind_Bz.set_xlabel("Time")
 
-            self.ax_solar_wind_speed = self.figure.add_subplot(4, 1, 2)
+            self.ax_solar_wind_speed = self.figure.add_subplot(grid[2, 1:3])
             self.ax_solar_wind_speed.set_title('Solar wind speed')
             locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_solar_wind_speed.xaxis.set_major_locator(locator)
             self.ax_solar_wind_speed.xaxis.set_major_formatter(formatter)
             self.ax_solar_wind_speed.plot(df_solar_wind["t"], df_solar_wind["speed"])
+            self.ax_solar_wind_speed.set_ylabel("Speed")
+            self.ax_solar_wind_speed.set_xlabel("Time")
 
-            self.ax_solar_wind_proton_density = self.figure.add_subplot(4, 1, 3)
+            self.ax_solar_wind_proton_density = self.figure.add_subplot(grid[3, 1:3])
             self.ax_solar_wind_proton_density.set_title("Solar wind proton density")
             locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_solar_wind_proton_density.xaxis.set_major_locator(locator)
             self.ax_solar_wind_proton_density.xaxis.set_major_formatter(formatter)
             self.ax_solar_wind_proton_density.plot(df_solar_wind["t"], df_solar_wind["proton_density"])
+            self.ax_solar_wind_proton_density.set_xlabel("Time")
+            self.ax_solar_wind_proton_density.set_ylabel("Proton density")
 
         else:
             self.figure.subplots_adjust(left=0.07, right=0.8)
