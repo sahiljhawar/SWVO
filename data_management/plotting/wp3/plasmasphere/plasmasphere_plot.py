@@ -136,7 +136,7 @@ class PlasmaspherePlot(PlotOutput):
         fig = plt.figure(figsize=fig_size)
         self.figure = fig
         grid = fig.add_gridspec(4, 3)
-        
+
         ax = self.figure.add_subplot(grid[:, 0], projection='polar')
         self.ax = ax
         angle_values = PlasmaspherePlot._mlt_to_angle(mlt_values)
@@ -245,7 +245,7 @@ class PlasmaspherePlot(PlotOutput):
         if os.path.isfile(os.path.join(output_folder, video_file_name)):
             os.remove(os.path.join(output_folder, video_file_name))
 
-        temp_folder_path = os.path.join(output_folder, "temp/")
+        temp_folder_path = os.path.join(output_folder, "temp_with_inputs/")
         if os.path.exists(temp_folder_path):
             temp_folder_files = glob.glob(os.path.join(temp_folder_path, "*.png"))
             for file in temp_folder_files:
