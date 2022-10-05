@@ -1,4 +1,0 @@
-numpy>=1.13
-pandas>=0.21
-matplotlib>=2.1.0
-flask>=2.0.1

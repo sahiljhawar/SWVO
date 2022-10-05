@@ -5,10 +5,12 @@ cat << EOF
 
    Usage: make_local_environment.sh [-e PYTHON_ENV]
 
-   This script is used to install a the geoforecast library.
+   This script is used to install a the data management library for PAGER project.
+   It requires an existing environment, either conda or python virtual env
 
    optional arguments:
-       -e PYTHON_ENV   The name of the python conda environment to use.
+       -e PYTHON_ENV   The name of the python conda environment to use. If not provided
+                       installation will not proceed
 EOF
 }
 
@@ -23,7 +25,8 @@ done
 
 if [ -z "$PYTHON_ENV" ]
 then
-  echo "Environment name not provided, installing data_management in current environment"
+  echo "Environment name not provided quitting installation..."
+  exit 1
 else
   echo "Installing data_management as a package for environment: " "$PYTHON_ENV"
   source activate "$PYTHON_ENV" || conda activate "$PYTHON_ENV"
