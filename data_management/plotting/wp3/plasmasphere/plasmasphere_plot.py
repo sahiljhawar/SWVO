@@ -163,7 +163,7 @@ class PlasmaspherePlot(PlotOutput):
             self.ax_kp.plot(df_kp["t"], df_kp["kp"])
             self.ax_kp.set_ylabel("Kp")
             self.ax_kp.set_xlabel("Time")
-            self.ax_kp.set_ylim(0, 8])
+            self.ax_kp.set_ylim([0, 8])
             self.ax_kp.set_yticks([0, 2, 4, 6, 8])
 
         if df_solar_wind is not None:
