@@ -8,7 +8,7 @@ cat << EOF
    This script is used to install a the data management library for PAGER project.
    It requires an existing environment, either conda or python virtual env
 
-   optional arguments:
+   arguments (all required):
        -e PYTHON_ENV   The name of the python conda environment to use. If not provided
                        installation will not proceed
 EOF
