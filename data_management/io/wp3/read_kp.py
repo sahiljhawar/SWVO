@@ -53,18 +53,22 @@ class KPReader(BaseReader):
         for file in files:
             date = file.split("/")[-1]
             date = date.split(".")[0]
+            product = date.split("_")[0]
+            target_date = requested_date
             try:
                 date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
                 hours = False
             except ValueError:
                 date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%dT%H%M%S")
                 hours = True
+            if product == "NIEMEGK":
+                target_date = requested_date + dt.timedelta(days=1)
 
-            if (not hours) and (requested_date.replace(hour=0) == date):
+            if (not hours) and (target_date.replace(hour=0) == date):
                 file_to_read = file
                 date_found = date
             else:
-                if requested_date == date:
+                if target_date == date:
                     if (model_name is not None) and (model_name not in file):
                         continue
                     file_to_read = file
