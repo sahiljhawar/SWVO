@@ -61,7 +61,7 @@ class KPReader(BaseReader):
             except ValueError:
                 date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%dT%H%M%S")
                 hours = True
-            if product == "NIEMEGK":
+            if product == "NIEMEGK" and requested_date.replace(microsecond=0, minute=0, second=0, hour=0) != dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0, hour=0):
                 target_date = requested_date + dt.timedelta(days=1)
 
             if (not hours) and (target_date.replace(hour=0) == date):
