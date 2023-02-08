@@ -33,7 +33,8 @@ class PlasmaspherePlot(PlotOutput):
         else:
             self.path_c_map = path_c_map
 
-        self.colour_map = mpl.colors.ListedColormap(np.load(self.path_c_map))
+        self.colour_map_density = mpl.colors.ListedColormap(np.load(self.path_c_map))
+        self.colour_map_deviation = "OrRd"
 
     @staticmethod
     def _get_date_components(date):
@@ -52,31 +53,37 @@ class PlasmaspherePlot(PlotOutput):
         minute = date.strftime("%M")
         return year, month, day, hour, minute
 
-    def _draw_earth_night_side(self):
-        self.ax.fill_between(np.linspace(-np.pi / 2, np.pi / 2, 100),
-                             0, 1, alpha=1, color='k')
+    @staticmethod
+    def _draw_earth_night_side(axes):
+        axes.fill_between(np.linspace(-np.pi / 2, np.pi / 2, 100),
+                          0, 1, alpha=1, color='k')
+        return axes
 
-    def _set_axes_ticks_labels(self):
+    @staticmethod
+    def _set_axes_ticks_labels(axes):
 
         ticks_loc = [x for x in np.linspace(0, 2 * math.pi, 8, endpoint=False)]
-        self.ax.xaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
-        self.ax.set_xticklabels(
+        axes.xaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
+        axes.set_xticklabels(
             labels=[xlabel for xlabel in np.arange(0, 24, 3)]
         )
 
         ticks_loc = [1, 2, 3, 4, 5, 6]
-        self.ax.yaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
-        self.ax.set_ylim(0, 6.5)
-        self.ax.set_yticklabels(
+        axes.yaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
+        axes.set_ylim(0, 6.5)
+        axes.set_yticklabels(
             labels=ticks_loc
         )
-        self.ax.grid(c='grey', lw=0.5, ls='-', visible=True)
+        axes.grid(c='grey', lw=0.5, ls='-', visible=True)
+        return axes
 
-    def _plot_plasma_density(self,
-                             angle_values,
-                             l_values,
-                             density_values
-                             ):
+    @staticmethod
+    def _plot_polar_distribution(axes,
+                                 angle_values,
+                                 l_values,
+                                 distribution_values,
+                                 colour_map,
+                                 title, vmin, vmax):
 
         unique_l_values = np.unique(l_values)
         unique_angle_values = np.unique(angle_values)
@@ -87,27 +94,37 @@ class PlasmaspherePlot(PlotOutput):
         l_grid = np.reshape(l_values,
                             (len(unique_l_values), len(unique_angle_values)),
                             order="F")
-        density_grid = np.reshape(density_values,
-                                  (len(unique_l_values), len(unique_angle_values)),
-                                  order="F")
-        self.ax.contourf(angle_grid, l_grid, density_grid, levels=512, cmap=self.colour_map)
 
-    def _add_colour_bar(self):
+        distribution_on_grid = np.reshape(
+            distribution_values,
+            (len(unique_l_values), len(unique_angle_values)),
+            order="F")
+        axes.contourf(angle_grid, l_grid, distribution_on_grid,
+                      levels=512, cmap=colour_map, vmin=vmin, vmax=vmax)
 
-        colour_bar_normalization = mpl.colors.Normalize(vmin=0,
-                                                        vmax=3.99
-                                                        )
+        axes = PlasmaspherePlot._draw_earth_night_side(axes)
+        axes = PlasmaspherePlot._set_axes_ticks_labels(axes)
+        axes.set_title(title, fontdict={'fontweight': 'bold'})
+
+        return axes
+
+    @staticmethod
+    def _add_colour_bar(axes, colour_map,
+                        min_value, max_value, label):
+
+        colour_bar_normalization = mpl.colors.Normalize(vmin=min_value, vmax=max_value)
 
         color_bar = plt.colorbar(mpl.cm.ScalarMappable(
             norm=colour_bar_normalization,
-            cmap=self.colour_map
+            cmap=colour_map
         ),
-            ax=self.ax,
+            ax=axes,
             use_gridspec=True,
             shrink=0.5,
             pad=0.15
         )
-        color_bar.set_label('$log_{10}(n_e)$')
+        color_bar.set_label(label)
+        return axes
 
     @staticmethod
     def _mlt_to_angle(mlt):
@@ -126,32 +143,118 @@ class PlasmaspherePlot(PlotOutput):
 
     @staticmethod
     def _nan_presence(density_values):
-        if np.sum(np.isnan(density_values)):
+        if density_values.isnull().values.any():
             return True
 
-    def _plot_single_plasmasphere(self, l_values, mlt_values, density_values, date,
-                                  fig_size=(16, 8), df_kp=None, df_solar_wind=None):
+    @staticmethod
+    def _get_mean(two_d_array):
+        return np.mean(two_d_array, axis=1)
+
+    @staticmethod
+    def _get_max(two_d_array):
+        return np.amax(two_d_array, axis=1)
+
+    @staticmethod
+    def _get_min(two_d_array):
+        return np.amin(two_d_array, axis=1)
+
+    @staticmethod
+    def _get_deviation(density_values):
+        return np.std(density_values, axis=1)
+
+    @staticmethod
+    def _plot_time_series_statistics(ax, df, time_column, target_columns):
+        mean_kp = PlasmaspherePlot._get_mean(df[target_columns].values)
+        ax.plot(df[time_column], mean_kp)
+        max_value = PlasmaspherePlot._get_max(df[target_columns].values)
+        min_value = PlasmaspherePlot._get_min(df[target_columns].values)
+        ax.fill_between(df[time_column], max_value, min_value, alpha=.5)
+        return ax
+
+    @staticmethod
+    def _plot_input(ax, df, time_column, input_columns):
+
+        if len(input_columns) == 1:
+            ax.plot(df[time_column], df[input_columns[0]])
+
+        elif len(input_columns) > 1:
+            ax = PlasmaspherePlot._plot_time_series_statistics(
+                ax, df, time_column=time_column,
+                target_columns=input_columns
+            )
+        else:
+            raise RuntimeError("input_columns list has lenght 0")
+
+        return ax
+
+
+    def _plot_single_date_prediction(self, l_values, mlt_values,
+                                     density_values, date,
+                                     fig_size=(16, 9), df_kp=None,
+                                     df_solar_wind=None):
 
         self._set_date(date)
         fig = plt.figure(figsize=fig_size)
         self.figure = fig
         grid = fig.add_gridspec(4, 3)
 
-        ax = self.figure.add_subplot(grid[:, 0], projection='polar')
-        self.ax = ax
         angle_values = PlasmaspherePlot._mlt_to_angle(mlt_values)
-        if not PlasmaspherePlot._nan_presence(density_values):
-            self._plot_plasma_density(
+        if len(list(density_values.columns)) == 1:
+            ax = self.figure.add_subplot(grid[:, 0],
+                                         projection='polar')
+            self.ax = ax
+            self.ax = PlasmaspherePlot._plot_polar_distribution(
+                self.ax,
                 angle_values,
                 l_values,
-                density_values,
+                density_values.values,
+                colour_map=self.colour_map_density,
+                title="{} UTC".format(self.date.strftime("%Y-%m-%d, %H:%M")),
+                vmin=0,
+                vmax=3.99
             )
-        self._draw_earth_night_side()
-        self._set_axes_ticks_labels()
-        self.ax.set_title(
-            "{} UTC".format(self.date.strftime("%Y-%m-%d, %H:%M")),
-            fontdict={'fontweight': 'bold'})
-        self._add_colour_bar()
+            self.ax = PlasmaspherePlot._add_colour_bar(
+                self.ax,
+                self.colour_map_density,
+                min_value=0, max_value=3.99,
+                label='$log_{10}(n_e)$')
+        else:
+            ax_mean = self.figure.add_subplot(grid[0:2, 0],
+                                              projection='polar')
+            self.ax_mean = ax_mean
+            mean_densities = PlasmaspherePlot._get_mean(density_values.values)
+            self.ax_mean = PlasmaspherePlot._plot_polar_distribution(
+                self.ax_mean, angle_values, l_values, mean_densities,
+                colour_map=self.colour_map_density,
+                title="Mean density, {} UTC".format(
+                    self.date.strftime("%Y-%m-%d, %H:%M")),
+                vmin=0,
+                vmax=3.99
+
+            )
+            self.ax_mean = PlasmaspherePlot._add_colour_bar(
+                self.ax_mean, self.colour_map_density,
+                min_value=0, max_value=3.99, label='$log_{10}(n_e)$')
+
+            ax_deviation = self.figure.add_subplot(grid[2:4, 0],
+                                                   projection='polar')
+            self.ax_deviation = ax_deviation
+            deviation = PlasmaspherePlot._get_deviation(density_values.values)
+            self.ax_deviation = PlasmaspherePlot._plot_polar_distribution(
+                self.ax_deviation,
+                angle_values,
+                l_values,
+                deviation,
+                colour_map=self.colour_map_deviation,
+                title="Standard deviation, {} UTC".format(
+                    self.date.strftime("%Y-%m-%d, %H:%M")),
+                vmin=0,
+                vmax=1
+            )
+            self.ax_deviation = PlasmaspherePlot._add_colour_bar(
+                self.ax_deviation, self.colour_map_deviation,
+                min_value=0, max_value=1,
+                label='$log_{10}(n_e)$')
 
         if df_kp is not None:
             self.ax_kp = self.figure.add_subplot(grid[0, 1:3])
@@ -160,7 +263,11 @@ class PlasmaspherePlot(PlotOutput):
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_kp.xaxis.set_major_locator(locator)
             self.ax_kp.xaxis.set_major_formatter(formatter)
-            self.ax_kp.plot(df_kp["t"], df_kp["kp"])
+            kp_columns = [column for column in df_kp.columns
+                          if "kp" in column]
+            self.ax_kp = PlasmaspherePlot._plot_input(
+                self.ax_kp, df_kp, time_column="t", input_columns=kp_columns
+            )
             self.ax_kp.set_ylabel("Kp")
             self.ax_kp.set_xlabel("Time")
             self.ax_kp.set_ylim([0, 8])
@@ -173,7 +280,12 @@ class PlasmaspherePlot(PlotOutput):
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_solar_wind_Bz.xaxis.set_major_locator(locator)
             self.ax_solar_wind_Bz.xaxis.set_major_formatter(formatter)
-            self.ax_solar_wind_Bz.plot(df_solar_wind["t"], df_solar_wind["Bz"])
+            bz_columns = [column for column in df_solar_wind.columns
+                          if "Bz" in column]
+            self.ax_solar_wind_Bz = PlasmaspherePlot._plot_input(
+                self.ax_solar_wind_Bz, df_solar_wind,
+                time_column="t", input_columns=bz_columns
+            )
             self.ax_solar_wind_Bz.set_ylabel("Bz")
             self.ax_solar_wind_Bz.set_xlabel("Time")
 
@@ -183,7 +295,12 @@ class PlasmaspherePlot(PlotOutput):
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_solar_wind_speed.xaxis.set_major_locator(locator)
             self.ax_solar_wind_speed.xaxis.set_major_formatter(formatter)
-            self.ax_solar_wind_speed.plot(df_solar_wind["t"], df_solar_wind["speed"])
+            speed_columns = [column for column in df_solar_wind.columns
+                             if "speed" in column]
+            self.ax_solar_wind_speed = PlasmaspherePlot._plot_input(
+                self.ax_solar_wind_speed, df_solar_wind,
+                time_column="t", input_columns=speed_columns
+            )
             self.ax_solar_wind_speed.set_ylabel("Speed")
             self.ax_solar_wind_speed.set_xlabel("Time")
 
@@ -193,7 +310,13 @@ class PlasmaspherePlot(PlotOutput):
             formatter = mdates.ConciseDateFormatter(locator)
             self.ax_solar_wind_proton_density.xaxis.set_major_locator(locator)
             self.ax_solar_wind_proton_density.xaxis.set_major_formatter(formatter)
-            self.ax_solar_wind_proton_density.plot(df_solar_wind["t"], df_solar_wind["proton_density"])
+            proton_density_columns = \
+                [column for column in df_solar_wind.columns
+                 if "proton_density" in column]
+            self.ax_solar_wind_proton_density = PlasmaspherePlot._plot_input(
+                self.ax_solar_wind_proton_density, df_solar_wind,
+                time_column="t", input_columns=proton_density_columns
+            )
             self.ax_solar_wind_proton_density.set_xlabel("Time")
             self.ax_solar_wind_proton_density.set_ylabel("Proton density")
 
@@ -205,7 +328,21 @@ class PlasmaspherePlot(PlotOutput):
         plt.close()
 
     @staticmethod
-    def plot_output(data, output_folder, video_file_name, kp_inputs, solar_wind_inputs):
+    def _get_density_values(df):
+        if not isinstance(df, pd.DataFrame):
+            msg = "data must be an instance of a pandas dataframe, " \
+                  "instead it is of type {}".format(type(df))
+            logging.error(msg)
+            raise TypeError(msg)
+
+        density_columns = [column for column in df.columns
+                           if "predicted_densities" in column]
+
+        return df[density_columns].copy()
+
+    @staticmethod
+    def plot_output(data, output_folder, video_file_name,
+                    kp_inputs, solar_wind_inputs):
         """
         It produces a video form the output of the plasmasphere predictions.
         In case the predicted densities are nan for some date,
@@ -225,7 +362,7 @@ class PlasmaspherePlot(PlotOutput):
             logging.error(msg)
             raise TypeError(msg)
 
-        required_columns = ["L", "MLT", "predicted_densities", "t"]
+        required_columns = ["L", "MLT", "t"]
         for column in required_columns:
             if column not in data.columns:
                 msg = "column {} is missing".format(column)
@@ -262,8 +399,8 @@ class PlasmaspherePlot(PlotOutput):
 
             l_values = df_date["L"].values
             mlt_values = df_date["MLT"].values
-            density_values = df_date["predicted_densities"].values
             date = df_date.iloc[0]["t"]
+            density_values = PlasmaspherePlot._get_density_values(df_date)
             if not PlasmaspherePlot._nan_presence(density_values):
                 df_kp_date = None
                 solar_wind_date = None
@@ -272,10 +409,10 @@ class PlasmaspherePlot(PlotOutput):
                     solar_wind_date = solar_wind_inputs[solar_wind_inputs["date_of_run"] == date]
 
                 plotter = PlasmaspherePlot()
-                plotter._plot_single_plasmasphere(l_values, mlt_values,
-                                                  density_values, date,
-                                                  df_kp=df_kp_date,
-                                                  df_solar_wind=solar_wind_date)
+                plotter._plot_single_date_prediction(l_values, mlt_values,
+                                                     density_values, date,
+                                                     df_kp=df_kp_date,
+                                                     df_solar_wind=solar_wind_date)
 
                 year, month, day, hour, minute = plotter._get_date_components(date)
                 plotter._save(os.path.join(temp_folder_path,
@@ -285,13 +422,15 @@ class PlasmaspherePlot(PlotOutput):
                               )
                 logging.info("for date {} plot has been generated".format(date))
             else:
-                logging.warning("for date {} the predictions were NaN and "
+                logging.warning("for date {} some predictions were NaN and "
                                 "the plot has not been generated".format(date))
         logging.info("Finished individual plasmasphere reconstructions generation")
 
         logging.info("Starting video generation")
 
         if not len(os.listdir(temp_folder_path)) == 0:
+
+            starting_working_directory = os.getcwd()
             os.chdir(temp_folder_path)
             subprocess.check_call([
                 'ffmpeg', '-framerate', '3', '-i', os.path.join(temp_folder_path, "%*.png"), '-vcodec', 'libx264', '-crf',
@@ -302,5 +441,7 @@ class PlasmaspherePlot(PlotOutput):
 
             for file_name in glob.glob(os.path.join(temp_folder_path, "*.png")):
                 os.remove(file_name)
+
+            os.chdir(starting_working_directory)
         else:
             logging.info("All predictions were Nan and no movie has been generated")
