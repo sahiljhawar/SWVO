@@ -34,12 +34,12 @@ class PlotKpOutput(PlotOutput):
     @staticmethod
     def _add_subplot(ax, data, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
                      ylabel_fontsize=20, ylim=(-0.1, 9.1), width=0.9, align="edge", alpha=None,
-                     ylabel=r"$K_{p}$", bar_colors=None):
+                     ylabel=r"$K_{p}$", bar_colors=None, data_column="kp"):
 
         if bar_colors is None:
             bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
-        ax = data["kp"].plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
-                             align=align, width=width, legend=False, alpha=alpha)
+        ax = data[data_column].plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
+                                    align=align, width=width, legend=False, alpha=alpha)
         ax.set_title(title, fontsize=title_font)
 
         ax.set_ylim(ylim)
@@ -91,13 +91,19 @@ class PlotKpOutput(PlotOutput):
         cadence = (data.index[1] - data.index[0]).seconds // 3600
         if cadence == 3:
             label = "K_{p}"
+            data_column = "kp"
         else:
-            label = "H_{p}"
+            label = "H_{p}60"
+            data_column = "Hp60"
 
         if ax is None:
             fig = plt.figure(figsize=(15, 8))
             ax = fig.add_subplot(1, 1, 1)
-        ax = PlotKpOutput._add_subplot(ax, data=data[["kp"]], title=None, ylabel=r'${}$'.format(label))
+
+        ax = PlotKpOutput._add_subplot(ax, data=data[[data_column]],
+                                       title=None,
+                                       ylabel=r'${}$'.format(label),
+                                       data_column=data_column)
 
         red_patch = patches.Patch(color='red', label=r'${}$ > 4'.format(label))
         yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'${}$ = 4'.format(label))
