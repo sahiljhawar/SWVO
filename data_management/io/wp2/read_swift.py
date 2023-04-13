@@ -110,7 +110,7 @@ class SwiftReader(BaseReader):
 
         if "gsm" in file_type:
             try:
-                gsm_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/gsm*"))[0]
+                gsm_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/SWIFT/gsm*"))[0]
                 data_gsm = SwiftReader._read_single_file(gsm_file, fields)
             except IndexError:
                 msg = "GSM SWIFT output file for date {} not found...impossible to read".format(date_to_string)
@@ -121,7 +121,7 @@ class SwiftReader(BaseReader):
 
         if "hgc" in file_type:
             try:
-                hgc_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/hgc*"))[0]
+                hgc_file = glob.glob(os.path.join(self.data_folder, date_to_string + "*/SWIFT/hgc*"))[0]
                 data_hgc = SwiftReader._read_single_file(hgc_file, fields)
             except IndexError:
                 msg = "HGC SWIFT output file for date {} not found...impossible to read".format(date_to_string)
