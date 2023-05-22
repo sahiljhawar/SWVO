@@ -95,7 +95,7 @@ class KPReader(BaseReader):
         """
         This function reads one of the available PAGER Kp forecast products.
 
-        :param source: The source of Kp product requested. Choose among "niemegk", "swpc" and "l1"
+        :param source: The source of Kp product requested. Choose among "niemegk", "swpc", "swift" and "l1"
         :type source: str
         :param requested_date: Requested data for data to read. If None it reads data from the latest file produced.
         :type requested_date: datetime.datetime or None
@@ -119,6 +119,10 @@ class KPReader(BaseReader):
             assert model_name is not None
             data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST"), requested_date,
                                                           model_name=model_name, header=header)
+        elif source == "swift":
+            data, data_timestamp = self._read_single_file(self.data_folder, requested_date,
+                                                          model_name=model_name,
+                                                          header=header)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
