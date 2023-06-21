@@ -16,9 +16,9 @@ class PlotSWIFTOutput(PlotOutput):
 
     @staticmethod
     def _add_subplot(ax, data, title=None, title_font=9, ylabel_fontsize=10, ylabel=None, xticks_labels_show=False,
-                     line_width=3, color='blue'):
+                     line_width=3, color='blue', legend=False, label="SWIFT"):
 
-        ax = data.plot(ax=ax, legend=False, linewidth=line_width, color=color)
+        ax = data.plot(ax=ax, legend=legend, linewidth=line_width, color=color, label=label)
         ax.set_title(title, fontsize=title_font)
 
         # Y-AXIS
@@ -50,7 +50,7 @@ class PlotSWIFTOutput(PlotOutput):
         return ax
 
     @staticmethod
-    def plot_output(data):
+    def plot_output(data, colour="orange", legend=False):
         """
         This function plots output data for SWIFT solar wind variables. The plot format is at the moment
         fixed.
@@ -71,10 +71,10 @@ class PlotSWIFTOutput(PlotOutput):
         for i in range(4):
             axis["ax{}".format(i + 1)] = plt.subplot(gs[i, 0])
 
-        PlotSWIFTOutput._add_subplot(axis["ax1"], density, ylabel=r"$N_{p}(cm^{-3})$")
-        PlotSWIFTOutput._add_subplot(axis["ax2"], speed, ylabel=r"$|U|(km/s)$")
-        PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$")
-        PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True)
+        PlotSWIFTOutput._add_subplot(axis["ax1"], speed, ylabel=r"$|U|(km/s)$", colour=colour, legend=legend)
+        PlotSWIFTOutput._add_subplot(axis["ax2"], density, ylabel=r"$N_{p}(cm^{-3})$", colour=colour, legend=legend)
+        PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$", colour=colour, legend=legend)
+        PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, colour=colour, legend=legend)
         return fig
 
     @staticmethod
