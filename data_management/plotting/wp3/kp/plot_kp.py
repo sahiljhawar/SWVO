@@ -131,7 +131,7 @@ class PlotKpEnsembleOutput(PlotOutput):
 
     @staticmethod
     def _add_max_bars(ax, data, color='r'):
-        for i, d in enumerate(data.index[:-1]):
+        for i, d in enumerate(data.index):
             ax.hlines(y=data.values[i][0], xmin=i + 0.03, xmax=i + 1 - 0.1, linewidth=4, color=color)
         return ax
 
