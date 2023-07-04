@@ -340,8 +340,7 @@ class PlasmaspherePlot(PlotOutput):
 
         return df[density_columns].copy()
 
-    @staticmethod
-    def plot_output(data, output_folder, video_file_name,
+    def plot_output(self, data, output_folder, video_file_name,
                     kp_inputs, solar_wind_inputs):
         """
         It produces a video form the output of the plasmasphere predictions.
@@ -408,18 +407,17 @@ class PlasmaspherePlot(PlotOutput):
                     df_kp_date = kp_inputs[kp_inputs["date_of_run"] == date]
                     solar_wind_date = solar_wind_inputs[solar_wind_inputs["date_of_run"] == date]
 
-                plotter = PlasmaspherePlot()
-                plotter._plot_single_date_prediction(l_values, mlt_values,
-                                                     density_values, date,
-                                                     df_kp=df_kp_date,
-                                                     df_solar_wind=solar_wind_date)
+                self._plot_single_date_prediction(l_values, mlt_values,
+                                                  density_values, date,
+                                                  df_kp=df_kp_date,
+                                                  df_solar_wind=solar_wind_date)
 
-                year, month, day, hour, minute = plotter._get_date_components(date)
-                plotter._save(os.path.join(temp_folder_path,
-                                           "./plasmasphere_{}_{}_{}_{}_{}.png".format(
-                                               year, month, day, hour, minute)
-                                           )
-                              )
+                year, month, day, hour, minute = PlasmaspherePlot._get_date_components(date)
+                self._save(os.path.join(temp_folder_path,
+                                        "./plasmasphere_{}_{}_{}_{}_{}.png".format(
+                                        year, month, day, hour, minute)
+                                        )
+                           )
                 logging.info("for date {} plot has been generated".format(date))
             else:
                 logging.warning("for date {} some predictions were NaN and "
