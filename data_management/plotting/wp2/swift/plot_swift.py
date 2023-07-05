@@ -32,7 +32,7 @@ class PlotSWIFTOutput(PlotOutput):
             else:
                 return ""
 
-        ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
+        #ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
 
         if xticks_labels_show:
             ax.set_xticks(data.index[::12])
@@ -41,7 +41,8 @@ class PlotSWIFTOutput(PlotOutput):
             ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
         else:
             ax.tick_params(axis="x", which="both", bottom=False)
-            ax.set_xticklabels(labels=[])
+            ax.set_xticks([])
+            print("trying not to print labels")
             ax.set_xlabel("")
 
         # GRID
@@ -72,9 +73,9 @@ class PlotSWIFTOutput(PlotOutput):
             axis["ax{}".format(i + 1)] = plt.subplot(gs[i, 0])
 
         PlotSWIFTOutput._add_subplot(axis["ax1"], speed, ylabel=r"$|U|(km/s)$", color=color, legend=legend, label="SWIFT")
-        PlotSWIFTOutput._add_subplot(axis["ax2"], density, ylabel=r"$N_{p}(cm^{-3})$", color=color, legend=legend, label="SWIFT")
-        PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$", color=color, legend=legend, label="SWIFT")
-        PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, color=color, legend=legend, label="SWIFT")
+        #PlotSWIFTOutput._add_subplot(axis["ax2"], density, ylabel=r"$N_{p}(cm^{-3})$", color=color, legend=legend, label="SWIFT")
+        #PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$", color=color, legend=legend, label="SWIFT")
+        #PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, color=color, legend=legend, label="SWIFT")
         return fig
 
     @staticmethod
