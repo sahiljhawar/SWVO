@@ -57,19 +57,6 @@ class PlotSWIFTOutput(PlotOutput):
         ax[3].xaxis.set_major_locator(locator)
         ax[3].xaxis.set_major_formatter(formatter)
 
-        def map_dates(x):
-            if x.hour == 0:
-                return x.strftime("%Y-%m-%d")
-            else:
-                return ""
-        # ax.set_xticks([])
-        # ax.set_xticks(data.index[::12])
-        # x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
-        # ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
-
-        # ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
-        # ax.set_xlabel("")
-
         PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$",
                                      color=color, legend=legend,
                                      label="SWIFT")
@@ -87,7 +74,7 @@ class PlotSWIFTOutput(PlotOutput):
 
         plt.tight_layout()
 
-        return fig
+        return fig, ax
 
     @staticmethod
     def plot_ensemble_output(data):
@@ -117,4 +104,4 @@ class PlotSWIFTOutput(PlotOutput):
             PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, line_width=1)
 
         plt.tight_layout()
-        return fig
+        return fig, ax
