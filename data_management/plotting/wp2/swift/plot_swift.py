@@ -15,7 +15,7 @@ class PlotSWIFTOutput(PlotOutput):
         super().__init__()
 
     @staticmethod
-    def _add_subplot(ax, data, title=None, title_font=9, ylabel_fontsize=10, ylabel=None, xticks_labels_show=False,
+    def _add_subplot(ax, data, title=None, title_font=9, ylabel_fontsize=10, ylabel=None,
                      line_width=1, color='orange', legend=False, label="SWIFT"):
 
         ax = data.plot(ax=ax, legend=legend, linewidth=line_width, color=color, label=label)
@@ -71,7 +71,7 @@ class PlotSWIFTOutput(PlotOutput):
                                      color=color, legend=legend,
                                      label=label)
         PlotSWIFTOutput._add_subplot(ax[3], b, ylabel=r"$|B|(nT)$",
-                                     xticks_labels_show=True, color=color,
+                                     color=color,
                                      legend=legend, label=label,
                                      line_width=linewidth)
 
