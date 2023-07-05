@@ -75,8 +75,6 @@ class PlotSWIFTOutput(PlotOutput):
                                      legend=legend, label=label,
                                      line_width=linewidth)
 
-        plt.tight_layout()
-
         return fig, ax
 
     @staticmethod
@@ -118,9 +116,8 @@ class PlotSWIFTOutput(PlotOutput):
                                          color=color, legend=legend,
                                          label=label)
             PlotSWIFTOutput._add_subplot(ax[3], b, ylabel=r"$|B|(nT)$",
-                                         xticks_labels_show=True, color=color,
+                                         color=color,
                                          legend=legend, label=label,
                                          line_width=linewidth)
 
-        plt.tight_layout()
         return fig, ax
