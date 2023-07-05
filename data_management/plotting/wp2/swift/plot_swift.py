@@ -35,9 +35,9 @@ class PlotSWIFTOutput(PlotOutput):
         #ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
 
         if xticks_labels_show:
-            ax.set_xticks(data.index[::12])
-            #x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
-            #ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
+            #ax.set_xticks(data.index[::12])
+            x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
+            ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
         else:
             ax.tick_params(axis="x", which="both", bottom=True)
             ax.set_xticks([])
