@@ -40,7 +40,7 @@ class PlotSWIFTOutput(PlotOutput):
             ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
             ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
         else:
-            ax.tick_params(axis="x", which="both", bottom=False)
+            ax.tick_params(axis="x", which="both", bottom=True)
             ax.set_xticks([])
             print("trying not to print labels")
             ax.set_xlabel("")
@@ -65,7 +65,9 @@ class PlotSWIFTOutput(PlotOutput):
         b = data["b"]
         temperature = data["temperature"]
 
-        fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(10, 10))
+        fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(10, 10))
+
+        fig.supxlabel("Time (UTC)", fontsize=15, labelpad=0)
 
         PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$", color=color, legend=legend, label="SWIFT")
         #PlotSWIFTOutput._add_subplot(axis["ax2"], density, ylabel=r"$N_{p}(cm^{-3})$", color=color, legend=legend, label="SWIFT")
