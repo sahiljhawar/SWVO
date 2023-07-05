@@ -54,8 +54,8 @@ class PlotSWIFTOutput(PlotOutput):
 
         locator = matplotlib.dates.AutoDateLocator(minticks=3, maxticks=7)
         formatter = matplotlib.dates.ConciseDateFormatter(locator)
-        ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(formatter)
+        ax[3].xaxis.set_major_locator(locator)
+        ax[3].xaxis.set_major_formatter(formatter)
 
         def map_dates(x):
             if x.hour == 0:
