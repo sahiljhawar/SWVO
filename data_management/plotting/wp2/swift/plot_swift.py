@@ -36,8 +36,13 @@ class PlotSWIFTOutput(PlotOutput):
 
         if xticks_labels_show:
             #ax.set_xticks(data.index[::12])
-            x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
-            ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
+            #x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
+            #ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
+            locator = matplotlib.dates.AutoDateLocator(minticks=3, maxticks=7)
+            formatter = matplotlib.dates.ConciseDateFormatter(locator)
+            ax.xaxis.set_major_locator(locator)
+            ax.xaxis.set_major_formatter(formatter)
+            
         else:
             ax.tick_params(axis="x", which="both", bottom=True)
             ax.set_xticks([])
