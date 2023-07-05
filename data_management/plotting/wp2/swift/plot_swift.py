@@ -16,7 +16,7 @@ class PlotSWIFTOutput(PlotOutput):
 
     @staticmethod
     def _add_subplot(ax, data, title=None, title_font=9, ylabel_fontsize=10, ylabel=None, xticks_labels_show=False,
-                     line_width=3, color='orange', legend=False, label="SWIFT"):
+                     line_width=1, color='orange', legend=False, label="SWIFT"):
 
         ax = data.plot(ax=ax, legend=legend, linewidth=line_width, color=color, label=label)
         ax.set_title(title, fontsize=title_font)
@@ -34,7 +34,7 @@ class PlotSWIFTOutput(PlotOutput):
         return ax
 
     @staticmethod
-    def plot_output(data, color="orange", legend=False, label="SWIFT"):
+    def plot_output(data, color="orange", legend=False, label="SWIFT", linewidth=1):
         """
         This function plots output data for SWIFT solar wind variables. The plot format is at the moment
         fixed.
@@ -59,18 +59,21 @@ class PlotSWIFTOutput(PlotOutput):
 
         PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$",
                                      color=color, legend=legend,
-                                     label=label)
+                                     label=label,
+                                     line_width=linewidth)
         PlotSWIFTOutput._add_subplot(ax[1], density,
                                      ylabel=r"$N_{p}(cm^{-3})$",
                                      color=color, legend=legend,
-                                     label=label)
+                                     label=label,
+                                     line_width=linewidth)
         PlotSWIFTOutput._add_subplot(ax[2], temperature,
                                      ylabel=r"$Temperature(K)$",
                                      color=color, legend=legend,
                                      label=label)
         PlotSWIFTOutput._add_subplot(ax[3], b, ylabel=r"$|B|(nT)$",
                                      xticks_labels_show=True, color=color,
-                                     legend=legend, label=label)
+                                     legend=legend, label=label,
+                                     line_width=linewidth)
 
         plt.tight_layout()
 
