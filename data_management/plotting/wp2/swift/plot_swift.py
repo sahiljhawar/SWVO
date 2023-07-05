@@ -26,28 +26,7 @@ class PlotSWIFTOutput(PlotOutput):
         ax.set_ylabel(ylabel, fontsize=ylabel_fontsize, rotation=90, labelpad=0)
 
         # X-AXIS
-        def map_dates(x):
-            if x.hour == 0:
-                return x.strftime("%Y-%m-%d")
-            else:
-                return ""
-
-        #ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
-
-        if xticks_labels_show:
-            #ax.set_xticks(data.index[::12])
-            #x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
-            #ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
-            locator = matplotlib.dates.AutoDateLocator(minticks=3, maxticks=7)
-            formatter = matplotlib.dates.ConciseDateFormatter(locator)
-            ax.xaxis.set_major_locator(locator)
-            ax.xaxis.set_major_formatter(formatter)
-            
-        else:
-            ax.tick_params(axis="x", which="both", bottom=True)
-            ax.set_xticks([])
-            print("trying not to print labels")
-            ax.set_xlabel("")
+        ax.tick_params(axis="x", which="both", bottom=True)
 
         # GRID
         ax.grid(True, axis='y', linestyle='dashed')
@@ -72,6 +51,24 @@ class PlotSWIFTOutput(PlotOutput):
         fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(10, 10))
 
         fig.supxlabel("Time (UTC)", fontsize=15)
+
+        locator = matplotlib.dates.AutoDateLocator(minticks=3, maxticks=7)
+        formatter = matplotlib.dates.ConciseDateFormatter(locator)
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(formatter)
+
+        def map_dates(x):
+            if x.hour == 0:
+                return x.strftime("%Y-%m-%d")
+            else:
+                return ""
+        # ax.set_xticks([])
+        # ax.set_xticks(data.index[::12])
+        # x_labels = list(data.index[::12].map(lambda x: map_dates(x)))
+        # ax.set_xticklabels(labels=x_labels, rotation=30, fontsize=10)
+
+        # ax.set_xlabel("Time (UTC)", fontsize=15, labelpad=0)
+        # ax.set_xlabel("")
 
         PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$",
                                      color=color, legend=legend,
