@@ -69,10 +69,20 @@ class PlotSWIFTOutput(PlotOutput):
 
         fig.supxlabel("Time (UTC)", fontsize=15)
 
-        PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$", color=color, legend=legend, label="SWIFT")
-        #PlotSWIFTOutput._add_subplot(axis["ax2"], density, ylabel=r"$N_{p}(cm^{-3})$", color=color, legend=legend, label="SWIFT")
-        #PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$", color=color, legend=legend, label="SWIFT")
-        #PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, color=color, legend=legend, label="SWIFT")
+        PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$",
+                                     color=color, legend=legend,
+                                     label="SWIFT")
+        PlotSWIFTOutput._add_subplot(ax[1], density,
+                                     ylabel=r"$N_{p}(cm^{-3})$",
+                                     color=color, legend=legend,
+                                     label="SWIFT")
+        PlotSWIFTOutput._add_subplot(ax[2], temperature,
+                                     ylabel=r"$Temperature(K)$",
+                                     color=color, legend=legend,
+                                     label="SWIFT")
+        PlotSWIFTOutput._add_subplot(ax[3], b, ylabel=r"$|B|(nT)$",
+                                     xticks_labels_show=True, color=color,
+                                     legend=legend, label="SWIFT")
 
         plt.tight_layout()
 
