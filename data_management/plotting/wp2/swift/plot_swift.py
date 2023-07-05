@@ -65,17 +65,15 @@ class PlotSWIFTOutput(PlotOutput):
         b = data["b"]
         temperature = data["temperature"]
 
-        fig = plt.figure(figsize=(10, 10))
-        gs = gridspec.GridSpec(4, 1)
-        gs.update(left=0.1, right=0.9, wspace=0.05, hspace=0.1)
-        axis = {}
-        for i in range(4):
-            axis["ax{}".format(i + 1)] = plt.subplot(gs[i, 0])
+        fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(10, 10))
 
-        PlotSWIFTOutput._add_subplot(axis["ax1"], speed, ylabel=r"$|U|(km/s)$", color=color, legend=legend, label="SWIFT")
+        PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$", color=color, legend=legend, label="SWIFT")
         #PlotSWIFTOutput._add_subplot(axis["ax2"], density, ylabel=r"$N_{p}(cm^{-3})$", color=color, legend=legend, label="SWIFT")
         #PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$", color=color, legend=legend, label="SWIFT")
         #PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, color=color, legend=legend, label="SWIFT")
+
+        plt.tight_layout()
+
         return fig
 
     @staticmethod
@@ -104,4 +102,6 @@ class PlotSWIFTOutput(PlotOutput):
             PlotSWIFTOutput._add_subplot(axis["ax2"], speed, ylabel=r"$|U|(km/s)$", line_width=1)
             PlotSWIFTOutput._add_subplot(axis["ax3"], temperature, ylabel=r"$Temperature(K)$", line_width=1)
             PlotSWIFTOutput._add_subplot(axis["ax4"], b, ylabel=r"$|B|(nT)$", xticks_labels_show=True, line_width=1)
+
+        plt.tight_layout()
         return fig
