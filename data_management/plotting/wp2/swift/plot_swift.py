@@ -67,7 +67,7 @@ class PlotSWIFTOutput(PlotOutput):
 
         fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(10, 10))
 
-        fig.supxlabel("Time (UTC)", fontsize=15, labelpad=0)
+        fig.supxlabel("Time (UTC)", fontsize=15)
 
         PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$", color=color, legend=legend, label="SWIFT")
         #PlotSWIFTOutput._add_subplot(axis["ax2"], density, ylabel=r"$N_{p}(cm^{-3})$", color=color, legend=legend, label="SWIFT")
