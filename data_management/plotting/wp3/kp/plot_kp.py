@@ -130,13 +130,28 @@ class PlotKpEnsembleOutput(PlotOutput):
         super().__init__()
 
     @staticmethod
-    def _add_max_bars(ax, data, color='r'):
-        for i, d in enumerate(data.index[:-1]):
-            ax.hlines(y=data.values[i][0], xmin=i + 0.03, xmax=i + 1 - 0.1, linewidth=4, color=color)
+    def _add_max_bars(ax, data, color='r', max_bar=None):
+        if max_bar is None:
+            for i, d in enumerate(data.index):
+                ax.hlines(y=data.values[i][0], xmin=i + 0.03, xmax=i + 0.9, linewidth=4, color=color)
+        else:
+            PlotKpEnsembleOutput._check_max_bar_keys(max_bar)
+            for i, d in enumerate(data.index):
+                ax.hlines(y=data.values[i][0],
+                          xmin=i + max_bar["xmin_shift"],
+                          xmax=i + max_bar["max_shift"],
+                          linewidth=max_bar["linewidht"], color=color)
         return ax
 
     @staticmethod
-    def plot_output(data, legend=True):
+    def _check_max_bar_keys(max_bar):
+        supported_parameters = ["xmin_shift", "max_shift", "linewidht"]
+        if not (set(max_bar.keys()) == set(supported_parameters)):
+            raise ValueError("not all the necessary keys of provided max_bar a"
+                             "re provided")
+
+    @staticmethod
+    def plot_output(data, legend=True, max_bar=None):
         """
         This function plots output data for Kp Ensemble. The plot format is at the moment
         fixed.
@@ -171,7 +186,7 @@ class PlotKpEnsembleOutput(PlotOutput):
 
         plotter = PlotKpOutput()
         ax = plotter.plot_output(data_median, ax=ax)
-        ax = PlotKpEnsembleOutput._add_max_bars(ax, data=data_max)
+        ax = PlotKpEnsembleOutput._add_max_bars(ax, data=data_max, max_bar=max_bar)
 
         red_patch = patches.Patch(color='red', label=r'${}$ > 4'.format(label))
         yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'${}$ = 4'.format(label))
