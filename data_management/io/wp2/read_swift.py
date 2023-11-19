@@ -62,11 +62,18 @@ class SwiftReader(BaseReader):
             data["arrays"]["Btheta"]["data"]) * np.cos(data["arrays"]["Bphi"]["data"]) * 1.0e9
         by = np.array(data["arrays"]["Br"]["data"]) * np.sin(
             data["arrays"]["Btheta"]["data"]) * np.sin(data["arrays"]["Bphi"]["data"]) * 1.0e9
+
         bz = np.array(data["arrays"]["Br"]["data"]) * np.cos(data["arrays"]["Btheta"]["data"]) * 1.0e9
+        bz = - np.array(data["arrays"]["Btheta"]["data"]) * 1.0e9
 
         temperature = np.array(data["arrays"]["Temperature_ion"]["data"])
         speed = np.sqrt(ux ** 2 + uy ** 2 + uz ** 2)
+
         b = np.sqrt(bx ** 2 + by ** 2 + bz ** 2)
+        b = np.sqrt(np.array(data["arrays"]["Br"]["data"]) ** 2 +
+                    np.array(data["arrays"]["Btheta"]["data"]) ** 2 +
+                    np.array(data["arrays"]["Bphi"]["data"]) ** 2) * 1.0e9
+
         n = np.array(data["arrays"]["Rho"]["data"]) / SwiftReader.PROTON_MASS * 1.0e-6
 
         df = pd.DataFrame({"proton_density": n, "speed": speed, "b": b, "temperature": temperature,
@@ -196,5 +203,8 @@ class SwiftEnsembleReader(SwiftReader):
             else:
                 data_hgc = None
             hgc_s.append(data_hgc)
+
+        for index, df in enumerate(gsm_s):
+            gsm_s[index]["bz"] = hgc_s[index]["bz"]
 
         return gsm_s, hgc_s
