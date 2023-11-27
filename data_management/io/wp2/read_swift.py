@@ -52,21 +52,19 @@ class SwiftReader(BaseReader):
 
         time = list(map(lambda x: dt.datetime.utcfromtimestamp(int(x)), data["arrays"]["Unix time"]["data"]))
 
-        ux = np.array(data["arrays"]["Vr"]["data"]) * np.sin(
-            data["arrays"]["Vtheta"]["data"]) * np.cos(data["arrays"]["Vphi"]["data"]) / 1000.0
-        uy = np.array(data["arrays"]["Vr"]["data"]) * np.sin(
-            data["arrays"]["Vtheta"]["data"]) * np.sin(data["arrays"]["Vphi"]["data"]) / 1000.0
-        uz = np.array(data["arrays"]["Vr"]["data"]) * np.cos(data["arrays"]["Vtheta"]["data"]) / 1000.0
+        ux = np.array(data["arrays"]["Vx"]["data"]) / 1000.0
+        uy = np.array(data["arrays"]["Vy"]["data"]) / 1000.0
+        uz = np.array(data["arrays"]["Vz"]["data"]) / 1000.0
 
-        bx = np.array(data["arrays"]["Br"]["data"]) * np.sin(
-            data["arrays"]["Btheta"]["data"]) * np.cos(data["arrays"]["Bphi"]["data"]) * 1.0e9
-        by = np.array(data["arrays"]["Br"]["data"]) * np.sin(
-            data["arrays"]["Btheta"]["data"]) * np.sin(data["arrays"]["Bphi"]["data"]) * 1.0e9
-        bz = np.array(data["arrays"]["Br"]["data"]) * np.cos(data["arrays"]["Btheta"]["data"]) * 1.0e9
+        bx = np.array(data["arrays"]["Bx"]["data"]) * 1.0e9
+        by = np.array(data["arrays"]["By"]["data"]) * 1.0e9
+        bz = np.array(data["arrays"]["Bz"]["data"]) * 1.0e9
 
         temperature = np.array(data["arrays"]["Temperature_ion"]["data"])
+
         speed = np.sqrt(ux ** 2 + uy ** 2 + uz ** 2)
         b = np.sqrt(bx ** 2 + by ** 2 + bz ** 2)
+
         n = np.array(data["arrays"]["Rho"]["data"]) / SwiftReader.PROTON_MASS * 1.0e-6
 
         df = pd.DataFrame({"proton_density": n, "speed": speed, "b": b, "temperature": temperature,
@@ -196,5 +194,8 @@ class SwiftEnsembleReader(SwiftReader):
             else:
                 data_hgc = None
             hgc_s.append(data_hgc)
+
+        for index, df in enumerate(gsm_s):
+            gsm_s[index]["bz"] = hgc_s[index]["bz"]
 
         return gsm_s, hgc_s
