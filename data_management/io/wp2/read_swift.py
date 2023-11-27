@@ -195,7 +195,4 @@ class SwiftEnsembleReader(SwiftReader):
                 data_hgc = None
             hgc_s.append(data_hgc)
 
-        for index, df in enumerate(gsm_s):
-            gsm_s[index]["bz"] = hgc_s[index]["bz"]
-
         return gsm_s, hgc_s
