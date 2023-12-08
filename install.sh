@@ -38,5 +38,4 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd "$SCRIPT_DIR" || exit
 
 pip install -r ./requirements.txt
-python setup.py install
-python setup.py develop
+pip install .
