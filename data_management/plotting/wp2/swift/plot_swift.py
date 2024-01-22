@@ -43,10 +43,6 @@ class PlotSWIFTOutput(PlotOutput):
         :type data: pandas.DataFrame
         :return: A figure object of type matplotlib.figure.Figure containing the produced plot
         """
-        density = data["proton_density"]
-        speed = data["speed"]
-        b = data["b"]
-        temperature = data["temperature"]
 
         fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(10, 10))
 
@@ -57,23 +53,23 @@ class PlotSWIFTOutput(PlotOutput):
         ax[3].xaxis.set_major_locator(locator)
         ax[3].xaxis.set_major_formatter(formatter)
 
-        PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$",
+        PlotSWIFTOutput._add_subplot(ax[0], data["speed"], ylabel=r"$|U|(km/s)$",
                                      color=color, legend=legend,
                                      label=label,
                                      line_width=linewidth)
-        PlotSWIFTOutput._add_subplot(ax[1], density,
+        PlotSWIFTOutput._add_subplot(ax[1], data["proton_density"],
                                      ylabel=r"$N_{p}(cm^{-3})$",
                                      color=color, legend=legend,
                                      label=label,
                                      line_width=linewidth)
-        PlotSWIFTOutput._add_subplot(ax[2], temperature,
-                                     ylabel=r"$Temperature(K)$",
-                                     color=color, legend=legend,
-                                     label=label)
-        PlotSWIFTOutput._add_subplot(ax[3], b, ylabel=r"$|B|(nT)$",
+        PlotSWIFTOutput._add_subplot(ax[2], data["b"], ylabel=r"$|B|(nT)$",
                                      color=color,
                                      legend=legend, label=label,
                                      line_width=linewidth)
+        PlotSWIFTOutput._add_subplot(ax[3], data["bz"],
+                                     ylabel=r"$Bz(nT)$",
+                                     color=color, legend=legend,
+                                     label=label)
 
         return fig, ax
 
@@ -97,27 +93,23 @@ class PlotSWIFTOutput(PlotOutput):
         ax[3].xaxis.set_major_formatter(formatter)
 
         for d in data:
-            density = d["proton_density"]
-            speed = d["speed"]
-            b = d["b"]
-            temperature = d["temperature"]
 
-            PlotSWIFTOutput._add_subplot(ax[0], speed, ylabel=r"$|U|(km/s)$",
+            PlotSWIFTOutput._add_subplot(ax[0], d["speed"], ylabel=r"$|U|(km/s)$",
                                          color=color, legend=legend,
                                          label=label,
                                          line_width=linewidth)
-            PlotSWIFTOutput._add_subplot(ax[1], density,
+            PlotSWIFTOutput._add_subplot(ax[1], d["proton_density"],
                                          ylabel=r"$N_{p}(cm^{-3})$",
                                          color=color, legend=legend,
                                          label=label,
                                          line_width=linewidth)
-            PlotSWIFTOutput._add_subplot(ax[2], temperature,
-                                         ylabel=r"$Temperature(K)$",
-                                         color=color, legend=legend,
-                                         label=label)
-            PlotSWIFTOutput._add_subplot(ax[3], b, ylabel=r"$|B|(nT)$",
+            PlotSWIFTOutput._add_subplot(ax[2], d["b"], ylabel=r"$|B|(nT)$",
                                          color=color,
                                          legend=legend, label=label,
                                          line_width=linewidth)
+            PlotSWIFTOutput._add_subplot(ax[3], d["bz"],
+                                         ylabel=r"$Bz(nT)$",
+                                         color=color, legend=legend,
+                                         label=label)
 
         return fig, ax
