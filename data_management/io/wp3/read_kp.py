@@ -51,28 +51,28 @@ class KPReader(BaseReader):
         date_found = None
         files = sorted(glob.glob(folder + "/*"))
         for file in files:
+
             date = file.split("/")[-1]
             date = date.split(".")[0]
-            product = date.split("_")[0]
-            target_date = requested_date
             try:
                 date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%d")
                 hours = False
             except ValueError:
                 date = dt.datetime.strptime(date.split("_")[-1], "%Y%m%dT%H%M%S")
                 hours = True
-            if product == "NIEMEGK" and requested_date.replace(microsecond=0, minute=0, second=0, hour=0) != dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0, hour=0):
-                target_date = requested_date + dt.timedelta(days=1)
 
-            if (not hours) and (target_date.replace(hour=0) == date):
+            if (not hours) and (requested_date.replace(hour=0) == date):
                 file_to_read = file
                 date_found = date
-            else:
-                if target_date == date:
-                    if (model_name is not None) and (model_name not in file):
-                        continue
+                break
+                
+            if hours and (requested_date == date):
+                if (model_name is not None) and (model_name not in file):
+                    break
+                else:
                     file_to_read = file
                     date_found = date
+                    break
 
         try:
             if not header:
@@ -93,9 +93,9 @@ class KPReader(BaseReader):
 
     def read(self, source, requested_date=None, model_name=None, header=False) -> tuple:
         """
-        This function reads one of the available PAGER Kp forecast products.
+        This function reads one of the available PAGER non-ensemble Kp forecast products.
 
-        :param source: The source of Kp product requested. Choose among "niemegk", "swpc", "swift" and "l1"
+        :param source: The source of Kp product requested. Choose among "niemegk", "swpc"  and "l1"
         :type source: str
         :param requested_date: Requested data for data to read. If None it reads data from the latest file produced.
         :type requested_date: datetime.datetime or None
@@ -119,10 +119,6 @@ class KPReader(BaseReader):
             assert model_name is not None
             data, data_timestamp = self._read_single_file(os.path.join(self.data_folder, "L1_FORECAST"), requested_date,
                                                           model_name=model_name, header=header)
-        elif source == "swift":
-            data, data_timestamp = self._read_single_file(self.data_folder, requested_date,
-                                                          model_name=model_name,
-                                                          header=header)
         else:
             msg = "Source {} requested for reading Kp not available...".format(source)
             logging.error(msg)
