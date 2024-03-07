@@ -86,12 +86,12 @@ class Hp60Reader(BaseReader):
 
 class Hp60EnsembleReader(Hp60Reader):
 
-    def __init__(self, wp3_output_folder):
+    def __init__(self, hp60_output_folder):
         """
         :param hp60_output_folder: The path to data outputs to hp60output
         :type hp60_output_folder: str
         """
-        super().__init__(wp3_output_folder)
+        super().__init__(hp60_output_folder)
 
     @staticmethod
     def _read_ensemble_files(folder, requested_date=None, header=False, model_name=None) -> (list, str):
