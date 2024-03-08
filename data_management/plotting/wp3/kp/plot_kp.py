@@ -175,11 +175,20 @@ class PlotKpEnsembleOutput(PlotOutput):
                 logging.error(msg)
                 raise TypeError(msg)
 
-        data_median = pd.DataFrame(np.median([d.values.flatten() for d in data], axis=0), columns=["kp"],
-                                   index=data[0].index)
-        data_max = pd.DataFrame(np.max([d.values.flatten() for d in data], axis=0), columns=["kp"], index=data[0].index)
+        # Todo This is a hack, still working on it
+        cadence = (data[0].index[1] - data[0].index[0]).seconds // 3600
+        if cadence == 3:
+            label = "K_{p}"
+            data_column = "kp"
+        else:
+            label = "H_{p}60"
+            data_column = "Hp60"
 
-        label = "K_p"
+        data_median = pd.DataFrame(np.median([d.values.flatten() for d in data], axis=0),
+                                   columns=[data_column],
+                                   index=data[0].index)
+        data_max = pd.DataFrame(np.max([d.values.flatten() for d in data], axis=0),
+                                columns=[data_column], index=data[0].index)
 
         fig = plt.figure(figsize=(15, 8))
         ax = fig.add_subplot(1, 1, 1)
