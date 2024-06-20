@@ -142,25 +142,25 @@ class PlasmaspherePlot(PlotOutput):
         self.figure = fig
 
     @staticmethod
-    def _nan_presence(density_values):
-        if density_values.isnull().values.any():
+    def _predictions_all_nan(density_values):
+        if density_values.isnull().values.all():
             return True
 
     @staticmethod
     def _get_mean(two_d_array):
-        return np.mean(two_d_array, axis=1)
+        return np.nanmean(two_d_array, axis=1)
 
     @staticmethod
     def _get_max(two_d_array):
-        return np.amax(two_d_array, axis=1)
+        return np.nanmax(two_d_array, axis=1)
 
     @staticmethod
     def _get_min(two_d_array):
-        return np.amin(two_d_array, axis=1)
+        return np.nanmin(two_d_array, axis=1)
 
     @staticmethod
     def _get_deviation(density_values):
-        return np.std(density_values, axis=1)
+        return np.nanstd(density_values, axis=1)
 
     @staticmethod
     def _plot_time_series_statistics(ax, df, time_column, target_columns):
@@ -400,7 +400,7 @@ class PlasmaspherePlot(PlotOutput):
             mlt_values = df_date["MLT"].values
             date = df_date.iloc[0]["t"]
             density_values = PlasmaspherePlot._get_density_values(df_date)
-            if not PlasmaspherePlot._nan_presence(density_values):
+            if not PlasmaspherePlot._predictions_all_nan(density_values):
                 df_kp_date = None
                 solar_wind_date = None
                 if kp_inputs is not None and solar_wind_inputs is not None:
@@ -420,7 +420,7 @@ class PlasmaspherePlot(PlotOutput):
                            )
                 logging.info("for date {} plot has been generated".format(date))
             else:
-                logging.warning("for date {} some predictions were NaN and "
+                logging.warning("for date {} predictions were all NaN and "
                                 "the plot has not been generated".format(date))
         logging.info("Finished individual plasmasphere reconstructions generation")
 
