@@ -95,10 +95,10 @@ class ACERTReader(BaseReader):
                     logging.error(msg)
                     raise KeyError(msg)
 
-        file_swepam = self.data_folder + "{}{}{}_ace_swepam_1m.txt".format(str(date.year), str(date.month).zfill(2),
-                                                                           str(date.day).zfill(2))
-        file_mag = self.data_folder + "{}{}{}_ace_mag_1m.txt".format(str(date.year), str(date.month).zfill(2),
-                                                                     str(date.day).zfill(2))
+        file_swepam = os.path.join(self.data_folder, "{}{}{}_ace_swepam_1m.txt".format(str(date.year), str(date.month).zfill(2),
+                                                                           str(date.day).zfill(2)))
+        file_mag = os.path.join(self.data_folder, "{}{}{}_ace_mag_1m.txt".format(str(date.year), str(date.month).zfill(2),
+                                                                     str(date.day).zfill(2)))
         data_swepam = ACERTReader._read_swepam_file(file_swepam)
         data_mag = ACERTReader._read_mag_file(file_mag)
         data = pd.concat([data_swepam, data_mag], 1)
