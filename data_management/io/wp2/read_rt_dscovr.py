@@ -89,16 +89,16 @@ class DSCOVRRTReader(BaseReader):
                     logging.error(msg)
                     raise KeyError(msg)
 
-        files_plasma = glob.glob(self.data_folder + "plasma-1-day-{}{}{}{}*.json".format(str(date.year),
+        files_plasma = glob.glob(os.path.join(self.data_folder, "plasma-1-day-{}{}{}{}*.json".format(str(date.year),
                                                                                          str(date.month).zfill(2),
                                                                                          str(date.day).zfill(2),
                                                                                          str(date.hour).zfill(2),
-                                                                                         str(date.minute).zfill(2)))
-        files_mag = glob.glob(self.data_folder + "mag-1-day-{}{}{}{}*.json".format(str(date.year),
+                                                                                         str(date.minute).zfill(2))))
+        files_mag = glob.glob(os.path.join(self.data_folder, "mag-1-day-{}{}{}{}*.json".format(str(date.year),
                                                                                    str(date.month).zfill(2),
                                                                                    str(date.day).zfill(2),
                                                                                    str(date.hour).zfill(2),
-                                                                                   str(date.minute).zfill(2)))
+                                                                                   str(date.minute).zfill(2))))
 
         data_plasma = DSCOVRRTReader._read_plasma_file(sorted(files_plasma)[0])
         data_mag = DSCOVRRTReader._read_mag_file(sorted(files_mag)[0])
