@@ -174,25 +174,18 @@ class SwiftEnsembleReader(SwiftReader):
                     gsm_file = glob.glob(os.path.join(self.data_folder,
                                                       date_to_string + "*/task{}/SWIFT/gsm*".format(n)))[0]
                     data_gsm = SwiftReader._read_single_file(gsm_file, fields)
+                    gsm_s.append(data_gsm)
                 except IndexError:
                     msg = "GSM SWIFT output file for date {} and task {} not found...impossible to read".format(date_to_string, n)
                     logging.warning(msg)
-                    data_gsm = None
-            else:
-                data_gsm = None
-            gsm_s.append(data_gsm)
 
             if "hgc" in file_type:
                 try:
                     hgc_file = glob.glob(os.path.join(self.data_folder,
                                                       date_to_string + "*/task{}/SWIFT/hgc*".format(n)))[0]
                     data_hgc = SwiftReader._read_single_file(hgc_file, fields)
+                    hgc_s.append(data_hgc)
                 except IndexError:
                     msg = "HGC SWIFT output file for date {} and task {} not found...impossible to read".format(date_to_string, n)
                     logging.warning(msg)
-                    data_hgc = None
-            else:
-                data_hgc = None
-            hgc_s.append(data_hgc)
-
         return gsm_s, hgc_s
