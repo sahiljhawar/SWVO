@@ -5,7 +5,6 @@ class PlotOutput(object):
     def __init__(self):
         self.description = None
 
-    @staticmethod
     @abstractmethod
-    def plot_output(*args):
+    def plot_output(self, *args):
         raise NotImplementedError
