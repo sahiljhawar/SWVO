@@ -9,9 +9,9 @@ from data_management.plotting.plotting_base import PlotOutput
 matplotlib.use('Agg')
 
 
-class PlotKpOutput(PlotOutput):
+class PlotKpHpOutput(PlotOutput):
     """
-    This class is in charge to produce standard plots for Kp and geomagnetic indexes output data.
+    This class is in charge to produce standard plots for Kp/Hp output data.
     """
 
     def __init__(self):
@@ -32,21 +32,31 @@ class PlotKpOutput(PlotOutput):
         return color
 
     @staticmethod
-    def _add_subplot(ax, data, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
-                     ylabel_fontsize=20, ylim=(-0.1, 9.1), width=0.9, align="edge", alpha=None,
-                     ylabel=r"$K_{p}$", bar_colors=None, data_column="kp"):
+    def _get_max_ylim(data, data_column):
+        if data_column == "kp":
+            return 9.1
+        elif data_column in ["hp60", "hp30"]:
+            return np.max(9.1, np.max(data[data_column]) + 0.1)
 
-        if bar_colors is None:
-            bar_colors = PlotKpOutput._add_bar_color(data, list(data.keys())[0])
-        ax = data[data_column].plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
-                                    align=align, width=width, legend=False, alpha=alpha)
-        ax.set_title(title, fontsize=title_font)
-
+    @staticmethod
+    def _set_yaxis_style(ax, ylim, ylabel_fontsize=20, ylabel=None):
         ax.set_ylim(ylim)
         y_labels = [i for i in range(10) if i % 2 == 0]
         ax.set_yticks(y_labels)
         ax.tick_params(axis="y", labelsize=ylabel_fontsize, direction='in')
         ax.set_ylabel(ylabel, fontsize=ylabel_fontsize, rotation=90, labelpad=15)
+        return ax
+
+    @staticmethod
+    def _add_subplot(ax, data, data_column, title=None, rotation=0, title_font=9, xlabel_fontsize=14,
+                    width=0.9, align="edge", alpha=None, bar_colors=None):
+
+        if bar_colors is None:
+            bar_colors = PlotKpHpOutput._add_bar_color(data, list(data.keys())[0])
+        ax = data[data_column].plot(kind="bar", ax=ax, edgecolor=['k'] * len(data), color=bar_colors,
+                                    align=align, width=width, legend=False, alpha=alpha)
+        ax.set_title(title, fontsize=title_font)
+
         first_hour = data.index[0].hour
 
         def map_dates(x):
@@ -68,12 +78,31 @@ class PlotKpOutput(PlotOutput):
         return ax
 
     @staticmethod
-    def plot_output(data, ax=None, legend=True):
-        """
-        This function plots output data for Kp products. The plot format is at the moment fixed.
+    def _check_column_to_plot(data, column_to_plot):
+        if column_to_plot not in data.columns:
+            raise ValueError("specified data column {} is not among the data"
+                             " columns {}".format(column_to_plot,
+                                                  data.columns))
+    @staticmethod
+    def _get_label(column_to_plot):
+        if column_to_plot == "kp":
+            return "K_{p}"
+        elif column_to_plot == "hp60":
+            return "H_{p}60"
+        elif column_to_plot == "hp30":
+            return "H_{p}30"
+        else:
+            raise ValueError("given value for {} not expected".format(column_to_plot))
 
-        :param data: This is the standard output format of Kp products read by KpReader class.
+
+    def plot_output(self, data, column_to_plot, ax=None, legend=True):
+        """
+        This function plots output data for Kp/Hp products. The plot format is at the moment fixed.
+
+        :param data: This is the standard output format of Kp/Hp products read by KpReader class.
         :type data: pandas.DataFrame
+        :param column_to_plot: column in data to plot.
+        :type column_to_plot: str
         :param ax: An Axes object in the case the plot needs to be combined with other figures outside of the class
                    otherwise pass None.
         :type ax: matplotlib.axes.Axes or None
@@ -83,47 +112,52 @@ class PlotKpOutput(PlotOutput):
         """
 
         if not isinstance(data, pd.DataFrame):
-            msg = "data must be an instance of a pandas dataframe, instead it is of type {}".format(type(data))
+            msg = ("data must be an instance of a pandas dataframe, instead "
+                   "it is of type {}").format(type(data))
             logging.error(msg)
             raise TypeError(msg)
 
-        # Todo This is a hack, still working on it
-        cadence = (data.index[1] - data.index[0]).seconds // 3600
-        if cadence == 3:
-            label = "K_{p}"
-            data_column = "kp"
-        else:
-            label = "H_{p}60"
-            data_column = "Hp60"
+        PlotKpHpOutput._check_column_to_plot(data, column_to_plot)
+
+        label = PlotKpHpOutput._get_label(column_to_plot)
 
         if ax is None:
             fig = plt.figure(figsize=(15, 8))
             ax = fig.add_subplot(1, 1, 1)
 
-        ax = PlotKpOutput._add_subplot(ax, data=data[[data_column]],
-                                       title=None,
-                                       ylabel=r'${}$'.format(label),
-                                       data_column=data_column)
+        ax = PlotKpHpOutput._add_subplot(ax, data=data[[column_to_plot]],
+                                         data_column=column_to_plot,
+                                         title=None)
+
+        max_ylim = PlotKpHpOutput._get_max_ylim(data, column_to_plot)
+        ax = PlotKpHpOutput._set_yaxis_style(ax, ylim=(-0.1, max_ylim),
+                                             ylabel_fontsize=20,
+                                             ylabel=r'${}$'.format(label))
 
         red_patch = patches.Patch(color='red', label=r'${}$ > 4'.format(label))
-        yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'${}$ = 4'.format(label))
-        green_patch = patches.Patch(color='green', label=r'${}$ < 4'.format(label))
-        transparent_patch = patches.Patch(color=[0, 0, 0, 0.1], label='Data not available')
+        yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0],
+                                     label=r'${}$ = 4'.format(label))
+        green_patch = patches.Patch(color='green',
+                                    label=r'${}$ < 4'.format(label))
+        transparent_patch = patches.Patch(color=[0, 0, 0, 0.1],
+                                          label='Data not available')
 
         if legend:
             ax.legend(bbox_to_anchor=(0., 1., 0.84, .275),
-                      handles=[green_patch, yellow_patch, red_patch, transparent_patch],
+                      handles=[green_patch, yellow_patch, red_patch,
+                               transparent_patch],
                       ncol=4, fontsize="x-large", shadow=True)
 
         if ax is None:
-            fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7, wspace=None, hspace=0.6)
+            fig.subplots_adjust(left=None, bottom=0.3, right=None, top=0.7,
+                                wspace=None, hspace=0.6)
 
         return ax
 
 
-class PlotKpEnsembleOutput(PlotOutput):
+class PlotKpHpEnsembleOutput(PlotKpHpOutput):
     """
-    This class is in charge to produce standard plots for Kp and geomagnetic indexes output data.
+    This class is in charge to produce standard plots for Kp/Hp output data.
     """
 
     def __init__(self):
@@ -135,7 +169,7 @@ class PlotKpEnsembleOutput(PlotOutput):
             for i, d in enumerate(data.index):
                 ax.hlines(y=data.values[i][0], xmin=i + 0.03, xmax=i + 0.9, linewidth=4, color=color)
         else:
-            PlotKpEnsembleOutput._check_max_bar_keys(max_bar)
+            PlotKpHpEnsembleOutput._check_max_bar_keys(max_bar)
             for i, d in enumerate(data.index):
                 ax.hlines(y=data.values[i][0],
                           xmin=i + max_bar["xmin_shift"],
@@ -150,14 +184,15 @@ class PlotKpEnsembleOutput(PlotOutput):
             raise ValueError("not all the necessary keys of provided max_bar a"
                              "re provided")
 
-    @staticmethod
-    def plot_output(data, legend=True, max_bar=None):
+    def plot_output(self, data, column_to_plot, legend=True, max_bar=None):
         """
-        This function plots output data for Kp Ensemble. The plot format is at the moment
+        This function plots output data for Kp/Hp Ensemble. The plot format is at the moment
         fixed.
 
         :param data: This is the standard output format of Kp Ensemble products read by KpEnsembleReader class.
         :type data: list of pandas.DataFrame
+        :param column_to_plot: column in data to plot.
+        :type column_to_plot: str
         :param legend: If True the default legend of the plot is kept, otherwise it is not plotted.
         :type legend: bool
         :return: An Axes object
@@ -175,27 +210,31 @@ class PlotKpEnsembleOutput(PlotOutput):
                 logging.error(msg)
                 raise TypeError(msg)
 
-        # Todo This is a hack, still working on it
-        cadence = (data[0].index[1] - data[0].index[0]).seconds // 3600
-        if cadence == 3:
-            label = "K_{p}"
-            data_column = "kp"
-        else:
-            label = "H_{p}60"
-            data_column = "Hp60"
+            PlotKpHpEnsembleOutput._check_column_to_plot(d, column_to_plot)
+
+        label = PlotKpHpEnsembleOutput._get_label(column_to_plot)
+
 
         data_median = pd.DataFrame(np.median([d.values.flatten() for d in data], axis=0),
-                                   columns=[data_column],
+                                   columns=[column_to_plot],
                                    index=data[0].index)
         data_max = pd.DataFrame(np.max([d.values.flatten() for d in data], axis=0),
-                                columns=[data_column], index=data[0].index)
+                                columns=[column_to_plot], index=data[0].index)
 
         fig = plt.figure(figsize=(15, 8))
         ax = fig.add_subplot(1, 1, 1)
 
-        plotter = PlotKpOutput()
-        ax = plotter.plot_output(data_median, ax=ax)
-        ax = PlotKpEnsembleOutput._add_max_bars(ax, data=data_max, max_bar=max_bar)
+        ax = PlotKpHpEnsembleOutput._add_subplot(ax, data_median,
+                                                 column_to_plot,
+                                                 title=None,
+                                                 ylabel=r'${}$'.format(label)
+                                                 )
+        ax = PlotKpHpEnsembleOutput._add_max_bars(ax, data=data_max, max_bar=max_bar)
+
+        max_ylim = PlotKpHpEnsembleOutput._get_max_ylim(data_max, column_to_plot)
+        PlotKpHpEnsembleOutput._set_yaxis_style(ax, ylim=(-0.1, max_ylim),
+                                                ylabel_fontsize=20,
+                                                ylabel=r'${}$'.format(label))
 
         red_patch = patches.Patch(color='red', label=r'${}$ > 4'.format(label))
         yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'${}$ = 4'.format(label))
