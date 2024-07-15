@@ -226,18 +226,20 @@ class PlotKpHpEnsembleOutput(PlotKpHpOutput):
 
         ax = PlotKpHpEnsembleOutput._add_subplot(ax, data_median,
                                                  column_to_plot,
-                                                 title=None,
-                                                 ylabel=r'${}$'.format(label)
-                                                 )
-        ax = PlotKpHpEnsembleOutput._add_max_bars(ax, data=data_max, max_bar=max_bar)
+                                                 title=None)
+        ax = PlotKpHpEnsembleOutput._add_max_bars(ax,
+                                                  data=data_max,
+                                                  max_bar=max_bar)
 
-        max_ylim = PlotKpHpEnsembleOutput._get_max_ylim(data_max, column_to_plot)
+        max_ylim = PlotKpHpEnsembleOutput._get_max_ylim(data_max,
+                                                        column_to_plot)
         PlotKpHpEnsembleOutput._set_yaxis_style(ax, ylim=(-0.1, max_ylim),
                                                 ylabel_fontsize=20,
                                                 ylabel=r'${}$'.format(label))
 
         red_patch = patches.Patch(color='red', label=r'${}$ > 4'.format(label))
-        yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0], label=r'${}$ = 4'.format(label))
+        yellow_patch = patches.Patch(color=[204 / 255.0, 204 / 255.0, 0.0, 1.0],
+                                     label=r'${}$ = 4'.format(label))
         green_patch = patches.Patch(color='green', label=r'${}$ < 4'.format(label))
         transparent_patch = patches.Patch(color=[0, 0, 0, 0.1], label='Data not available')
 
