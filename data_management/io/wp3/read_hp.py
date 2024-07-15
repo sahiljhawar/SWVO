@@ -24,6 +24,7 @@ class HpReader(BaseReader):
         self.data_folder = data_folder
         self._check_data_folder()
         self.index = index
+        self._check_index()
 
     def _check_data_folder(self):
         if not os.path.exists(self.data_folder):
