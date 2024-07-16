@@ -61,7 +61,7 @@ class PlotKpHpOutput(PlotOutput):
 
         def map_dates(x):
 
-            if ((x.hour - first_hour) % 6 != 0 ) or (x.min != 0):
+            if ((x.hour - first_hour) % 6 != 0 ) or (x.minute != 0):
                 return ""
             elif ((x.hour - first_hour) % 6 == 0) and (x.hour == first_hour):
                 return x.strftime("%H:%M\n%d %b")
