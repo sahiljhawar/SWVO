@@ -41,7 +41,7 @@ class PlotKpHpOutput(PlotOutput):
     @staticmethod
     def _set_yaxis_style(ax, ylim, ylabel_fontsize=20, ylabel=None):
         ax.set_ylim(ylim)
-        y_labels = [i for i in range(10) if i % 2 == 0]
+        y_labels = [i for i in range(int(ylim[1]) + 1)]
         ax.set_yticks(y_labels)
         ax.tick_params(axis="y", labelsize=ylabel_fontsize, direction='in')
         ax.set_ylabel(ylabel, fontsize=ylabel_fontsize, rotation=90, labelpad=15)
