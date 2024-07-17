@@ -8,29 +8,38 @@ from data_management.io.base_file_reader import BaseReader
 
 
 
-class Hp60Reader(BaseReader):
+class HpReader(BaseReader):
     """
-    Reader class for Kp products from WP3 PAGER project. It reads Hp60 forecasts.
+    Reader class for Hp products from WP3 PAGER project. It reads Hp60/Hp30 forecasts.
     """
 
-    def __init__(self, hp60_output_folder):
+    def __init__(self, data_folder, index):
         """
-        :param hp60_output_folder: The path to data outputs for hp60.
-        :type hp60_output_folder: str
+        :param data_folder: The path where data is contained.
+        :type data_folder: str
+        :param index: it can be either hp30 or hp60
+        :type index: str
         """
         super().__init__()
-        self.data_folder = hp60_output_folder
+        self.data_folder = data_folder
         self._check_data_folder()
+        self.index = index
+        self._check_index()
 
     def _check_data_folder(self):
         if not os.path.exists(self.data_folder):
-            msg = "Data folder for HP60 output not found...impossible to retrieve data."
+            msg = "Data folder not found...impossible to retrieve data."
             logging.error(msg)
             raise FileNotFoundError(msg)
 
+    def _check_index(self):
+        if self.index not in ["hp30", "hp60"]:
+            raise RuntimeError("requested {} index does not exist.."
+                               ".".format(self.index))
+
     @staticmethod
     def _correct_column_name_for_files_generated_before_2023(df):
-        return df.rename(columns={"kp": "Hp60"})
+        return df.rename(columns={"kp": "hp60"})
 
     def read(self, requested_date=None, model_name="HP60-FULL-SW-SWAMI-PAGER", header=False) -> tuple:
         """
@@ -72,11 +81,11 @@ class Hp60Reader(BaseReader):
             return None, None
 
         if not header:
-            df = pd.read_csv(file_to_read, names=["t", "Hp60"])
+            df = pd.read_csv(file_to_read, names=["t", self.index])
         else:
             df = pd.read_csv(file_to_read)
             if "kp" in df.columns:
-                df = Hp60Reader._correct_column_name_for_files_generated_before_2023(df)
+                df = HpReader._correct_column_name_for_files_generated_before_2023(df)
 
         df["t"] = pd.to_datetime(df["t"])
         df.index = df["t"]
@@ -84,17 +93,19 @@ class Hp60Reader(BaseReader):
 
         return df, date_found
 
-class Hp60EnsembleReader(Hp60Reader):
+class HpEnsembleReader(HpReader):
 
-    def __init__(self, hp60_output_folder):
+    def __init__(self, data_folder, index):
         """
-        :param hp60_output_folder: The path to data outputs to hp60output
-        :type hp60_output_folder: str
+        :param data_folder: The path to data folder of the index output
+        :type data_folder: str
+        :param index: it can be either hp30 or hp60
+        :type index: str
         """
-        super().__init__(hp60_output_folder)
+        super().__init__(data_folder, index)
 
-    @staticmethod
-    def _read_ensemble_files(folder, requested_date=None, header=False, model_name=None) -> (list, str):
+
+    def _read_ensemble_files(self, folder, requested_date=None, header=False, model_name=None) -> (list, str):
         if requested_date is None:
             requested_date = dt.datetime.utcnow().replace(microsecond=0, minute=0, second=0)
 
@@ -104,7 +115,7 @@ class Hp60EnsembleReader(Hp60Reader):
         data = []
         for file in file_list:
             if not header:
-                df = pd.read_csv(file, names=["t", "Hp60"])
+                df = pd.read_csv(file, names=["t", self.index])
             else:
                 df = pd.read_csv(file)
             df["t"] = pd.to_datetime(df["t"])
@@ -113,7 +124,9 @@ class Hp60EnsembleReader(Hp60Reader):
             data.append(df)
 
         if len(data) == 0:
-            msg = "No Hp60 ensemble file found for requested date {}".format(requested_date)
+            msg = "No ensemble file found for requested date {}".format(
+                requested_date, self.index
+            )
             logging.warning(msg)
             return None, None
         else:
