@@ -14,7 +14,7 @@ class KpNiemegk(object):
     URL = "https://kp.gfz-potsdam.de/app/files/"
     NAME = "qlyymm.tab"
 
-    DAYS_TO_SAVE_EACH_FILE = 2
+    DAYS_TO_SAVE_EACH_FILE = 3
 
     def __init__(self, data_dir:str|Path=None):
 
@@ -105,7 +105,7 @@ class KpNiemegk(object):
         return data_out
 
     def _get_processed_file_list(self, start_time:datetime, end_time:datetime) -> Tuple[List, List]:
-
+        
         file_paths = []
         time_intervals = []
 
