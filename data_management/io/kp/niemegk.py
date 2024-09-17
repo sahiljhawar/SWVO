@@ -1,0 +1,171 @@
+import os
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Tuple, List
+
+import pandas as pd
+import numpy as np
+import wget
+
+class KpNiemegk(object):
+
+    ENV_VAR_NAME = 'RT_KP_NIEMEGK_STREAM_DIR'
+
+    URL = "https://kp.gfz-potsdam.de/app/files/"
+    NAME = "qlyymm.tab"
+
+    DAYS_TO_SAVE_EACH_FILE = 2
+
+    def __init__(self, data_dir:str|Path=None):
+
+        if data_dir is None:
+
+            if self.ENV_VAR_NAME not in os.environ:
+                raise ValueError(f'Necessary environment variable {self.ENV_VAR_NAME} not set!')
+
+            data_dir = os.environ.get(self.ENV_VAR_NAME)
+
+        self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+
+    def download_and_process(self, start_time:datetime, end_time:datetime, reprocess_files:bool=False, verbose:bool=False):
+
+        if start_time.month < datetime.today().month:
+            if verbose:
+                print('We can only download and progress a Kp Niemegk file for the current month!')
+                return
+
+        temporary_dir = Path("./temp_kp_niemegk_wget")
+        temporary_dir.mkdir(exist_ok=True, parents=True)
+
+        if verbose:
+            print(f'Downloading file {self.URL + self.NAME} ...')
+
+        wget.download(self.URL + self.NAME, str(temporary_dir))
+        print('')
+
+        # check if download was successfull
+        if os.stat(str(temporary_dir / self.NAME)).st_size == 0:
+            raise FileNotFoundError(f'Error while downloading file: {self.URL + self.NAME}!')
+
+        if verbose:
+            print(f'Processing file ...')
+        processed_df = self._process_single_file(temporary_dir)
+
+        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+
+        for file_path, time_interval in zip(file_paths, time_intervals):
+
+            if file_path.exists():
+                if reprocess_files:
+                    file_path.unlink()
+                else:
+                    continue
+
+            data_single_file = processed_df[(processed_df.index >= time_interval[0]) & (processed_df.index <= time_interval[1])]
+
+            if len(data_single_file.index) == 0:
+                continue
+
+            data_single_file.to_csv(file_path, index=True, header=False)
+
+            if verbose:
+                print(f'Saving processed file {file_path}')
+
+        (temporary_dir / self.NAME).unlink()
+        temporary_dir.rmdir()
+
+    def read(self, start_time:datetime, end_time:datetime, download:bool=False) -> pd.DataFrame:
+        
+        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+
+        # initialize data frame with NaNs
+        t = pd.date_range(datetime(start_time.year, start_time.month, start_time.day), datetime(end_time.year, end_time.month, end_time.day, 23, 59, 59), freq=timedelta(hours=3))
+        data_out = pd.DataFrame(index=t)
+        data_out['kp'] = np.array([np.nan] * len(t))
+
+        for file_path, time_interval in zip(file_paths, time_intervals):
+
+            if not file_path.exists():
+                if download:
+                    self.download_and_process(start_time, end_time)
+
+            # if we request a date in the future, the file will still not be found here
+            if not file_path.exists():
+                print(f'File {file_path} not found, filling with NaNs')
+                continue
+            else:
+                df_one_file = self._read_single_file(file_path)
+
+            # combine the new file with the old ones, replace all values present in df_one_file in data_out
+            data_out = df_one_file.combine_first(data_out)
+
+        data_out = data_out.truncate(before=start_time-timedelta(hours=2.9999), after=end_time+timedelta(hours=2.9999))
+
+        return data_out
+
+    def _get_processed_file_list(self, start_time:datetime, end_time:datetime) -> Tuple[List, List]:
+
+        file_paths = []
+        time_intervals = []
+
+        current_time = datetime(start_time.year, start_time.month, start_time.day, 0, 0, 0)
+        end_time = datetime(end_time.year, end_time.month, end_time.day, 0, 0, 0) + timedelta(days=1)
+
+        while current_time <= end_time:
+
+            file_path = self.data_dir / f"NIEMEGK_KP_NOWCAST_{current_time.strftime('%Y%m%d')}.csv"
+            file_paths.append(file_path)
+
+            interval_start = current_time - timedelta(days=self.DAYS_TO_SAVE_EACH_FILE-1)
+            interval_end = datetime(current_time.year, current_time.month, current_time.day, 23, 59, 59)
+
+            time_intervals.append((interval_start, interval_end))
+            current_time += timedelta(days=1)
+
+        return file_paths, time_intervals
+
+    def _read_single_file(self, file_path) -> pd.DataFrame:
+
+        df = pd.read_csv(file_path, names=["t", "kp"])
+
+        df["t"] = pd.to_datetime(df["t"])
+        df.index = df["t"]
+        df.drop(labels=["t"], axis=1, inplace=True)
+
+        return df
+
+    def _process_single_file(self, temporary_dir:Path) -> pd.DataFrame:
+
+        kp = []
+        timestamp = []
+        
+        header = ["t", "0", "1", "2", "3", "4", "5", "6", "7", "last", "last2", "last3"]
+
+        data = pd.read_csv(temporary_dir / self.NAME, names=header, sep='\s+')
+        data.drop(labels=["last", "last2", "last3"], axis=1, inplace=True)
+        
+        for _, row in data.iterrows():
+            for i in range(8):
+                t = datetime(int("20" + str(row["t"])[0:2]), int(str(row["t"])[2:4]), int(str(row["t"])[4:6]), i * 3)
+                timestamp.append(t)
+                value = row[str(i)]
+                try:
+                    v = float(str(value)[0])
+                    if value[1] == "+":
+                        v += 1.0 / 3.0
+                    elif value[1] == "-":
+                        v -= 1.0 / 3.0
+                    else:
+                        pass
+                    kp.append(v)
+                except ValueError:
+                    kp.append(np.nan)
+        
+        data = pd.DataFrame({"kp": kp, "t": timestamp})
+        data.index.rename("t", inplace=True)
+        data.index = data["t"]
+        data.drop(labels=["t"], axis=1, inplace=True)
+        data.dropna(inplace=True)
+
+        return data
