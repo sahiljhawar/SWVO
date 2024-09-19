@@ -86,7 +86,7 @@ class OMNILowRes(object):
             interval_end = datetime(current_time.year, 12, 31, 23, 59, 59)
 
             time_intervals.append((interval_start, interval_end))
-            current_time = datetime(start_time.year+1, 1, 1, 0, 0, 0)
+            current_time = datetime(current_time.year+1, 1, 1, 0, 0, 0)
 
         return file_paths, time_intervals
 
