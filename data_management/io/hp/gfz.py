@@ -33,7 +33,7 @@ class HpGFZ(object):
 
         (self.data_dir / str(self.index)).mkdir(exist_ok=True)
 
-        assert self.index == 'Hp30' or self.index == 'Hp60', 'Enountered invalid index: {self.index}. Possible options are: Hp30, Hp60!'
+        assert self.index == 'hp30' or self.index == 'hp60', 'Enountered invalid index: {self.index}. Possible options are: hp30, hp60!'
 
     def download_and_process(self, start_time:datetime, end_time:datetime, reprocess_files:bool=False, verbose:bool=False):
 
@@ -182,26 +182,11 @@ class HpGFZ(object):
         df.drop(labels=["t"], axis=1, inplace=True)
 
         return df
-
-    def _make_hp_nan(self, year) -> pd.DataFrame:
-        """
-        Prepares a yearly nan data for hp index.
-
-        :param year: The year of interest
-        :type year: int
-        :return: A pandas DataFrame with all nan values.
-        """
-        freq = self.index[2:] + "T"
-        t = pd.date_range(dt.datetime(year, 1, 1), dt.datetime(year, 12, 31, 21, 0, 0), freq=freq)
-        data = pd.DataFrame(index=t)
-        index_column_name = "Hp" + self.index[2:]
-        data[index_column_name] = np.array([np.nan] * (len(t)))
-        return data
     
 class Hp30GFZ(HpGFZ):
     def __init__(self, data_dir:str|Path=None):
-        super().__init__('Hp30', data_dir)
+        super().__init__('hp30', data_dir)
 
 class Hp60GFZ(HpGFZ):
     def __init__(self, data_dir:str|Path=None):
-        super().__init__('Hp60', data_dir)
+        super().__init__('hp60', data_dir)

@@ -4,7 +4,7 @@ import os
 from data_management.io.kp import KpNiemegk, KpSWPC, KpOMNI
 from data_management.io.omni import OMNILowRes
 from data_management.io.kp import read_kp_with_backups
-from data_management.io.hp import Hp30GFZ, Hp60GFZ
+from data_management.io.hp import Hp30GFZ, Hp60GFZ, Hp30Ensemble
 
 from matplotlib import pyplot as plt
 
@@ -13,6 +13,7 @@ os.environ['RT_KP_SWPC_STREAM_DIR'] = '/home/bhaas/FLAG_TEST/SWPC/'
 os.environ['OMNI_LOW_RES_STREAM_DIR'] = '/home/bhaas/FLAG_TEST/OMNI_LOW_RES/'
 os.environ['KP_ENSEMBLE_FORECAST_DIR'] = '/PAGER/WP3/data/outputs/SWIFT_ENSEMBLE/'
 os.environ['RT_HP_GFZ_STREAM_DIR'] = '/home/bhaas/FLAG_TEST/Hp/'
+os.environ['HP30_ENSEMBLE_FORECAST_DIR'] = '/PAGER/WP3/data/outputs/HP30/'
 
 start_time = datetime.today() - timedelta(days=15)
 end_time = datetime.today() - timedelta(days=2)
@@ -32,8 +33,10 @@ print(end_time)
 #OMNILowRes().download_and_process(start_time, end_time, reprocess_files=True, verbose=True)
 #print(KpOMNI().read(start_time, end_time))
 
-Hp60GFZ().download_and_process(datetime.today(), datetime.today(), reprocess_files=True, verbose=True)
-print(Hp60GFZ().read(datetime.today()-timedelta(days=365), datetime.today()+timedelta(days=10)))
+#Hp60GFZ().download_and_process(datetime.today(), datetime.today(), reprocess_files=True, verbose=True)
+#print(Hp60GFZ().read(datetime.today()-timedelta(days=365), datetime.today()+timedelta(days=10)))
+
+print(Hp30Ensemble().read(datetime.today(), datetime.today()+timedelta(hours=30)))
 
 # data_kp_all = [read_kp_with_backups(datetime.today()-timedelta(days=12), datetime.today()-timedelta(days=5))]
 
