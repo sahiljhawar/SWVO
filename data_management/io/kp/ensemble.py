@@ -30,8 +30,7 @@ class KpEnsemble(object):
         if end_time is None:
             end_time = start_time + timedelta(days=3)
 
-        start_date = datetime(start_time.year, start_time.month, start_time.day)
-        str_date = start_date.strftime("%Y%m%dT%H%M%S")
+        str_date = start_time.strftime("%Y%m%dT%H0000")
 
         file_list = sorted(self.data_dir.glob(f"FORECAST_PAGER_SWIFT_swift_{str_date}_ensemble_*.csv"))
 
@@ -42,6 +41,10 @@ class KpEnsemble(object):
             df["t"] = pd.to_datetime(df["t"])
             df.index = df["t"]
             df.drop(labels=["t"], axis=1, inplace=True)
+
+            df["file_name"] = file
+            df.loc[df["kp"].isna(), "file_name"] = None
+
             df = df.truncate(before=start_time-timedelta(hours=2.9999), after=end_time+timedelta(hours=2.9999))
 
             data.append(df)

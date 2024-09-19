@@ -36,16 +36,18 @@ print(end_time)
 #Hp60GFZ().download_and_process(datetime.today(), datetime.today(), reprocess_files=True, verbose=True)
 #print(Hp60GFZ().read(datetime.today()-timedelta(days=365), datetime.today()+timedelta(days=10)))
 
-print(Hp30Ensemble().read(datetime.today(), datetime.today()+timedelta(hours=30)))
+#print(Hp30Ensemble().read(datetime.today(), datetime.today()+timedelta(hours=30)))
 
-# data_kp_all = [read_kp_with_backups(datetime.today()-timedelta(days=12), datetime.today()-timedelta(days=5))]
+data_kp_all = read_kp_with_backups(datetime.today()-timedelta(days=12), datetime.today()+timedelta(days=2))
+print(data_kp_all[0])
+print(data_kp_all[0].loc["2024-09-21 11:00:00", "file_name"])
 
-# data_omni = data_kp_all[0].loc[data_kp_all[0]['model'] == 'omni']
-# data_niemegk = data_kp_all[0].loc[data_kp_all[0]['model'] == 'niemegk']
+#data_omni = data_kp_all[0].loc[data_kp_all[0]['model'] == 'omni']
+#data_niemegk = data_kp_all[0].loc[data_kp_all[0]['model'] == 'niemegk']
 
-# plt.subplots(1,1,figsize=(19/2,10/2))
-# plt.step(data_omni.index, data_omni['kp'], 'b')
-# plt.step(data_niemegk.index, data_niemegk['kp'], 'r')
+#plt.subplots(1,1,figsize=(19/2,10/2))
+#plt.step(data_omni.index, data_omni['kp'], 'b')
+#plt.step(data_niemegk.index, data_niemegk['kp'], 'r')
 
 # for ie in range(len(data_kp_all)):
 #      data_ensemble = data_kp_all[ie].loc[data_kp_all[ie]['model'] == 'ensemble']

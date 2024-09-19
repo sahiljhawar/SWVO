@@ -66,5 +66,8 @@ class KpOMNI(object):
         df.drop(labels=["t"], axis=1, inplace=True)
         df.drop(labels=["timestamp"], axis=1, inplace=True)
         df.drop(labels=["dst"], axis=1, inplace=True)
+        
+        df["file_name"] = file_path
+        df.loc[df["kp"].isna(), "file_name"] = None
 
         return df

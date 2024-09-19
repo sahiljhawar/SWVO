@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Tuple, List
 
+from shutil import rmtree
 import pandas as pd
 import numpy as np
 import wget
@@ -72,8 +73,7 @@ class KpNiemegk(object):
             if verbose:
                 print(f'Saving processed file {file_path}')
 
-        (temporary_dir / self.NAME).unlink()
-        temporary_dir.rmdir()
+        rmtree(temporary_dir)
 
     def read(self, start_time:datetime, end_time:datetime, download:bool=False) -> pd.DataFrame:
         
@@ -132,6 +132,9 @@ class KpNiemegk(object):
         df["t"] = pd.to_datetime(df["t"])
         df.index = df["t"]
         df.drop(labels=["t"], axis=1, inplace=True)
+        
+        df["file_name"] = file_path
+        df.loc[df["kp"].isna(), "file_name"] = None
 
         return df
 

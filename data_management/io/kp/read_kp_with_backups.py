@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 import numpy as np
@@ -32,7 +32,20 @@ def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:lis
 
         if isinstance(model, KpEnsemble):
             print('Reading PAGER Kp ensemble...')
+
+            # we are trying to read the most recent file; it this fails, we go one step back (1 hour) and see if this file is present
+
+            target_time = datetime.today()
             data_one_model = model.read(datetime.today(), end_time)
+
+            while len(data_one_model) == 0 and target_time > (datetime.today()-timedelta(days=3)):
+                target_time -= timedelta(hours=1)
+
+                # ONLY READ MIDNIGHT FILE FOR NOW; OTHER FILES BREAK
+                target_time = target_time.replace(hour=0, minute=0, second=0)
+
+                data_one_model = model.read(target_time, end_time)
+
             model_label = 'ensemble'
 
             num_ens_members = len(data_one_model)
@@ -62,8 +75,6 @@ def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:lis
 
             if data_out[i]['kp'].isna().sum() > 0:
                 any_nans_found = True
-
-        print(data_out)
 
         # if no NaNs are present anymore, we don't have to read backups
         if not any_nans_found:

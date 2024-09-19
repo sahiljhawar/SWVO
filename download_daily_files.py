@@ -5,6 +5,7 @@ from pathlib import Path
 import traceback
 
 from data_management.io.kp import KpNiemegk, KpSWPC
+from data_management.io.hp import Hp30GFZ, Hp60GFZ
 from data_management.io.omni import OMNILowRes
 
 base_path = '/home/bhaas/FLAG_TEST/'
@@ -13,7 +14,8 @@ kp_path = base_path + 'Kp/'
 ENV_VAR_NAMES = {'DAILY_DOWNLOAD_LOG_DIR': base_path + 'log/',
                  'RT_KP_NIEMEGK_STREAM_DIR': kp_path + 'Niemegk/',
                  'RT_KP_SWPC_STREAM_DIR': kp_path + 'SWPC/',
-                 'OMNI_LOW_RES_STREAM_DIR': base_path + 'OMNI/Low_res'}
+                 'OMNI_LOW_RES_STREAM_DIR': base_path + 'OMNI/Low_res',
+                 'RT_HP_GFZ_STREAM_DIR' : base_path + 'HP/'}
 
 
 if __name__ == '__main__':
@@ -38,23 +40,39 @@ if __name__ == '__main__':
 
     logging.info('Kp Niemegk...\n')
     try:
-        KpNiemegk().download_and_process(date_yesterday_start, datetime.today())
+        KpNiemegk().download_and_process(date_yesterday_start, datetime.today(), reprocess_files=True)
     except:
         logging.error('Encountered error while downloading Niemegk Kp. Traceback:')
         logging.error(traceback.format_exc())
 
     logging.info('Kp SWPC...\n')
     try:
-        KpSWPC().download_and_process(datetime.today())
+        KpSWPC().download_and_process(datetime.today(), reprocess_files=True)
     except:
         logging.error('Encountered error while downloading SWPC Kp. Traceback:')
         logging.error(traceback.format_exc())
 
     logging.info('OMNI low resolution...\n')
     try:
-        OMNILowRes().download_and_process(date_yesterday_start, datetime.today())
+        OMNILowRes().download_and_process(date_yesterday_start, datetime.today(), reprocess_files=True)
     except:
         logging.error('Encountered error while downloading OMNI low res. Traceback:')
+        logging.error(traceback.format_exc())
+
+    logging.info('Finished downloading and processing!')
+
+    logging.info('Hp30 GFZ...\n')
+    try:
+        Hp30GFZ().download_and_process(date_yesterday_start, datetime.today(), reprocess_files=True)
+    except:
+        logging.error('Encountered error while downloading Hp30. Traceback:')
+        logging.error(traceback.format_exc())
+
+    logging.info('Hp60 GFZ...\n')
+    try:
+        Hp60GFZ().download_and_process(date_yesterday_start, datetime.today(), reprocess_files=True)
+    except:
+        logging.error('Encountered error while downloading Hp30. Traceback:')
         logging.error(traceback.format_exc())
 
     logging.info('Finished downloading and processing!')
