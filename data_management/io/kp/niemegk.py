@@ -39,41 +39,43 @@ class KpNiemegk(object):
         temporary_dir = Path("./temp_kp_niemegk_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        if verbose:
-            print(f'Downloading file {self.URL + self.NAME} ...')
+        try:
+            if verbose:
+                print(f'Downloading file {self.URL + self.NAME} ...')
 
-        wget.download(self.URL + self.NAME, str(temporary_dir))
-        print('')
+            wget.download(self.URL + self.NAME, str(temporary_dir))
+            print('')
 
-        # check if download was successfull
-        if os.stat(str(temporary_dir / self.NAME)).st_size == 0:
-            raise FileNotFoundError(f'Error while downloading file: {self.URL + self.NAME}!')
-
-        if verbose:
-            print(f'Processing file ...')
-        processed_df = self._process_single_file(temporary_dir)
-
-        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
-
-        for file_path, time_interval in zip(file_paths, time_intervals):
-
-            if file_path.exists():
-                if reprocess_files:
-                    file_path.unlink()
-                else:
-                    continue
-
-            data_single_file = processed_df[(processed_df.index >= time_interval[0]) & (processed_df.index <= time_interval[1])]
-
-            if len(data_single_file.index) == 0:
-                continue
-
-            data_single_file.to_csv(file_path, index=True, header=False)
+            # check if download was successfull
+            if os.stat(str(temporary_dir / self.NAME)).st_size == 0:
+                raise FileNotFoundError(f'Error while downloading file: {self.URL + self.NAME}!')
 
             if verbose:
-                print(f'Saving processed file {file_path}')
+                print(f'Processing file ...')
+            processed_df = self._process_single_file(temporary_dir)
 
-        rmtree(temporary_dir)
+            file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+
+            for file_path, time_interval in zip(file_paths, time_intervals):
+
+                if file_path.exists():
+                    if reprocess_files:
+                        file_path.unlink()
+                    else:
+                        continue
+
+                data_single_file = processed_df[(processed_df.index >= time_interval[0]) & (processed_df.index <= time_interval[1])]
+
+                if len(data_single_file.index) == 0:
+                    continue
+
+                data_single_file.to_csv(file_path, index=True, header=False)
+
+                if verbose:
+                    print(f'Saving processed file {file_path}')
+
+        finally:
+            rmtree(temporary_dir)
 
     def read(self, start_time:datetime, end_time:datetime, download:bool=False) -> pd.DataFrame:
         
@@ -145,7 +147,7 @@ class KpNiemegk(object):
         
         header = ["t", "0", "1", "2", "3", "4", "5", "6", "7", "last", "last2", "last3"]
 
-        data = pd.read_csv(temporary_dir / self.NAME, names=header, sep='\s+')
+        data = pd.read_csv(temporary_dir / self.NAME, names=header, sep=r'\s+')
         data.drop(labels=["last", "last2", "last3"], axis=1, inplace=True)
         
         for _, row in data.iterrows():

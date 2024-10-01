@@ -44,22 +44,24 @@ class KpSWPC(object):
         temporary_dir = Path("./temp_kp_swpc_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        if verbose:
-            print(f'Downloading file {self.URL + self.NAME} ...')
+        try:
+            if verbose:
+                print(f'Downloading file {self.URL + self.NAME} ...')
 
-        wget.download(self.URL + self.NAME, str(temporary_dir))
-        print('')
+            wget.download(self.URL + self.NAME, str(temporary_dir))
+            print('')
 
-        if verbose:
-            print(f'Processing file ...')
-        processed_df = self._process_single_file(temporary_dir)
+            if verbose:
+                print(f'Processing file ...')
+            processed_df = self._process_single_file(temporary_dir)
 
-        processed_df.to_csv(file_path, index=False, header=False)
+            processed_df.to_csv(file_path, index=False, header=False)
 
-        if verbose:
-            print(f'Saving processed file {file_path}')
+            if verbose:
+                print(f'Saving processed file {file_path}')
 
-        rmtree(temporary_dir)
+        finally:
+            rmtree(temporary_dir)
 
     def read(self, start_time:datetime, end_time:datetime=None, download:bool=False) -> pd.DataFrame:
         
@@ -117,7 +119,7 @@ class KpSWPC(object):
                     break
 
         data = pd.read_csv(temporary_dir / self.NAME, skiprows=first_line + 2,
-                        sep='\s+', names=["0", "1", "2", "3"])
+                        sep=r'\s+', names=["0", "1", "2", "3"])
         kp = []
         timestamp = []
 

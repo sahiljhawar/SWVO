@@ -42,31 +42,33 @@ class OMNILowRes(object):
         temporary_dir = Path("./temp_omni_low_res_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+        try:
+            file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
 
-        for file_path, time_interval in zip(file_paths, time_intervals):
+            for file_path, time_interval in zip(file_paths, time_intervals):
 
-            filename = "omni2_" + str(time_interval[0].year) + ".dat"
+                filename = "omni2_" + str(time_interval[0].year) + ".dat"
 
-            if verbose:
-                print(f'Downloading file {self.URL + filename} ...')
+                if verbose:
+                    print(f'Downloading file {self.URL + filename} ...')
 
-            if file_path.exists():
-                if reprocess_files:
-                    file_path.unlink()
-                else:
-                    continue
+                if file_path.exists():
+                    if reprocess_files:
+                        file_path.unlink()
+                    else:
+                        continue
 
-            wget.download(self.URL + filename, str(temporary_dir))
-            print('')
+                wget.download(self.URL + filename, str(temporary_dir))
+                print('')
 
-            if verbose:
-                print(f'Processing file ...')
+                if verbose:
+                    print(f'Processing file ...')
 
-            processed_df = self._process_single_file(temporary_dir / filename)
-            processed_df.to_csv(file_path, index=True, header=True)
-        
-        rmtree(temporary_dir)
+                processed_df = self._process_single_file(temporary_dir / filename)
+                processed_df.to_csv(file_path, index=True, header=True)
+                
+        finally:
+                rmtree(temporary_dir)
 
     def _get_processed_file_list(self, start_time:datetime, end_time:datetime) -> Tuple[List, List]:
 
