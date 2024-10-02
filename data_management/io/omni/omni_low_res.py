@@ -23,7 +23,6 @@ class OMNILowRes(object):
               "sigma_N", "sigma_V", "sigma_phi_V", "sigma_theta_V", "sigma_alpha_proton_ratio", "e", "plasma_beta",
               "alfven_mach_n", "Kp", "sunspot_n", "dst", "ae", "p_flux_1", "p_flux_2", "p_flux_4", "p_flux_10",
               "p_flux_30", "p_flux_60", "flag", "ap", "f107", "pc", "al", "au", "magnetosonic_mach_n"]
-    URL = "https://spdf.gsfc.nasa.gov/pub/data/omni/low_res_omni/"
 
     def __init__(self, data_dir:str|Path=None):
        
@@ -49,14 +48,14 @@ class OMNILowRes(object):
 
                 filename = "omni2_" + str(time_interval[0].year) + ".dat"
 
-                if verbose:
-                    print(f'Downloading file {self.URL + filename} ...')
-
                 if file_path.exists():
                     if reprocess_files:
                         file_path.unlink()
                     else:
                         continue
+                
+                if verbose:
+                    print(f'Downloading file {self.URL + filename} ...')
 
                 wget.download(self.URL + filename, str(temporary_dir))
                 print('')
@@ -93,7 +92,7 @@ class OMNILowRes(object):
 
     def _process_single_file(self, file_path):
 
-        data = pd.read_csv(file_path, sep='\s+', names=self.HEADER)
+        data = pd.read_csv(file_path, sep=r'\s+', names=self.HEADER)
         data["timestamp"] = data["year"].map(str).apply(lambda x: x + "-01-01 ")
         data["timestamp"] = data["year"].map(str).apply(lambda x: x + "-01-01 ") + data["hour"].map(str).apply(
             lambda x: x.zfill(2))
