@@ -31,12 +31,12 @@ class SWACE(object):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-    def download_and_process(self, start_time:datetime, reprocess_files:bool=False, verbose:bool=False):
+    def download_and_process(self, start_time:datetime, verbose:bool=False):
 
-        if start_time.date() < datetime.now(timezone.utc).date():
+        if start_time - datetime.now(timezone.utc) > timedelta(hours=2):
             if verbose:
-                print('We can only download and progress a ACE RT file for the current day!')
-                return
+                print('We can only download and progress a ACE RT file for the last two hours!')
+            return
 
         temporary_dir = Path("./temp_sw_ace_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
@@ -44,12 +44,7 @@ class SWACE(object):
         try:
 
             file_path = self.data_dir / f"ACE_SW_NOWCAST_{start_time.strftime('%Y%m%d')}.csv"
-
-            if file_path.exists():
-                if not reprocess_files:
-                    rmtree(temporary_dir)
-                    return
-
+                    
             if verbose:
                 print(f'Downloading file {self.URL + self.NAME_MAG} ...')
 
@@ -75,12 +70,16 @@ class SWACE(object):
             processed_df = self._process_single_file(temporary_dir)
 
             if file_path.exists():
-                if reprocess_files:
-                    file_path.unlink()
-                    processed_df.to_csv(file_path, index=True, header=True)
+                if verbose:
+                    print(f'Found previous file. Loading and combining ...')
+                previous_df = self._read_single_file(file_path)
+                previous_df.drop('file_name', axis=1, inplace=True)
+                processed_df = processed_df.combine_first(previous_df)
 
-                    if verbose:
-                        print(f'Saving processed file {file_path}')
+            processed_df.to_csv(file_path, index=True, header=True)
+
+            if verbose:
+                print(f'Saving processed file {file_path}')
 
             else:
                 processed_df.to_csv(file_path, index=True, header=True)
@@ -97,14 +96,14 @@ class SWACE(object):
 
         # initialize data frame with NaNs
         t = pd.date_range(datetime(start_time.year, start_time.month, start_time.day), datetime(end_time.year, end_time.month, end_time.day, 23, 59, 59), freq=timedelta(minutes=1))
-        data_out = pd.DataFrame(index=t)
-        #data_out['kp'] = np.array([np.nan] * len(t))
+        nan_data = [np.nan] * len(t)
+        data_out = pd.DataFrame(index=t, data={'bavg': nan_data, 'bx_gsm': nan_data, 'by_gsm': nan_data, 'bz_gsm': nan_data, 'proton_density': nan_data, 'speed': nan_data, 'temperature': nan_data})
 
         for file_path in file_paths:
 
             if not file_path.exists():
                 if download:
-                    self.download_and_process(start_time, end_time)
+                    self.download_and_process(start_time)
 
             # if we request a date in the future, the file will still not be found here
             if not file_path.exists():

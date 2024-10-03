@@ -1,6 +1,5 @@
 import os
-from datetime import datetime, timedelta
-import logging
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Tuple, List
 from shutil import rmtree
@@ -49,7 +48,7 @@ class HpGFZ(object):
                 filenames_download = [f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_{str(time_interval[0].year)}.txt"]
 
                 # there is a separate nowcast file
-                if time_interval[0].year == datetime.today().year:
+                if time_interval[0].year == datetime.now(timezone.utc).year:
                     filenames_download.append(f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_nowcast.txt")
 
                 for filename_download in filenames_download:

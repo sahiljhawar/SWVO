@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Tuple, List
 
@@ -31,7 +31,7 @@ class KpNiemegk(object):
 
     def download_and_process(self, start_time:datetime, end_time:datetime, reprocess_files:bool=False, verbose:bool=False):
 
-        if start_time.month < datetime.today().month:
+        if start_time.month != datetime.now(timezone.utc).month:
             if verbose:
                 print('We can only download and progress a Kp Niemegk file for the current month!')
                 return

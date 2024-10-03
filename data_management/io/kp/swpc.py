@@ -29,7 +29,7 @@ class KpSWPC(object):
 
     def download_and_process(self, target_date:datetime, reprocess_files:bool=False, verbose:bool=False):
 
-        if target_date.day < datetime.now(timezone.utc).day:
+        if target_date.date() < datetime.now(timezone.utc).date():
             raise ValueError('We can only download and progress a Kp SWPC file for the current day!')
 
         file_path = self.data_dir / f"SWPC_KP_FORECAST_{target_date.strftime('%Y%m%d')}.csv"

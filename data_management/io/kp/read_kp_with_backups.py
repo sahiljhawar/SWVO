@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import numpy as np
 
 from data_management.io.kp import KpOMNI, KpNiemegk, KpSWPC, KpEnsemble
 
-def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:list=None, reduce_ensemble=None):
+def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:list=None, reduce_ensemble=None, synthetic_now_time:datetime=datetime.now(timezone.utc)):
     
     if model_order is None:
         model_order = [KpOMNI(), KpNiemegk(), KpEnsemble(), KpSWPC()]
@@ -24,10 +24,10 @@ def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:lis
             data_one_model = [model.read(start_time, end_time, download=True)]
             model_label = 'niemegk'
 
-        # Forecasting models are called with today's date
+        # Forecasting models are called with synthetic now time
         if isinstance(model, KpSWPC):
             print('Reading swpc...')
-            data_one_model = [model.read(datetime.today().replace(hour=0, minute=0, second=0), end_time, download=True)]
+            data_one_model = [model.read(synthetic_now_time.replace(hour=0, minute=0, second=0), end_time, download=True)]
             model_label = 'swpc'
 
         if isinstance(model, KpEnsemble):
@@ -35,10 +35,10 @@ def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:lis
 
             # we are trying to read the most recent file; it this fails, we go one step back (1 hour) and see if this file is present
 
-            target_time = datetime.today()
-            data_one_model = model.read(datetime.today(), end_time)
+            target_time = synthetic_now_time
+            data_one_model = model.read(synthetic_now_time, end_time)
 
-            while len(data_one_model) == 0 and target_time > (datetime.today()-timedelta(days=3)):
+            while len(data_one_model) == 0 and target_time > (synthetic_now_time-timedelta(days=3)):
                 target_time -= timedelta(hours=1)
 
                 # ONLY READ MIDNIGHT FILE FOR NOW; OTHER FILES BREAK
@@ -67,7 +67,7 @@ def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:lis
                 data_out = data_out * num_ens_members
 
         any_nans_found = False
-        # we making it a list in case of ensemble memblers
+        # we making it a list in case of ensemble members
         for i in range(len(data_one_model)):
             data_one_model[i]['model'] = model_label
             data_one_model[i].loc[data_one_model[i]['kp'].isna(), 'model'] = None

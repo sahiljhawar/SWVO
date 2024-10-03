@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 import pandas as pd
 import numpy as np
 
 from data_management.io.solar_wind import SWACE, SWOMNI, SWSWIFTEnsemble
 
-def read_solar_wind_with_backups(start_time:datetime, end_time:datetime, model_order:list=None, reduce_ensemble=None):
+def read_solar_wind_with_backups(start_time:datetime, end_time:datetime, model_order:list=None, reduce_ensemble=None, synthetic_now_time:datetime=datetime.now(timezone.utc)):
     
     if model_order is None:
         model_order = [SWOMNI(), SWACE(), SWSWIFTEnsemble()]
@@ -29,13 +29,11 @@ def read_solar_wind_with_backups(start_time:datetime, end_time:datetime, model_o
 
             # we are trying to read the most recent file; it this fails, we go one step back (1 day) and see if this file is present
 
-            target_time = start_time
+            target_time = synthetic_now_time
 
             data_one_model = []
 
-            while target_time > (datetime.today()-timedelta(days=3)):
-
-                data_one_model = model.read(datetime.today(), end_time)
+            while target_time > (synthetic_now_time-timedelta(days=3)):
 
                 target_time = target_time.replace(hour=0, minute=0, second=0)
 
