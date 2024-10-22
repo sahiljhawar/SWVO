@@ -17,11 +17,13 @@ def read_kp_with_backups(start_time:datetime, end_time:datetime, model_order:lis
         if isinstance(model, KpOMNI):
             print('Reading omni...')
             data_one_model = [model.read(start_time, end_time, download=True)]
+            data_one_model[0][data_one_model[0].index >= synthetic_now_time] = pd.NA
             model_label = 'omni'
 
         if isinstance(model, KpNiemegk):
             print('Reading niemegk...')
             data_one_model = [model.read(start_time, end_time, download=True)]
+            data_one_model[0][data_one_model[0].index >= synthetic_now_time] = pd.NA
             model_label = 'niemegk'
 
         # Forecasting models are called with synthetic now time

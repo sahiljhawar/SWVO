@@ -7,7 +7,7 @@ import pandas as pd
 
 class KpEnsemble(object):
 
-    ENV_VAR_NAME = 'KP_ENSEMBLE_FORECAST_DIR'
+    ENV_VAR_NAME = 'KP_ENSEMBLE_OUTPUT_DIR'
 
     def __init__(self, data_dir:str|Path=None):
         if data_dir is None:

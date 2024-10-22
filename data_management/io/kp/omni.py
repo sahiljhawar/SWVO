@@ -32,8 +32,6 @@ class KpOMNI(object):
                   " available mission files...")
             start_time = datetime(self.START_YEAR, 1, 1)
 
-        assert start_time < end_time
-
         file_paths, _ = self.omni_low_res._get_processed_file_list(start_time, end_time)
 
         dfs = []
