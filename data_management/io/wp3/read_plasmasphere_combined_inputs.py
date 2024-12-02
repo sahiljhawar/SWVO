@@ -8,9 +8,9 @@ from data_management.io.base_file_reader import BaseReader
 
 class PlasmasphereCombinedInputsReader(BaseReader):
 
-    def __init__(self, wp3_output_folder, sub_folder="GFZ_PLASMA"):
+    def __init__(self, folder):
         super().__init__()
-        self.data_folder = os.path.join(wp3_output_folder, sub_folder)
+        self.data_folder = folder
         self._check_data_folder()
         self.file = None
         self.requested_date = None
@@ -47,11 +47,11 @@ class PlasmasphereCombinedInputsReader(BaseReader):
             return None
 
         if source == "solar_wind":
-            data = pd.read_csv(file_path, parse_dates=["date", "date_of_run"])
+            data = pd.read_csv(file_path, parse_dates=["date"])
             data["t"] = data["date"]
             data.drop(labels=["date"], axis=1, inplace=True)
         if source == "kp":
-            data = pd.read_csv(file_path, parse_dates=["t", "date_of_run"])
+            data = pd.read_csv(file_path, parse_dates=["t"])
 
         return data
 
