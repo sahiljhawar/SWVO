@@ -47,11 +47,11 @@ class PlasmasphereCombinedInputsReader(BaseReader):
             return None
 
         if source == "solar_wind":
-            data = pd.read_csv(file_path, parse_dates=["date", "date_of_run"])
+            data = pd.read_csv(file_path, parse_dates=["date"])
             data["t"] = data["date"]
             data.drop(labels=["date"], axis=1, inplace=True)
         if source == "kp":
-            data = pd.read_csv(file_path, parse_dates=["t", "date_of_run"])
+            data = pd.read_csv(file_path, parse_dates=["t"])
 
         return data
 
