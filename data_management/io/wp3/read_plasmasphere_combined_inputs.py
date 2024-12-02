@@ -8,9 +8,9 @@ from data_management.io.base_file_reader import BaseReader
 
 class PlasmasphereCombinedInputsReader(BaseReader):
 
-    def __init__(self, wp3_output_folder, sub_folder="GFZ_PLASMA"):
+    def __init__(self, folder):
         super().__init__()
-        self.data_folder = os.path.join(wp3_output_folder, sub_folder)
+        self.data_folder = folder
         self._check_data_folder()
         self.file = None
         self.requested_date = None
