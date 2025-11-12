@@ -17,7 +17,10 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import requests
 import wget
+
+logger = logging.getLogger(__name__)
 
 logging.captureWarnings(True)
 
@@ -56,7 +59,7 @@ class DSTWDC:
         self.data_dir: Path = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        logging.info(f"WDC Dst data directory: {self.data_dir}")
+        logger.info(f"WDC Dst data directory: {self.data_dir}")
 
     def download_and_process(self, start_time: datetime, end_time: datetime, reprocess_files: bool = False) -> None:
         """Download and process WDC Dst data files.
@@ -80,35 +83,48 @@ class DSTWDC:
         temporary_dir = Path("./temp_wdc")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        try:
-            file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
 
-            for file_path, time_interval in zip(file_paths, time_intervals):
-                filename = "index.html"
+        for file_path, time_interval in zip(file_paths, time_intervals):
+            filename = "index.html"
+            if file_path.exists() and not reprocess_files:
+                continue
 
-                URL = self.URL.replace("YYYYMM", time_interval.strftime("%Y%m"))
+            tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
-                if file_path.exists():
-                    if reprocess_files:
-                        file_path.unlink()
-                    else:
-                        continue
+            URL = self.URL.replace("YYYYMM", time_interval.strftime("%Y%m"))
 
-                logging.debug(f"Downloading file {URL + filename} ...")
+            if file_path.exists():
+                if reprocess_files:
+                    file_path.unlink()
+                else:
+                    continue
 
-                wget.download(URL + filename, str(temporary_dir))
-
-                logging.debug("Processing file ...")
+            try:
+                logger.debug(f"Downloading file {URL} ...")
+                response = requests.get(URL)
+                response.raise_for_status()
+                data = response.text.splitlines()
+                with open(temporary_dir / filename, "w") as file:
+                    file.write("\n".join(data))
+                logger.debug("Processing file ...")
 
                 processed_df = self._process_single_file(
                     temporary_dir / filename,
                     year=time_interval.year,
                     month=time_interval.month,
                 )
-                processed_df.to_csv(file_path, index=True, header=True)
+                processed_df.to_csv(tmp_path, index=True, header=True)
+                tmp_path.replace(file_path)
+            except Exception as e:
+                logger.error(f"Failed to process {file_path}: {e}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                    pass
+                continue
 
-        finally:
-            rmtree(temporary_dir, ignore_errors=True)
+            finally:
+                rmtree(temporary_dir, ignore_errors=True)
 
     def _get_processed_file_list(self, start_time: datetime, end_time: datetime) -> Tuple[List, List]:
         """Get list of file paths and their corresponding time intervals.
