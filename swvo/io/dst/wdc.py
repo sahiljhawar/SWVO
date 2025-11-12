@@ -18,7 +18,6 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import requests
-import wget
 
 logger = logging.getLogger(__name__)
 
