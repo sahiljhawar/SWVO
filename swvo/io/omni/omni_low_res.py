@@ -16,9 +16,11 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import wget
+import requests
 
 logging.captureWarnings(True)
+
+_logger = logging.getLogger(__name__)
 
 
 class OMNILowRes:
@@ -113,7 +115,7 @@ class OMNILowRes:
         self.data_dir: Path = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        logging.info(f"OMNI Low Res  data directory: {self.data_dir}")
+        _logger.info(f"OMNI Low Res  data directory: {self.data_dir}")
 
     def download_and_process(self, start_time: datetime, end_time: datetime, reprocess_files: bool = False) -> None:
         """Download and process OMNI Low Resolution data files.
@@ -135,29 +137,42 @@ class OMNILowRes:
         temporary_dir = Path("./temp_omni_low_res_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        try:
-            file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
 
-            for file_path, time_interval in zip(file_paths, time_intervals):
+        for file_path, time_interval in zip(file_paths, time_intervals):
+            if file_path.exists() and not reprocess_files:
+                continue
+
+            tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
+
+            try:
                 filename = "omni2_" + str(time_interval[0].year) + ".dat"
 
-                if file_path.exists():
-                    if reprocess_files:
-                        file_path.unlink()
-                    else:
-                        continue
+                _logger.debug(f"Downloading file {self.URL + filename} ...")
 
-                logging.debug(f"Downloading file {self.URL + filename} ...")
+                self._download(temporary_dir, filename)
 
-                wget.download(self.URL + filename, str(temporary_dir))
-
-                logging.debug("Processing file ...")
+                _logger.debug("Processing file ...")
 
                 processed_df = self._process_single_file(temporary_dir / filename)
-                processed_df.to_csv(file_path, index=True, header=True)
+                processed_df.to_csv(tmp_path, index=True, header=True)
+                tmp_path.replace(file_path)
 
-        finally:
-            rmtree(temporary_dir, ignore_errors=True)
+            except Exception as e:
+                _logger.error(f"Failed to process {file_path}: {e}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                    pass
+                continue
+            finally:
+                rmtree(temporary_dir, ignore_errors=True)
+
+    def _download(self, temporary_dir: Path, filename: str):
+        repsonse = requests.get(self.URL + filename)
+        repsonse.raise_for_status()
+
+        with open(temporary_dir / filename, "wb") as f:
+            f.write(repsonse.content)
 
     def _get_processed_file_list(self, start_time: datetime, end_time: datetime) -> Tuple[List, List]:
         """Get list of file paths and their corresponding time intervals.
@@ -264,7 +279,7 @@ class OMNILowRes:
             end_time = end_time.replace(tzinfo=timezone.utc)
 
         if start_time < datetime(START_YEAR, 1, 1).replace(tzinfo=timezone.utc):
-            logging.warning(
+            _logger.warning(
                 "Start date chosen falls behind the existing data. Moving start date to first"
                 " available mission files..."
             )

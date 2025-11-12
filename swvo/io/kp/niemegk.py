@@ -18,9 +18,9 @@ import numpy as np
 import pandas as pd
 import requests
 
-logger = logging.getLogger(__name__)
-
 logging.captureWarnings(True)
+
+_logger = logging.getLogger(__name__)
 
 
 class KpNiemegk:
@@ -60,7 +60,7 @@ class KpNiemegk:
         self.data_dir: Path = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Kp Niemegk  data directory: {self.data_dir}")
+        _logger.info(f"Kp Niemegk  data directory: {self.data_dir}")
 
     def download_and_process(self, start_time: datetime, end_time: datetime, reprocess_files: bool = False) -> None:
         """Download and process Niemegk Kp data file.
@@ -80,13 +80,13 @@ class KpNiemegk:
             Raise `FileNotFoundError` if the file is not downloaded successfully.
         """
         if start_time < datetime.now(timezone.utc) - timedelta(days=30):
-            logger.info("We can only download and process a Kp Niemegk file from the last 30 days!")
+            _logger.info("We can only download and process a Kp Niemegk file from the last 30 days!")
             return
 
         temporary_dir = Path("./temp_kp_niemegk_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        logger.debug(f"Downloading file {self.URL + self.NAME} ...")
+        _logger.debug(f"Downloading file {self.URL + self.NAME} ...")
 
         file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
         for file_path, time_interval in zip(file_paths, time_intervals):
@@ -100,7 +100,7 @@ class KpNiemegk:
                 if os.stat(str(temporary_dir / self.NAME)).st_size == 0:
                     raise FileNotFoundError(f"Error while downloading file: {self.URL + self.NAME}!")
 
-                logger.debug("Processing file ...")
+                _logger.debug("Processing file ...")
                 processed_df = self._process_single_file(temporary_dir)
 
                 data_single_file = processed_df[
@@ -113,9 +113,9 @@ class KpNiemegk:
                 data_single_file.to_csv(tmp_path, index=True, header=False)
                 tmp_path.replace(file_path)
 
-                logger.debug(f"Saving processed file {file_path}")
+                _logger.debug(f"Saving processed file {file_path}")
             except Exception as e:
-                logger.error(f"Failed to process {file_path}: {e}")
+                _logger.error(f"Failed to process {file_path}: {e}")
                 if tmp_path.exists():
                     tmp_path.unlink()
                     pass
