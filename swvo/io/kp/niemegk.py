@@ -123,7 +123,7 @@ class KpNiemegk:
                 continue
 
             finally:
-                rmtree(temporary_dir)
+                rmtree(temporary_dir, ignore_errors=True)
 
     def _download(self, temporary_dir):
         response = requests.get(self.URL + self.NAME, str(temporary_dir))
