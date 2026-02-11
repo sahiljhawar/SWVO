@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 from scipy.ndimage import gaussian_filter1d
 
+logger = logging.getLogger(__name__)
+
 
 def any_nans(data: list[pd.DataFrame] | pd.DataFrame) -> bool:
     """Calculate if a list of data frames contains any nans.
@@ -49,7 +51,7 @@ def nan_percentage(data: pd.DataFrame) -> float:
     """
     float_columns = data.select_dtypes(include=["float64", "float32"]).columns
     nan_percentage = (data[float_columns].isna().sum().sum() / (data.shape[0])) * 100
-    logging.info(f"Percentage of NaNs in data frame: {nan_percentage:.2f}%")
+    logger.info(f"Percentage of NaNs in data frame: {nan_percentage:.2f}%")
 
     return nan_percentage
 
@@ -102,7 +104,16 @@ def construct_updated_data_frame(
         else:
             data_one_model[i]["model"] = model_label
             data_one_model[i].loc[data_one_model[i].isna().any(axis=1), "model"] = None
-        data[i] = data[i].combine_first(data_one_model[i])
+        if "file_name" in data_one_model[i].columns:
+            data_one_model[i].loc[data_one_model[i]["file_name"].notna(), "model"] = model_label
+            data_one_model[i].loc[data_one_model[i]["file_name"].isna(), "model"] = None
+        if data[i].empty:
+            data[i] = data_one_model[i]
+        empty_idx = data[i].index[data[i].isna().all(axis=1)]
+
+        data[i].loc[empty_idx] = (
+            data[i].loc[empty_idx].combine_first(data_one_model[i].reindex(data[i].index).loc[empty_idx])
+        )
 
     return data
 
@@ -201,8 +212,7 @@ def sw_mag_propagation(sw_data: pd.DataFrame) -> pd.DataFrame:
         Data frame with propagated solar wind data, indexed by time.
     """
 
-    sw_data["t"] = sw_data.index
-    sw_data["t"] = sw_data["t"].astype("int64") / 1e9
+    sw_data["t"] = [t.timestamp() for t in sw_data.index.to_pydatetime()]
     sw_data = sw_data.dropna(how="any")
 
     distance = 1.5e6

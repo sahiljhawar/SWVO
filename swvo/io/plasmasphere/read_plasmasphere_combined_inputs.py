@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
+logger = logging.getLogger(__name__)
+
 
 class PlasmasphereCombinedInputsReader:
     """Reads one of the available combined inputs for plasmasphere density prediction.
@@ -39,7 +41,7 @@ class PlasmasphereCombinedInputsReader:
         """
         if not os.path.exists(self.data_folder):
             msg = f"Data folder {self.data_folder} for WP3 plasma output not found...impossible to retrieve data."
-            logging.error(msg)
+            logger.error(msg)
             raise FileNotFoundError(msg)
 
     @staticmethod
@@ -64,15 +66,19 @@ class PlasmasphereCombinedInputsReader:
         file_name = ""
 
         if source == "kp":
-            file_name = f"kp_{date.year}-{str(date.month).zfill(2)}-{str(date.day).zfill(2)}-{str(date.hour).zfill(2)}-{str(date.minute).zfill(2)}.csv"
+            file_name = (
+                f"kp_{date.year}{str(date.month).zfill(2)}{str(date.day).zfill(2)}T{str(date.hour).zfill(2)}00.csv"
+            )
         if source == "solar_wind":
-            file_name = f"solar_wind_{date.year}-{str(date.month).zfill(2)}-{str(date.day).zfill(2)}-{str(date.hour).zfill(2)}-{str(date.minute).zfill(2)}.csv"
+            file_name = f"solar_wind_{date.year}{str(date.month).zfill(2)}{str(date.day).zfill(2)}T{str(date.hour).zfill(2)}00.csv"
 
         file_path = os.path.join(folder, file_name)
 
+        logger.info(f"Looking for file {file_path} for source {source} and date {date}")
+
         if not os.path.isfile(file_path):
             msg = f"No suitable files found in the folder {folder} for the requested date {date}"
-            logging.warning(msg)
+            logger.warning(msg)
             return None
 
         if source == "solar_wind":
@@ -109,13 +115,13 @@ class PlasmasphereCombinedInputsReader:
 
         if source == "kp":
             requested_date = requested_date.replace(minute=0, second=0, microsecond=0)
-            return self._read_single_file(os.path.join(self.data_folder, "inputs/kp"), requested_date, "kp")
+            return self._read_single_file(os.path.join(self.data_folder, "combined_inputs/kp"), requested_date, "kp")
         elif source == "solar_wind":
             requested_date = requested_date.replace(minute=0, second=0, microsecond=0)
             return self._read_single_file(
-                os.path.join(self.data_folder, "inputs/solar_wind"), requested_date, "solar_wind"
+                os.path.join(self.data_folder, "combined_inputs/solar_wind"), requested_date, "solar_wind"
             )
         else:
             msg = f"Combined input {source} requested not available..."
-            logging.error(msg)
+            logger.error(msg)
             raise RuntimeError(msg)

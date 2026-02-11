@@ -19,6 +19,8 @@ import numpy as np
 import pandas as pd
 import wget
 
+logger = logging.getLogger(__name__)
+
 logging.captureWarnings(True)
 
 
@@ -60,7 +62,7 @@ class KpSWPC:
         self.data_dir: Path = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        logging.info(f"Kp SWPC  data directory: {self.data_dir}")
+        logger.info(f"Kp SWPC  data directory: {self.data_dir}")
 
     def download_and_process(self, target_date: datetime, reprocess_files: bool = False) -> None:
         """
@@ -81,7 +83,9 @@ class KpSWPC:
         if target_date.date() < datetime.now(timezone.utc).date():
             raise ValueError("We can only download and progress a Kp SWPC file for the current day!")
 
-        file_path = self.data_dir / f"SWPC_KP_FORECAST_{target_date.strftime('%Y%m%d')}.csv"
+        file_path = (
+            self.data_dir / target_date.strftime("%Y/%m") / f"SWPC_KP_FORECAST_{target_date.strftime('%Y%m%d')}.csv"
+        )
 
         if file_path.exists():
             if reprocess_files:
@@ -93,16 +97,17 @@ class KpSWPC:
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
         try:
-            logging.debug(f"Downloading file {self.URL + self.NAME} ...")
+            logger.debug(f"Downloading file {self.URL + self.NAME} ...")
 
             wget.download(self.URL + self.NAME, str(temporary_dir))
 
-            logging.debug("Processing file ...")
+            logger.debug("Processing file ...")
             processed_df = self._process_single_file(temporary_dir)
 
+            file_path.parent.mkdir(parents=True, exist_ok=True)
             processed_df.to_csv(file_path, index=False, header=False)
 
-            logging.debug(f"Saving processed file {file_path}")
+            logger.debug(f"Saving processed file {file_path}")
 
         finally:
             rmtree(temporary_dir)
@@ -140,7 +145,7 @@ class KpSWPC:
 
         if (end_time - start_time).days > 3:
             msg = "The difference between `end_time` and `start_time` should be less than 3 days. We can only read 3 days at a time of Kp SWPC!"
-            logging.error(msg)
+            logger.error(msg)
             raise ValueError(msg)
 
         t = pd.date_range(
@@ -154,7 +159,12 @@ class KpSWPC:
         data_out["file_name"] = np.array([np.nan] * len(t))
 
         file_name_time = start_time
-        file_path = self.data_dir / f"SWPC_KP_FORECAST_{file_name_time.strftime('%Y%m%d')}.csv"
+        file_path = (
+            self.data_dir
+            / file_name_time.strftime("%Y/%m")
+            / f"SWPC_KP_FORECAST_{file_name_time.strftime('%Y%m%d')}.csv"
+        )
+        logger.info(f"Reading from {file_path}")
         if not file_path.exists() and download:
             self.download_and_process(start_time)
         if file_path.exists():

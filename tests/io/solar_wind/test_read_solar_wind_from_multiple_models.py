@@ -32,7 +32,7 @@ class TestReadSolarWindFromMultipleModels:
     @pytest.fixture(scope="session", autouse=True)
     def set_env_var(self):
         ENV_VAR_NAMES = {
-            "OMNI_HIGH_RES_STREAM_DIR": f"{str(DATA_DIR)}",
+            "OMNI_HIGH_RES_STREAM_DIR": f"{str(DATA_DIR)}/OMNI",
             "SWIFT_ENSEMBLE_OUTPUT_DIR": f"{str(DATA_DIR)}/ensemble",
             "RT_SW_ACE_STREAM_DIR": f"{str(DATA_DIR)}/ACE_RT",
             "SW_DSCOVR_STREAM_DIR": f"{str(DATA_DIR)}/DSCOVR",
@@ -75,8 +75,8 @@ class TestReadSolarWindFromMultipleModels:
 
         assert isinstance(data, pd.DataFrame)
         assert all(col in data.columns for col in expected_columns)
+        assert data.loc["2024-11-20 13:23:00+00:00"].model == "dscovr"
         assert data.loc["2024-11-22 18:00:00+00:00"].model == "omni"
-        assert data.loc["2024-11-23 00:00:00+00:00"].model == "dscovr"
         # no ace since dscovr and ace files are same in the test data and dscovr is before ace in the model_order
         assert not data["file_name"].isna().all()
 
@@ -121,7 +121,6 @@ class TestReadSolarWindFromMultipleModels:
         for d in data:
             assert d.index.is_monotonic_increasing
             assert d.loc["2024-11-20 00:00:00+00:00"].model == "omni"
-            assert d.loc["2024-11-25 00:00:00+00:00"].model == "dscovr"
             assert d.loc["2024-11-25 00:01:00+00:00"].model == "swift"
             assert all(col in d.columns for col in expected_columns)
 
@@ -249,7 +248,7 @@ class TestReadSolarWindFromMultipleModels:
         )
 
         data_t0 = pd.DataFrame(
-            {"value": [np.nan] * n, "file_name": [np.nan] * n, "model": [np.nan] * n},
+            {"value": [np.nan] * n, "file_name": [None] * n, "model": [None] * n},
             index=pd.date_range(t0, periods=n, freq="1min", tz="UTC"),
         )
 

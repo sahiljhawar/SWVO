@@ -6,17 +6,18 @@
 Module for handling OMNI high resolution data.
 """
 
+import calendar
 import logging
 import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from shutil import rmtree
 from typing import List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class OMNIHighRes:
@@ -55,7 +56,7 @@ class OMNIHighRes:
         self.data_dir: Path = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        logging.info(f"OMNI high resolution data directory: {self.data_dir}")
+        logger.info(f"OMNI high resolution data directory: {self.data_dir}")
 
     def download_and_process(
         self,
@@ -91,14 +92,14 @@ class OMNIHighRes:
             "Only 1 or 5 minute cadence can be chosen for high resolution omni data."
         )
 
-        temporary_dir = Path("./temp_omni_high_res_wget")
-        temporary_dir.mkdir(exist_ok=True, parents=True)
-
         file_paths, time_intervals = self._get_processed_file_list(start_time, end_time, cadence_min)
 
         for file_path, time_interval in zip(file_paths, time_intervals):
             if file_path.exists() and not reprocess_files:
                 continue
+
+            # Create directory structure if it doesn't exist
+            file_path.parent.mkdir(parents=True, exist_ok=True)
 
             tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
@@ -109,20 +110,18 @@ class OMNIHighRes:
                     cadence=cadence_min,
                 )
 
-                logging.debug("Processing file ...")
+                logger.debug("Processing file ...")
 
-                processed_df = self._process_single_year(data)
+                processed_df = self._process_single_month(data)
                 processed_df.to_csv(tmp_path, index=True, header=True)
                 tmp_path.replace(file_path)
 
             except Exception as e:
-                logging.error(f"Failed to process {file_path}: {e}")
+                logger.error(f"Failed to process {file_path}: {e}")
                 if tmp_path.exists():
                     tmp_path.unlink()
                     pass
                 continue
-            finally:
-                rmtree(temporary_dir, ignore_errors=True)
 
     def read(
         self,
@@ -166,7 +165,7 @@ class OMNIHighRes:
             end_time = end_time.replace(tzinfo=timezone.utc)
 
         if start_time < datetime(self.START_YEAR, 1, 1, tzinfo=timezone.utc):
-            logging.warning(
+            logger.warning(
                 "Start date chosen falls behind the existing data. Moving start date to first"
                 " available mission files..."
             )
@@ -183,12 +182,12 @@ class OMNIHighRes:
                 if download:
                     self.download_and_process(start_time, end_time, cadence_min=cadence_min)
                 else:
-                    logging.warning(f"File {file_path} not found")
+                    logger.warning(f"File {file_path} not found")
                     continue
 
             dfs.append(self._read_single_file(file_path))
 
-        data_out = pd.concat(dfs)
+        data_out = pd.concat(dfs, ignore_index=False)
 
         if not data_out.empty:
             if not data_out.index.tzinfo:
@@ -208,6 +207,10 @@ class OMNIHighRes:
 
         Parameters
         ----------
+        start_time : datetime
+            Start time for the data.
+        end_time : datetime
+            End time for the data.
         cadence_min : float
             Cadence of the data in minutes.
 
@@ -220,51 +223,80 @@ class OMNIHighRes:
         file_paths = []
         time_intervals = []
 
-        start_year = start_time.year
+        # Start from the first day of the start_time month
+        current_date = start_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        # Check if end_time is within cadence_min of the next month boundary
+        # This ensures we include the next month's file if needed
         end_year = end_time.year
+        end_month = end_time.month
 
-        # Check if end_time is within cadence_min of the next year boundary
-        # This ensures we include the next year's file if needed for  Kp data
-        next_year_start = datetime(end_year + 1, 1, 1, 0, 0, 0, tzinfo=end_time.tzinfo)
-        time_diff_to_next_year = (next_year_start - end_time).total_seconds() / 3600
+        # Calculate next month start
+        if end_month == 12:
+            next_month_start = datetime(end_year + 1, 1, 1, 0, 0, 0, tzinfo=end_time.tzinfo)
+        else:
+            next_month_start = datetime(end_year, end_month + 1, 1, 0, 0, 0, tzinfo=end_time.tzinfo)
 
-        # If end_time is within `cadence_min` of next year, include the next year
+        time_diff_to_next_month = (next_month_start - end_time).total_seconds() / 3600
+
+        # If end_time is within `cadence_min` of next month, include the next month
         cadence_hours = cadence_min / 60
-        if time_diff_to_next_year <= cadence_hours:
-            end_year += 1
+        include_next_month = time_diff_to_next_month <= cadence_hours
 
-        for year in range(start_year, end_year + 1):
-            file_path = self.data_dir / f"OMNI_HIGH_RES_{cadence_min}min_{year}.csv"
+        while current_date <= end_time or (include_next_month and current_date == next_month_start):
+            year = current_date.year
+            month = current_date.month
+
+            # directory: YYYY/
+            year_dir = self.data_dir / f"{year:04d}"
+
+            # Create file path
+            file_path = year_dir / f"OMNI_HIGH_RES_{cadence_min}min_{year:04d}{month:02d}.csv"
             file_paths.append(file_path)
-            if year == start_year:
-                interval_start = datetime(year, 1, 1, 0, 0, 0)
-            else:
-                interval_start = datetime(year, 1, 1, 0, 0, 0)
-            if year == end_year:
-                interval_end = datetime(year, 12, 31, 23, 59, 59)
-            else:
-                interval_end = datetime(year, 12, 31, 23, 59, 59)
+
+            # Create time interval for current month
+            interval_start = datetime(year, month, 1, 0, 0, 0, tzinfo=current_date.tzinfo)
+
+            # Get last day of the month
+            last_day = calendar.monthrange(year, month)[1]
+            interval_end = datetime(year, month, last_day, 23, 59, 59, tzinfo=current_date.tzinfo)
+
             time_intervals.append((interval_start, interval_end))
+
+            # Move to next month
+            if month == 12:
+                current_date = current_date.replace(year=year + 1, month=1)
+            else:
+                current_date = current_date.replace(month=month + 1)
+
+            # Break condition to avoid infinite loop
+            if include_next_month and current_date > next_month_start:
+                break
 
         return file_paths, time_intervals
 
-    def _process_single_year(self, data: list[str]) -> pd.DataFrame:
-        """Process yearly OMNI High Resolution data to a DataFrame.
+    def _process_single_month(self, data: list[str]) -> pd.DataFrame:
+        """Process monthly OMNI High Resolution data to a DataFrame.
 
         Parameters
         ----------
-        file_path : Path
-            Path to the file.
+        data : list[str]
+            Raw data lines from the OMNI service.
 
         Returns
         -------
         pd.DataFrame
-            Yearly OMNI High Resolution data.
+            Monthly OMNI High Resolution data.
         """
         header_line = next(line for line in data if line.strip().startswith("YYYY"))
         columns = header_line.split()
 
-        data_lines = [line for line in data if line.strip().startswith("20")]
+        data_lines = [line for line in data if line.strip().startswith(("19", "20"))]
+
+        if not data_lines:
+            msg = "DataFrame is empty."
+            logger.error(msg)
+            raise ValueError(msg)
 
         df = pd.DataFrame([line.split() for line in data_lines], columns=columns)
         df = df.apply(pd.to_numeric)
@@ -288,32 +320,22 @@ class OMNIHighRes:
             "proton_density": 999.8,
             "temperature": 9999998.0,
             "pdyn": 99.0,
+            "sym-h": 99999.0,
         }
 
         df.columns = maxes.keys()
-
         for col, max_val in maxes.items():
             df[col] = df[col].where(df[col] < max_val, other=pd.NA)
 
         if df.empty:
-            msg = "DataFrame is empty after processing the year."
-            logging.error(msg)
+            msg = "DataFrame is empty after processing the month."
+            logger.error(msg)
             raise ValueError(msg)
-
-        # fill the dataframe unilt the end of the year since the retreive data is not complete
-        full_date_range = pd.date_range(
-            start=df.index[0],
-            end=datetime(df.index[0].year, 12, 31, 23, 59, 59),
-            freq=df.index[1] - df.index[0],
-        )
-
-        df = df.reindex(full_date_range, fill_value=np.nan)
-        df.index.name = "timestamp"
 
         return df
 
     def _read_single_file(self, file_path) -> pd.DataFrame:
-        """Read yearly OMNI High Resolution file to a DataFrame.
+        """Read monthly OMNI High Resolution file to a DataFrame.
 
         Parameters
         ----------
@@ -323,7 +345,7 @@ class OMNIHighRes:
         Returns
         -------
         pd.DataFrame
-            Data from yearly High Low Resolution file.
+            Data from monthly High Resolution file.
         """
         df = pd.read_csv(file_path)
 
@@ -351,7 +373,7 @@ class OMNIHighRes:
             "start_date": start.strftime("%Y%m%d"),
             "end_date": end.strftime("%Y%m%d"),
         }
-        common_vars = {"vars": ["13", "14", "17", "18", "21", "25", "26", "27"]}
+        common_vars = {"vars": ["13", "14", "17", "18", "21", "25", "26", "27", "41"]}
         if cadence == 1:
             params = {"res": "min", "spacecraft": "omni_min"}
             payload.update(params)
@@ -363,15 +385,15 @@ class OMNIHighRes:
 
         else:
             msg = f"Invalid cadence: {cadence}. Only 1 or 5 minutes are supported."
-            logging.error(msg)
+            logger.error(msg)
             raise ValueError(msg)
-        logging.debug(f"Fetching data from {self.URL} with payload: {payload}")
+        logger.debug(f"Fetching data from {self.URL} with payload: {payload}")
         response = requests.post(self.URL, data=payload)
         response.raise_for_status()
         data = response.text.splitlines()
 
         if data and "Error" in data[0]:
-            logging.warning("Received an error response from the server.")
+            logger.warning("Received an error response from the server.")
 
             for line in data:
                 if "correct range" in line:
@@ -381,13 +403,13 @@ class OMNIHighRes:
                         new_end_date_str = match.group(1)
                         new_end_date = datetime.strptime(new_end_date_str, "%Y%m%d")
 
-                        logging.warning(
+                        logger.warning(
                             f"Invalid date range detected. Found suggested end date: {new_end_date.strftime('%Y-%m-%d')}"
                         )
 
                         # Recursively call the function with the original start date and the new end date
                         return self._get_data_from_omni(start=start, end=new_end_date, cadence=cadence)
             msg = f"An unspecified error occurred: {data}"
-            logging.error(msg)
+            logger.error(msg)
             raise ValueError(msg)
         return data
