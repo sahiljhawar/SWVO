@@ -134,7 +134,6 @@ class F107SWPC:
                     continue
 
         finally:
-            # ...
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     def _download(self, temp_dir: Path, filename: str) -> None:
