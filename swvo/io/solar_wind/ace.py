@@ -102,44 +102,43 @@ class SWACE:
         temporary_dir = Path("./temp_sw_ace_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        try:
-            self._download(temporary_dir, self.NAME_MAG)
-            self._download(temporary_dir, self.NAME_SWEPAM)
-            logger.debug("Processing file ...")
-            processed_df = self._process_single_file(temporary_dir)
+        self._download(temporary_dir, self.NAME_MAG)
+        self._download(temporary_dir, self.NAME_SWEPAM)
+        logger.debug("Processing file ...")
+        processed_df = self._process_single_file(temporary_dir)
 
-            unique_dates = np.unique(processed_df.index.date)
+        unique_dates = np.unique(processed_df.index.date)
 
-            for date in unique_dates:
-                file_path = self.data_dir / date.strftime("%Y/%m") / f"ACE_SW_NOWCAST_{date.strftime('%Y%m%d')}.csv"
-                tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
+        for date in unique_dates:
+            file_path = self.data_dir / date.strftime("%Y/%m") / f"ACE_SW_NOWCAST_{date.strftime('%Y%m%d')}.csv"
+            tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
-                try:
-                    day_start = datetime.combine(date, datetime.min.time()).replace(tzinfo=timezone.utc)
-                    day_end = datetime.combine(date, datetime.max.time()).replace(tzinfo=timezone.utc)
+            try:
+                day_start = datetime.combine(date, datetime.min.time()).replace(tzinfo=timezone.utc)
+                day_end = datetime.combine(date, datetime.max.time()).replace(tzinfo=timezone.utc)
 
-                    day_data = processed_df[(processed_df.index >= day_start) & (processed_df.index <= day_end)]
+                day_data = processed_df[(processed_df.index >= day_start) & (processed_df.index <= day_end)]
 
-                    if file_path.exists():
-                        logger.debug(f"Found previous file for {date}. Loading and combining ...")
-                        previous_df = self._read_single_file(file_path)
+                if file_path.exists():
+                    logger.debug(f"Found previous file for {date}. Loading and combining ...")
+                    previous_df = self._read_single_file(file_path)
 
-                        previous_df.drop("file_name", axis=1, inplace=True)
-                        day_data = day_data.combine_first(previous_df)
+                    previous_df.drop("file_name", axis=1, inplace=True)
+                    day_data = day_data.combine_first(previous_df)
 
-                    logger.debug(f"Saving processed file for {date}")
-                    file_path.parent.mkdir(parents=True, exist_ok=True)
-                    day_data.to_csv(tmp_path, index=True, header=True)
-                    tmp_path.replace(file_path)
+                logger.debug(f"Saving processed file for {date}")
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                day_data.to_csv(tmp_path, index=True, header=True)
+                tmp_path.replace(file_path)
 
-                except Exception as e:
-                    logger.error(f"Failed to process file for {date}: {e}")
-                    if tmp_path.exists():
-                        tmp_path.unlink()
-                    continue
+            except Exception as e:
+                logger.error(f"Failed to process file for {date}: {e}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                continue
 
-        finally:
-            rmtree(temporary_dir, ignore_errors=True)
+            finally:
+                rmtree(temporary_dir, ignore_errors=True)
 
     def _download(self, temporary_dir: Path, file_name: str) -> None:
         """Download a file from ACE server.

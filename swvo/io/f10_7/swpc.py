@@ -95,46 +95,45 @@ class F107SWPC:
         temp_dir = Path("./temp_f107")
         temp_dir.mkdir(exist_ok=True)
 
-        try:
-            logger.debug("Downloading F10.7 data...")
-            self._download(temp_dir, self.NAME_F107)
+        logger.debug("Downloading F10.7 data...")
+        self._download(temp_dir, self.NAME_F107)
 
-            logger.debug("Processing F10.7 data...")
+        logger.debug("Processing F10.7 data...")
 
-            new_data = self._process_single_file(temp_dir / self.NAME_F107)
+        new_data = self._process_single_file(temp_dir / self.NAME_F107)
 
-            for year, year_data in new_data.groupby(new_data.date.dt.year):
-                file_path = self.data_dir / f"SWPC_F107_{year}.csv"
-                tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
+        for year, year_data in new_data.groupby(new_data.date.dt.year):
+            file_path = self.data_dir / f"SWPC_F107_{year}.csv"
+            tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
-                try:
-                    if file_path.expanduser().exists():
-                        logger.debug(f"Updating {file_path}...")
+            try:
+                if file_path.expanduser().exists():
+                    logger.debug(f"Updating {file_path}...")
 
-                        existing_data = pd.read_csv(file_path, parse_dates=["date"])
-                        existing_data["date"] = pd.to_datetime(existing_data["date"]).dt.tz_localize(None)
+                    existing_data = pd.read_csv(file_path, parse_dates=["date"])
+                    existing_data["date"] = pd.to_datetime(existing_data["date"]).dt.tz_localize(None)
 
-                        combined_data = pd.concat([existing_data, year_data])
-                        combined_data = combined_data.drop_duplicates(subset=["date"], keep="last")
-                        combined_data = combined_data.sort_values("date")
+                    combined_data = pd.concat([existing_data, year_data])
+                    combined_data = combined_data.drop_duplicates(subset=["date"], keep="last")
+                    combined_data = combined_data.sort_values("date")
 
-                        new_records = len(combined_data) - len(existing_data)
-                        logger.debug(f"Added {new_records} new records to {year}")
-                    else:
-                        logger.debug(f"Creating new file for {year}")
-                        combined_data = year_data
+                    new_records = len(combined_data) - len(existing_data)
+                    logger.debug(f"Added {new_records} new records to {year}")
+                else:
+                    logger.debug(f"Creating new file for {year}")
+                    combined_data = year_data
 
-                    combined_data.to_csv(tmp_path, index=False)
-                    tmp_path.replace(file_path)
+                combined_data.to_csv(tmp_path, index=False)
+                tmp_path.replace(file_path)
 
-                except Exception as e:
-                    logger.error(f"Failed to process file for year {year}: {e}")
-                    if tmp_path.exists():
-                        tmp_path.unlink()
-                    continue
+            except Exception as e:
+                logger.error(f"Failed to process file for year {year}: {e}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                continue
 
-        finally:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+            finally:
+                shutil.rmtree(temp_dir, ignore_errors=True)
 
     def _download(self, temp_dir: Path, filename: str) -> None:
         """Download a file from SWPC server.

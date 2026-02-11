@@ -91,45 +91,44 @@ class HpGFZ:
         temporary_dir = Path("./temp_hp_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        try:
-            file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
 
-            for file_path, time_interval in zip(file_paths, time_intervals):
-                if file_path.exists() and not reprocess_files:
-                    continue
+        for file_path, time_interval in zip(file_paths, time_intervals):
+            if file_path.exists() and not reprocess_files:
+                continue
 
-                tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
+            tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
-                filenames_download = [
-                    f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_{time_interval[0].year!s}.txt"
-                ]
+            filenames_download = [
+                f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_{time_interval[0].year!s}.txt"
+            ]
 
-                # there is a separate nowcast file
-                if time_interval[0].year == datetime.now(timezone.utc).year:
-                    filenames_download.append(
-                        f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_nowcast.txt"
-                    )
+            # there is a separate nowcast file
+            if time_interval[0].year == datetime.now(timezone.utc).year:
+                filenames_download.append(
+                    f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_nowcast.txt"
+                )
 
-                try:
-                    for filename_download in filenames_download:
-                        self._download(temporary_dir, filename_download)
+            try:
+                for filename_download in filenames_download:
+                    self._download(temporary_dir, filename_download)
 
-                    filenames_download = [x.split("/")[-1] for x in filenames_download]  # strip folder from filename
+                filenames_download = [x.split("/")[-1] for x in filenames_download]  # strip folder from filename
 
-                    processed_df = self._process_single_file(temporary_dir, filenames_download)
+                processed_df = self._process_single_file(temporary_dir, filenames_download)
 
-                    file_path.parent.mkdir(parents=True, exist_ok=True)
-                    processed_df.to_csv(tmp_path, index=True, header=False)
-                    tmp_path.replace(file_path)
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                processed_df.to_csv(tmp_path, index=True, header=False)
+                tmp_path.replace(file_path)
 
-                except Exception as e:
-                    logger.error(f"Failed to process {file_path}: {e}")
-                    if tmp_path.exists():
-                        tmp_path.unlink()
-                    continue
+            except Exception as e:
+                logger.error(f"Failed to process {file_path}: {e}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                continue
 
-        finally:
-            rmtree(temporary_dir, ignore_errors=True)
+            finally:
+                rmtree(temporary_dir, ignore_errors=True)
 
     def _download(self, temporary_dir: Path, filename: str) -> None:
         """Download a file from the GFZ server.
