@@ -184,7 +184,10 @@ class TestSWACE:
         assert all(col in data.columns for col in SWACE.MAG_FIELDS + SWACE.SWEPAM_FIELDS)
 
     def test_cleanup_after_download(self, swace_instance, mock_download_response):
-        with patch("wget.download", side_effect=mock_download_response):
+        mock_response = Mock()
+        mock_response.content = b"test content"
+        mock_response.raise_for_status = Mock()
+        with patch("requests.get", return_value=mock_response):
             current_time = datetime.now(timezone.utc)
             swace_instance.download_and_process(current_time)
 
