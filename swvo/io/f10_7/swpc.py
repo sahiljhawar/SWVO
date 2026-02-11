@@ -97,16 +97,7 @@ class F107SWPC:
 
         try:
             logger.debug("Downloading F10.7 data...")
-
-            response = requests.get(self.URL + self.NAME_F107)
-            response.raise_for_status()
-
-            with open(temp_dir / self.NAME_F107, "wb") as f:
-                f.write(response.content)
-
-            if (temp_dir / self.NAME_F107).stat().st_size == 0:
-                msg = f"Error downloading file: {self.URL + self.NAME_F107}"
-                raise FileNotFoundError(msg)
+            self._download(temp_dir, self.NAME_F107)
 
             logger.debug("Processing F10.7 data...")
 
@@ -142,13 +133,34 @@ class F107SWPC:
                         tmp_path.unlink()
                     continue
 
-        except Exception as e:
-            logger.error(f"Failed to download and process F10.7 data: {e}")
-            raise
-
         finally:
             # ...
             shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def _download(self, temp_dir: Path, filename: str) -> None:
+        """Download a file from SWPC server.
+
+        Parameters
+        ----------
+        temp_dir : Path
+            Temporary directory to store the downloaded file.
+        filename : str
+            Name of the file to download.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the downloaded file is empty.
+        """
+        response = requests.get(self.URL + filename)
+        response.raise_for_status()
+
+        with open(temp_dir / filename, "wb") as f:
+            f.write(response.content)
+
+        if (temp_dir / filename).stat().st_size == 0:
+            msg = f"Error downloading file: {self.URL + filename}"
+            raise FileNotFoundError(msg)
 
     def _process_single_file(self, file_path: Path) -> pd.DataFrame:
         """Read and process the F10.7 data file.

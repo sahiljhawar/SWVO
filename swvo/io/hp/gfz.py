@@ -100,29 +100,19 @@ class HpGFZ:
 
                 tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
+                filenames_download = [
+                    f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_{time_interval[0].year!s}.txt"
+                ]
+
+                # there is a separate nowcast file
+                if time_interval[0].year == datetime.now(timezone.utc).year:
+                    filenames_download.append(
+                        f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_nowcast.txt"
+                    )
+
                 try:
-                    filenames_download = [
-                        f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_{time_interval[0].year!s}.txt"
-                    ]
-
-                    # there is a separate nowcast file
-                    if time_interval[0].year == datetime.now(timezone.utc).year:
-                        filenames_download.append(
-                            f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_nowcast.txt"
-                        )
-
                     for filename_download in filenames_download:
-                        logger.debug(f"Downloading file {self.URL + filename_download} ...")
-
-                        response = requests.get(self.URL + filename_download)
-                        response.raise_for_status()
-
-                        # Extract just the filename from the path
-                        filename_only = filename_download.split("/")[-1]
-                        with open(temporary_dir / filename_only, "wb") as f:
-                            f.write(response.content)
-
-                        logger.debug("Processing file ...")
+                        self._download(temporary_dir, filename_download)
 
                     filenames_download = [x.split("/")[-1] for x in filenames_download]  # strip folder from filename
 
@@ -140,6 +130,26 @@ class HpGFZ:
 
         finally:
             rmtree(temporary_dir, ignore_errors=True)
+
+    def _download(self, temporary_dir: Path, filename: str) -> None:
+        """Download a file from the GFZ server.
+
+        Parameters
+        ----------
+        temporary_dir : Path
+            Temporary directory to store the downloaded file.
+        filename : str
+            Full path of the file to download (including folder).
+        """
+        logger.debug(f"Downloading file {self.URL + filename} ...")
+
+        response = requests.get(self.URL + filename)
+        response.raise_for_status()
+
+        # Extract just the filename from the path
+        filename_only = filename.split("/")[-1]
+        with open(temporary_dir / filename_only, "wb") as f:
+            f.write(response.content)
 
     def read(self, start_time: datetime, end_time: datetime, *, download: bool = False) -> pd.DataFrame:
         """Read HpGFZ data for the given time range.

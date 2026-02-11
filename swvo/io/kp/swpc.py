@@ -97,12 +97,7 @@ class KpSWPC:
 
         try:
             logger.debug(f"Downloading file {self.URL + self.NAME} ...")
-
-            response = requests.get(self.URL + self.NAME)
-            response.raise_for_status()
-
-            with open(temporary_dir / self.NAME, "wb") as f:
-                f.write(response.content)
+            self._download(temporary_dir, self.NAME)
 
             logger.debug("Processing file ...")
             processed_df = self._process_single_file(temporary_dir)
@@ -121,6 +116,22 @@ class KpSWPC:
 
         finally:
             rmtree(temporary_dir, ignore_errors=True)
+
+    def _download(self, temporary_dir: Path, filename: str) -> None:
+        """Download a file from SWPC server.
+
+        Parameters
+        ----------
+        temporary_dir : Path
+            Temporary directory to store the downloaded file.
+        filename : str
+            Name of the file to download.
+        """
+        response = requests.get(self.URL + filename)
+        response.raise_for_status()
+
+        with open(temporary_dir / filename, "wb") as f:
+            f.write(response.content)
 
     def read(self, start_time: datetime, end_time: Optional[datetime] = None, download: bool = False) -> pd.DataFrame:
         """

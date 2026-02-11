@@ -98,8 +98,8 @@ class DSCOVR:
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
         try:
-            self._download_file(temporary_dir, self.NAME_MAG)
-            self._download_file(temporary_dir, self.NAME_SWEPAM)
+            self._download(temporary_dir, self.NAME_MAG)
+            self._download(temporary_dir, self.NAME_SWEPAM)
 
             logger.debug("Processing file ...")
             processed_df = self._process_single_file(temporary_dir)
@@ -134,14 +134,24 @@ class DSCOVR:
                         tmp_path.unlink()
                     continue
 
-        except Exception as e:
-            logger.error(f"Failed to download and process DSCOVR data: {e}")
-            raise
-
         finally:
             rmtree(temporary_dir, ignore_errors=True)
 
-    def _download_file(self, temporary_dir: Path, file_name: str) -> None:
+    def _download(self, temporary_dir: Path, file_name: str) -> None:
+        """Download a file from DSCOVR server.
+
+        Parameters
+        ----------
+        temporary_dir : Path
+            Temporary directory to store the downloaded file.
+        file_name : str
+            Name of the file to download.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the downloaded file is empty.
+        """
         logger.debug(f"Downloading file {self.URL + file_name} ...")
         response = requests.get(self.URL + file_name)
         response.raise_for_status()
