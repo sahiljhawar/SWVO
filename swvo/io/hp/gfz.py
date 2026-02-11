@@ -91,54 +91,55 @@ class HpGFZ:
         temporary_dir = Path("./temp_hp_wget")
         temporary_dir.mkdir(exist_ok=True, parents=True)
 
-        file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
+        try:
+            file_paths, time_intervals = self._get_processed_file_list(start_time, end_time)
 
-        for file_path, time_interval in zip(file_paths, time_intervals):
-            if file_path.exists() and not reprocess_files:
-                continue
+            for file_path, time_interval in zip(file_paths, time_intervals):
+                if file_path.exists() and not reprocess_files:
+                    continue
 
-            tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
+                tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
-            try:
-                filenames_download = [
-                    f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_{time_interval[0].year!s}.txt"
-                ]
+                try:
+                    filenames_download = [
+                        f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_{time_interval[0].year!s}.txt"
+                    ]
 
-                # there is a separate nowcast file
-                if time_interval[0].year == datetime.now(timezone.utc).year:
-                    filenames_download.append(
-                        f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_nowcast.txt"
-                    )
+                    # there is a separate nowcast file
+                    if time_interval[0].year == datetime.now(timezone.utc).year:
+                        filenames_download.append(
+                            f"Hp{self.index_number}/Hp{self.index_number}_ap{self.index_number}_nowcast.txt"
+                        )
 
-                for filename_download in filenames_download:
-                    logger.debug(f"Downloading file {self.URL + filename_download} ...")
+                    for filename_download in filenames_download:
+                        logger.debug(f"Downloading file {self.URL + filename_download} ...")
 
-                    response = requests.get(self.URL + filename_download)
-                    response.raise_for_status()
+                        response = requests.get(self.URL + filename_download)
+                        response.raise_for_status()
 
-                    # Extract just the filename from the path
-                    filename_only = filename_download.split("/")[-1]
-                    with open(temporary_dir / filename_only, "wb") as f:
-                        f.write(response.content)
+                        # Extract just the filename from the path
+                        filename_only = filename_download.split("/")[-1]
+                        with open(temporary_dir / filename_only, "wb") as f:
+                            f.write(response.content)
 
-                    logger.debug("Processing file ...")
+                        logger.debug("Processing file ...")
 
-                filenames_download = [x.split("/")[-1] for x in filenames_download]  # strip of folder of filename
+                    filenames_download = [x.split("/")[-1] for x in filenames_download]  # strip folder from filename
 
-                processed_df = self._process_single_file(temporary_dir, filenames_download)
+                    processed_df = self._process_single_file(temporary_dir, filenames_download)
 
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                processed_df.to_csv(tmp_path, index=True, header=False)
-                tmp_path.replace(file_path)
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    processed_df.to_csv(tmp_path, index=True, header=False)
+                    tmp_path.replace(file_path)
 
-            except Exception as e:
-                logger.error(f"Failed to process {file_path}: {e}")
-                if tmp_path.exists():
-                    tmp_path.unlink()
-                continue
+                except Exception as e:
+                    logger.error(f"Failed to process {file_path}: {e}")
+                    if tmp_path.exists():
+                        tmp_path.unlink()
+                    continue
 
-            finally:
-                rmtree(temporary_dir, ignore_errors=True)
+        finally:
+            rmtree(temporary_dir, ignore_errors=True)
 
     def read(self, start_time: datetime, end_time: datetime, *, download: bool = False) -> pd.DataFrame:
         """Read HpGFZ data for the given time range.
