@@ -126,6 +126,11 @@ class KpSWPC:
             Temporary directory to store the downloaded file.
         filename : str
             Name of the file to download.
+
+        Raises
+        ------
+        requests.HTTPError
+            If the HTTP request fails.
         """
         response = requests.get(self.URL + filename)
         response.raise_for_status()

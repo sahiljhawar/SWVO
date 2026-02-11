@@ -153,6 +153,8 @@ class SWACE:
 
         Raises
         ------
+        requests.HTTPError
+            If the HTTP request fails.
         FileNotFoundError
             If the downloaded file is empty.
         """

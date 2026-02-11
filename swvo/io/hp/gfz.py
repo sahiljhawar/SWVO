@@ -140,6 +140,11 @@ class HpGFZ:
             Temporary directory to store the downloaded file.
         filename : str
             Full path of the file to download (including folder).
+
+        Raises
+        ------
+        requests.HTTPError
+            If the HTTP request fails.
         """
         logger.debug(f"Downloading file {self.URL + filename} ...")
 
