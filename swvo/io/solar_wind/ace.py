@@ -16,7 +16,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import wget
+import requests
 
 from swvo.io.utils import sw_mag_propagation
 
@@ -112,31 +112,48 @@ class SWACE:
 
             for date in unique_dates:
                 file_path = self.data_dir / date.strftime("%Y/%m") / f"ACE_SW_NOWCAST_{date.strftime('%Y%m%d')}.csv"
+                tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
-                day_start = datetime.combine(date, datetime.min.time()).replace(tzinfo=timezone.utc)
-                day_end = datetime.combine(date, datetime.max.time()).replace(tzinfo=timezone.utc)
+                try:
+                    day_start = datetime.combine(date, datetime.min.time()).replace(tzinfo=timezone.utc)
+                    day_end = datetime.combine(date, datetime.max.time()).replace(tzinfo=timezone.utc)
 
-                day_data = processed_df[(processed_df.index >= day_start) & (processed_df.index <= day_end)]
+                    day_data = processed_df[(processed_df.index >= day_start) & (processed_df.index <= day_end)]
 
-                if file_path.exists():
-                    logger.debug(f"Found previous file for {date}. Loading and combining ...")
-                    previous_df = self._read_single_file(file_path)
+                    if file_path.exists():
+                        logger.debug(f"Found previous file for {date}. Loading and combining ...")
+                        previous_df = self._read_single_file(file_path)
 
-                    previous_df.drop("file_name", axis=1, inplace=True)
-                    day_data = day_data.combine_first(previous_df)
+                        previous_df.drop("file_name", axis=1, inplace=True)
+                        day_data = day_data.combine_first(previous_df)
 
-                logger.debug(f"Saving processed file for {date}")
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                day_data.to_csv(file_path, index=True, header=True)
+                    logger.debug(f"Saving processed file for {date}")
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    day_data.to_csv(tmp_path, index=True, header=True)
+                    tmp_path.replace(file_path)
+
+                except Exception as e:
+                    logger.error(f"Failed to process file for {date}: {e}")
+                    if tmp_path.exists():
+                        tmp_path.unlink()
+                    continue
+
+        except Exception as e:
+            logger.error(f"Failed to download and process ACE data: {e}")
+            raise
 
         finally:
-            rmtree(temporary_dir)
+            rmtree(temporary_dir, ignore_errors=True)
 
     def _download_file(self, temporary_dir: Path, file_name: str) -> None:
         logger.debug(f"Downloading file {self.URL + file_name} ...")
-        wget.download(self.URL + file_name, str(temporary_dir))
+        response = requests.get(self.URL + file_name)
+        response.raise_for_status()
 
-        if os.stat(str(temporary_dir / file_name)).st_size == 0:
+        with open(temporary_dir / file_name, "wb") as f:
+            f.write(response.content)
+
+        if (temporary_dir / file_name).stat().st_size == 0:
             raise FileNotFoundError(f"Error while downloading file: {self.URL + file_name}!")
 
     def read(
