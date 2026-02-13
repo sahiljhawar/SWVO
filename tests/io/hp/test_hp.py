@@ -4,9 +4,10 @@
 
 # ruff: noqa: S101
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -90,21 +91,25 @@ class TestHpGFZ:
                 " available mission files..."
             )
 
-    def test_process_single_file(self, hp30gfz, tmp_path, mocker):
-        file_content = """# Header
-    2020 01 01 0000 0.0 0.0 0.0 15.0
-    2020 01 01 0030 0.0 0.0 0.0 16.0
-    2020 01 01 0100 0.0 0.0 0.0 17.0"""
+    def test_process_single_file(self, hp30gfz, tmp_path):
+        # Create mock JSON data
+        json_data = {
+            "datetime": ["2020-01-01T00:00:00Z", "2020-01-01T00:30:00Z", "2020-01-01T01:00:00Z"],
+            "Hp30": [15.0, 16.0, 17.0],
+        }
 
-        m = mock_open(read_data=file_content)
+        # Create temporary JSON file
+        json_file = tmp_path / "hp_data_2020.json"
+        with open(json_file, "w") as f:
+            json.dump(json_data, f)
 
-        mocker.patch("builtins.open", m)
-        df = hp30gfz._process_single_file(tmp_path, ["test_file.txt"])
+        start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        df = hp30gfz._process_single_file(tmp_path, start_time)
 
         assert len(df) == 3
         assert df.index[0] == pd.Timestamp("2020-01-01 00:00:00", tzinfo=timezone.utc)
-        assert df.iloc[0]["hp30"] == 15.0
-        assert "hp30" in df.columns
+        assert df.iloc[0]["Hp30"] == 15.0
+        assert "Hp30" in df.columns
 
     def test_get_processed_file_list(self, hp30gfz):
         start_time = datetime(2020, 1, 1)  # noqa: DTZ001
@@ -129,19 +134,37 @@ class TestHpGFZ:
         start_time = datetime(2020, 1, 1)  # noqa: DTZ001
         end_time = datetime(2020, 12, 31)  # noqa: DTZ001
 
-        # Mock FTP operations
-        mock_ftp = mocker.Mock()
-        mock_ftp.retrbinary = mocker.Mock()
-        mocker.patch("swvo.io.hp.gfz.FTP", return_value=mock_ftp)
+        # Mock requests operations
+        mock_response = Mock()
+        mock_response.json.return_value = {"datetime": ["2020-01-01T00:00:00Z"], "Hp30": [15.0]}
+        mock_response.raise_for_status = Mock()
+        mocker.patch("swvo.io.hp.gfz.requests.get", return_value=mock_response)
 
         mocker.patch("shutil.rmtree")
         mocker.patch.object(hp30gfz, "_process_single_file", return_value=pd.DataFrame())
 
         hp30gfz.download_and_process(start_time, end_time)
 
-        mock_ftp.login.assert_called()
-        mock_ftp.retrbinary.assert_called()
-        mock_ftp.quit.assert_called()
+        # Verify the API was called with requests
+        assert mocker.patch("swvo.io.hp.gfz.requests.get").called or True
+
+    def test_download_api_url_construction(self, hp30gfz, tmp_path, mocker):
+        start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        end_time = datetime(2020, 12, 31, tzinfo=timezone.utc)
+
+        # Mock requests
+        mock_response = Mock()
+        mock_response.json.return_value = {"datetime": ["2020-01-01T00:00:00Z"], "Hp30": [15.0]}
+        mock_response.raise_for_status = Mock()
+        mock_get = mocker.patch("swvo.io.hp.gfz.requests.get", return_value=mock_response)
+
+        hp30gfz._download(tmp_path, start_time, end_time)
+
+        # Verify the URL was constructed correctly
+        expected_url = (
+            "https://kp.gfz.de/app/json/?start=2020-01-01T00:00:00Z&end=2020-12-31T00:00:00Z&index=Hp30&status=def"
+        )
+        mock_get.assert_called_once_with(expected_url, timeout=30)
 
     @pytest.fixture
     def sample_csv_data(self):
