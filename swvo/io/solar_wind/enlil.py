@@ -18,11 +18,11 @@ from shutil import rmtree
 from typing import Literal, Optional
 
 import astropy.units as u
-import netCDF4
 import numpy as np
 import pandas as pd
 import requests
 import richpool
+import xarray as xr
 from astropy.coordinates import CartesianRepresentation
 from astropy.time import Time
 from sunpy.coordinates import GeocentricSolarMagnetospheric, HeliographicStonyhurst
@@ -39,6 +39,21 @@ METERS_PER_SECOND_TO_KM_PER_SECOND = 1e-3
 KG_PER_M3_TO_PER_CM3 = 1e-6 / PROTON_MASS_KG
 
 _VECTOR_TRANSFORM_SCALE = 1e9 * u.m / u.T
+
+EARTH_VARIABLES = (
+    "Earth_TIME",
+    "Earth_X1",
+    "Earth_X2",
+    "Earth_X3",
+    "Earth_B1",
+    "Earth_B2",
+    "Earth_B3",
+    "Earth_V1",
+    "Earth_V2",
+    "Earth_V3",
+    "Earth_Density",
+    "Earth_Temperature",
+)
 
 Mode = Literal["bkg", "cme"]
 
@@ -544,21 +559,17 @@ class SWENLIL(BaseIO):
         pd.DataFrame
             Earth solar wind data from this file, indexed by time (UTC).
         """
-        with netCDF4.Dataset(file_path) as nc_file:
-            refdate = datetime.strptime(nc_file.REFDATE_CAL, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
 
-            earth_time_sec = np.asarray(nc_file.variables["Earth_TIME"][:], dtype=float)
-            r = np.asarray(nc_file.variables["Earth_X1"][:], dtype=float)
-            theta = np.asarray(nc_file.variables["Earth_X2"][:], dtype=float)
-            phi = np.asarray(nc_file.variables["Earth_X3"][:], dtype=float)
-            b_r = np.asarray(nc_file.variables["Earth_B1"][:], dtype=float)
-            b_theta = np.asarray(nc_file.variables["Earth_B2"][:], dtype=float)
-            b_phi = np.asarray(nc_file.variables["Earth_B3"][:], dtype=float)
-            v_r = np.asarray(nc_file.variables["Earth_V1"][:], dtype=float)
-            v_theta = np.asarray(nc_file.variables["Earth_V2"][:], dtype=float)
-            v_phi = np.asarray(nc_file.variables["Earth_V3"][:], dtype=float)
-            density = np.asarray(nc_file.variables["Earth_Density"][:], dtype=float)
-            temperature = np.asarray(nc_file.variables["Earth_Temperature"][:], dtype=float)
+        with xr.open_dataset(file_path, decode_times=False) as dataset:
+            refdate = datetime.strptime(dataset.attrs["REFDATE_CAL"], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+            earth = {name: dataset[name].to_numpy().astype(float) for name in EARTH_VARIABLES}
+
+        earth_time_sec = earth["Earth_TIME"]
+        r, theta, phi = earth["Earth_X1"], earth["Earth_X2"], earth["Earth_X3"]
+        b_r, b_theta, b_phi = earth["Earth_B1"], earth["Earth_B2"], earth["Earth_B3"]
+        v_r, v_theta, v_phi = earth["Earth_V1"], earth["Earth_V2"], earth["Earth_V3"]
+        density = earth["Earth_Density"]
+        temperature = earth["Earth_Temperature"]
 
         timestamps = np.array([refdate + timedelta(seconds=sec) for sec in earth_time_sec])
 

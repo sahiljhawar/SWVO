@@ -9,11 +9,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import netCDF4
 import numpy as np
 import pandas as pd
 import pytest
 import requests
+import xarray as xr
 
 from swvo.io.solar_wind.enlil import SWENLIL, _spherical_vector_to_cartesian
 
@@ -25,40 +25,30 @@ EXPECTED_COLUMNS = ["bx_gsm", "by_gsm", "bz_gsm", "bavg", "speed", "proton_densi
 
 def _write_sample_nc(path: Path, refdate: datetime, num_samples: int = 5, seconds_step: float = 3600.0) -> None:
     """Write a minimal ENLIL-shaped NetCDF file with an `earth_t`-length Earth_* timeline."""
-    with netCDF4.Dataset(path, "w") as nc:
-        nc.REFDATE_CAL = refdate.strftime("%Y-%m-%dT%H:%M:%S")
-        nc.createDimension("earth_t", num_samples)
-
-        earth_time = nc.createVariable("Earth_TIME", "f4", ("earth_t",))
+    au_m = 1.496e11
+    variables = {
         # Start well before REFDATE so tests can exercise the start_time cutoff.
-        earth_time[:] = np.arange(num_samples) * seconds_step - 2 * seconds_step
+        "Earth_TIME": np.arange(num_samples) * seconds_step - 2 * seconds_step,
+        "Earth_X1": np.full(num_samples, 1.01 * au_m),
+        "Earth_X2": np.full(num_samples, np.pi / 2),
+        "Earth_X3": np.linspace(0, 0.01, num_samples),
+        "Earth_B1": np.full(num_samples, 3e-9),
+        "Earth_B2": np.full(num_samples, 1e-9),
+        "Earth_B3": np.full(num_samples, 2e-9),
+        "Earth_V1": np.full(num_samples, 4.0e5),
+        "Earth_V2": np.full(num_samples, 3.0e4),
+        "Earth_V3": np.full(num_samples, 4.0e4),
+        "Earth_Density": np.full(num_samples, 5e-21),
+        "Earth_Temperature": np.full(num_samples, 1e5),
+    }
 
-        au_m = 1.496e11
-        x1 = nc.createVariable("Earth_X1", "f4", ("earth_t",))
-        x1[:] = np.full(num_samples, 1.01 * au_m)
-        x2 = nc.createVariable("Earth_X2", "f4", ("earth_t",))
-        x2[:] = np.full(num_samples, np.pi / 2)
-        x3 = nc.createVariable("Earth_X3", "f4", ("earth_t",))
-        x3[:] = np.linspace(0, 0.01, num_samples)
-
-        b1 = nc.createVariable("Earth_B1", "f4", ("earth_t",))
-        b1[:] = np.full(num_samples, 3e-9)
-        b2 = nc.createVariable("Earth_B2", "f4", ("earth_t",))
-        b2[:] = np.full(num_samples, 1e-9)
-        b3 = nc.createVariable("Earth_B3", "f4", ("earth_t",))
-        b3[:] = np.full(num_samples, 2e-9)
-
-        v1 = nc.createVariable("Earth_V1", "f4", ("earth_t",))
-        v1[:] = np.full(num_samples, 4.0e5)
-        v2 = nc.createVariable("Earth_V2", "f4", ("earth_t",))
-        v2[:] = np.full(num_samples, 3.0e4)
-        v3 = nc.createVariable("Earth_V3", "f4", ("earth_t",))
-        v3[:] = np.full(num_samples, 4.0e4)
-
-        density = nc.createVariable("Earth_Density", "f4", ("earth_t",))
-        density[:] = np.full(num_samples, 5e-21)
-        temperature = nc.createVariable("Earth_Temperature", "f4", ("earth_t",))
-        temperature[:] = np.full(num_samples, 1e5)
+    dataset = xr.Dataset(
+        {name: ("earth_t", values.astype("f4")) for name, values in variables.items()},
+        attrs={"REFDATE_CAL": refdate.strftime("%Y-%m-%dT%H:%M:%S")},
+    )
+    # Real runs carry no fill value on these; without this xarray would add one of its own and
+    # the fixture would stop matching the files it stands in for.
+    dataset.to_netcdf(path, encoding={name: {"_FillValue": None} for name in variables})
 
 
 def _write_sample_archive(archive_path: Path, nc_name: str, refdate: datetime, **nc_kwargs) -> None:
