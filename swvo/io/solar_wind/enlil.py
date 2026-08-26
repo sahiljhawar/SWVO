@@ -524,7 +524,10 @@ class SWENLIL(BaseIO):
         df.index = pd.to_datetime(df.index, format="ISO8601", utc=True)
         df.index.name = "t"
 
-        return df
+        # `_read_single_file` sorts before writing, so this only matters for a file that was
+        # tampered with, but callers truncate and interpolate over this index and both give
+        # wrong answers on an unsorted one.
+        return df.sort_index()
 
     def _read_single_file(self, file_path: Path, start_time: datetime) -> pd.DataFrame:
         """Read the Earth-position timeline out of an ENLIL NetCDF file.
