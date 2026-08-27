@@ -55,6 +55,18 @@ EARTH_VARIABLES = (
     "Earth_Temperature",
 )
 
+OUTPUT_COLUMNS = [
+    "bx_gsm",
+    "by_gsm",
+    "bz_gsm",
+    "bavg",
+    "speed",
+    "proton_density",
+    "temperature",
+    "pdyn",
+    "file_name",
+]
+
 Mode = Literal["bkg", "cme"]
 
 
@@ -85,7 +97,7 @@ def _spherical_vector_to_cartesian(
 
 class SWENLIL(BaseIO):
     """
-    A class for handling NOAA SWPC WSA-ENLIL model data.
+    Base class for handling NOAA SWPC WSA-ENLIL model data.
 
     ENLIL is run in two modes: `bkg` (ambient background, one run archived
     per day at 00:00 UTC) and `cme` (CME simulation runs, archived only when
@@ -93,6 +105,8 @@ class SWENLIL(BaseIO):
     each at its own run time). Both modes are discovered via the NCEI space
     weather portal files API rather than a fixed URL pattern, since `cme`
     run times aren't predictable.
+
+    Instantiate :class:`SWENLIL_BKG` or :class:`SWENLIL_CME` instead.
 
     Parameters
     ----------
@@ -117,6 +131,8 @@ class SWENLIL(BaseIO):
 
     LABEL = "enlil"
 
+    MODE: Mode
+
     NUM_DOWNLOAD_WORKERS = min(8, multiprocessing.cpu_count())
 
     PRE_ARCHIVE_CUTOFF = datetime(2023, 4, 4, tzinfo=timezone.utc)
@@ -129,6 +145,11 @@ class SWENLIL(BaseIO):
     def _fallback_url(self) -> str:
         return self.API_URL
 
+    @property
+    def _product(self) -> str:
+        """The NCEI product id this run mode is archived under."""
+        return f"swpc_wsaenlil_{self.MODE}"
+
     def _warn_if_pre_archive_cutoff(self, target_date: datetime) -> None:
         """Log a critical message if `target_date` predates the archive's background-run cutoff.
 
@@ -140,13 +161,11 @@ class SWENLIL(BaseIO):
         if target_date < self.PRE_ARCHIVE_CUTOFF:
             logger.critical(self.PRE_ARCHIVE_CUTOFF_MESSAGE)
 
-    def _file_path_for(self, mode: Mode, target_date: datetime, run_time: str) -> Path:
-        """Build the CSV path for one run.
+    def _file_path_for(self, target_date: datetime, run_time: str) -> Path:
+        """Build the CSV path for one run of this mode.
 
         Parameters
         ----------
-        mode : Literal["bkg", "cme"]
-            Which ENLIL run mode.
         target_date : datetime
             Date of the run.
         run_time : str
@@ -160,11 +179,11 @@ class SWENLIL(BaseIO):
         return (
             self.data_dir
             / target_date.strftime("%Y/%m")
-            / f"ENLIL_FORECAST_{mode}_{target_date.strftime('%Y%m%d')}_{run_time}.csv"
+            / f"ENLIL_FORECAST_{self.MODE}_{target_date.strftime('%Y%m%d')}_{run_time}.csv"
         )
 
     def _find_file_entries(self, target_date: datetime) -> list[dict]:
-        """Query the NCEI files API for all ENLIL runs (bkg and cme) starting on `target_date`.
+        """Query the NCEI files API for this mode's ENLIL runs starting on `target_date`.
 
         Parameters
         ----------
@@ -174,7 +193,7 @@ class SWENLIL(BaseIO):
         Returns
         -------
         list[dict]
-            File entries (each with `id`, `file_link`, `product`, ...) whose
+            File entries (each with `id`, `file_link`, `product`, ...) of this mode whose
             `time_coverage_start` is exactly `target_date` at 00:00 UTC.
         """
         day_start = datetime(target_date.year, target_date.month, target_date.day, tzinfo=timezone.utc)
@@ -193,18 +212,41 @@ class SWENLIL(BaseIO):
         payload = response.json()
 
         day_start_str = day_start.strftime("%Y-%m-%dT%H:%M:%S.000Z")
-        return [entry for entry in payload.get("data", []) if entry.get("time_coverage_start") == day_start_str]
+        return [
+            entry
+            for entry in payload.get("data", [])
+            if entry.get("time_coverage_start") == day_start_str and entry.get("product") == self._product
+        ]
+
+    def _missing_run_error(self, target_date: datetime) -> Optional[FileNotFoundError]:
+        """Whether a date with no archived run of this mode is an error.
+
+        Overridden by :class:`SWENLIL_BKG`: a `bkg` run is archived every day, so a
+        missing one means an incomplete archive. The base implementation treats a
+        missing run as normal, which is correct for :class:`SWENLIL_CME`: a `cme` run
+        only exists for a date where a CME was modeled.
+
+        Parameters
+        ----------
+        target_date : datetime
+            Date that had no archived run.
+
+        Returns
+        -------
+        FileNotFoundError | None
+            The error to raise for this date, or `None` if a missing run is not an error.
+        """
+        return None
 
     def download_and_process(
         self, start_time: datetime, end_time: Optional[datetime] = None, reprocess_files: bool = False
     ) -> None:
         """
-        Download and process WSA-ENLIL `bkg` and `cme` runs into CSVs.
+        Download and process this mode's WSA-ENLIL runs into CSVs.
 
-        For each date in `[start_time.date(), end_time.date()]`, the single `bkg`
-        run and every `cme` run found for that date are downloaded and each
-        saved as its own CSV. A missing `bkg` run for a date is an error,
-        a date with no `cme` runs is not.
+        For each date in `[start_time.date(), end_time.date()]`, every run of this
+        mode found for that date is downloaded and each saved as its own CSV. Whether a
+        date with no run of this mode is an error is up to `_missing_run_error`.
 
         Parameters
         ----------
@@ -218,7 +260,9 @@ class SWENLIL(BaseIO):
         Raises
         ------
         FileNotFoundError
-            If no `bkg` archive is found for any requested date (all dates are still attempted).
+            If `_missing_run_error` reports an error for every requested date.
+        requests.RequestException
+            If the archive lookup fails for every requested date.
         """
         start_time = enforce_utc_timezone(start_time)
         end_time = enforce_utc_timezone(end_time) if end_time is not None else start_time
@@ -239,8 +283,7 @@ class SWENLIL(BaseIO):
 
         self._resolved_urls = []
 
-        bkg_jobs: list[tuple[dict, datetime]] = []
-        cme_jobs: list[tuple[dict, datetime]] = []
+        jobs: list[tuple[dict, datetime]] = []
         errors: list[Exception] = []
 
         for date in dates:
@@ -251,36 +294,27 @@ class SWENLIL(BaseIO):
                 errors.append(e)
                 continue
 
-            date_bkg_entries = [e for e in entries if e.get("product") == "swpc_wsaenlil_bkg"]
-            date_cme_entries = [e for e in entries if e.get("product") == "swpc_wsaenlil_cme"]
-
-            if not date_bkg_entries:
-                error = FileNotFoundError(f"No ENLIL bkg run found for {date.date()}.")
-                logger.error(str(error))
-                errors.append(error)
+            if not entries:
+                error = self._missing_run_error(date)
+                if error is not None:
+                    logger.error(str(error))
+                    errors.append(error)
                 continue
 
-            bkg_jobs.extend((entry, date) for entry in date_bkg_entries)
-            cme_jobs.extend((entry, date) for entry in date_cme_entries)
+            jobs.extend((entry, date) for entry in entries)
 
-        # Two independent, non-nested pools (never one pool spawning another
-        # from inside its own worker) so bkg and cme each get their own
-        # progress bar without risking a pool-teardown deadlock.
-        self._run_download_jobs(bkg_jobs, "bkg", reprocess_files)
-        self._run_download_jobs(cme_jobs, "cme", reprocess_files)
+        self._run_download_jobs(jobs, reprocess_files)
 
-        if len(errors) == len(dates):
+        if errors and len(errors) == len(dates):
             raise errors[0]
 
-    def _run_download_jobs(self, jobs: list[tuple[dict, datetime]], mode: Mode, reprocess_files: bool) -> None:
-        """Download and process a flat list of runs for one mode, with its own progress bar.
+    def _run_download_jobs(self, jobs: list[tuple[dict, datetime]], reprocess_files: bool) -> None:
+        """Download and process a flat list of runs, with its own progress bar.
 
         Parameters
         ----------
         jobs : list[tuple[dict, datetime]]
             `(file entry, target_date)` pairs to process.
-        mode : Literal["bkg", "cme"]
-            Which ENLIL run mode `jobs` belongs to.
         reprocess_files : bool
             Downloads and processes runs again if `True`, even if their CSVs already exist.
         """
@@ -289,9 +323,9 @@ class SWENLIL(BaseIO):
 
         def process_job(job: tuple[dict, datetime]) -> None:
             entry, target_date = job
-            self._download_and_process_single_run(entry, mode, target_date, reprocess_files)
+            self._download_and_process_single_run(entry, target_date, reprocess_files)
 
-        desc = f"Downloading ENLIL {mode} runs "
+        desc = f"Downloading ENLIL {self.MODE} runs "
         if len(jobs) == 1:
             richpool.t_map(process_job, jobs, desc=desc)
         else:
@@ -299,24 +333,20 @@ class SWENLIL(BaseIO):
                 process_job, jobs, kind="process", num_cpus=min(self.NUM_DOWNLOAD_WORKERS, len(jobs)), desc=desc
             )
 
-    def _download_and_process_single_run(
-        self, entry: dict, mode: Mode, target_date: datetime, reprocess_files: bool
-    ) -> None:
+    def _download_and_process_single_run(self, entry: dict, target_date: datetime, reprocess_files: bool) -> None:
         """Download and process a single run described by an API file entry.
 
         Parameters
         ----------
         entry : dict
             File entry from the NCEI files API (`id`, `file_link`, ...).
-        mode : Literal["bkg", "cme"]
-            Which ENLIL run mode `entry` is.
         target_date : datetime
             Date the run belongs to.
         reprocess_files : bool
             Downloads and processes the file again if `True`, even if its CSV already exists.
         """
         run_time = self._run_time_from_id(entry["id"])
-        file_path = self._file_path_for(mode, target_date, run_time)
+        file_path = self._file_path_for(target_date, run_time)
 
         if file_path.exists() and not reprocess_files:
             return
@@ -419,40 +449,26 @@ class SWENLIL(BaseIO):
 
         return nc_path
 
-    def read(
-        self,
-        start_time: datetime,
-        end_time: Optional[datetime] = None,
-        download: bool = False,
-        mode: Mode = "bkg",
-    ) -> pd.DataFrame | list[pd.DataFrame]:
-        """
-        Read processed ENLIL Earth-position solar wind data for the specified time range.
+    def _read_runs(self, start_time: datetime, end_time: Optional[datetime], download: bool) -> list[pd.DataFrame]:
+        """Read every run of this mode keyed by `start_time`'s date.
 
         Only runs keyed by `start_time`'s date are read; no other dates are combined in.
 
         Parameters
         ----------
         start_time : datetime
-            Start time of the data to read.
+            Start time of the data to read. Its date selects the runs.
         end_time : datetime, optional
             End time of the data to read. If not provided, defaults to the last
-            timestamp in the run's file.
-        download : bool, optional
-            Download and process data on the go, defaults to False.
-        mode : Literal["bkg", "cme"], optional
-            Which ENLIL run mode to read, defaults to `"bkg"`.
-            `"bkg"` reads the single background run for `start_time`'s date, as a `pd.DataFrame`.
-            `"cme"` reads every CME run found for `start_time`'s date, as a `list[pd.DataFrame]`
-            (empty if none exist).
+            timestamp in each run's file.
+        download : bool
+            Download and process data on the go.
 
         Returns
         -------
-        pd.DataFrame | list[pd.DataFrame]
-            For `mode="bkg"`, a single DataFrame with columns `bx_gsm`, `by_gsm`,
-            `bz_gsm`, `bavg`, `speed`, `proton_density`, `temperature`, `pdyn`,
-            `file_name`, indexed by time (UTC). For `mode="cme"`, a list of such
-            DataFrames, one per CME run.
+        list[pd.DataFrame]
+            One data frame per run of this mode, sorted by run time and truncated to
+            `[start_time, end_time]`. Empty if the date has no run of this mode.
         """
         start_time = enforce_utc_timezone(start_time)
         if end_time is not None:
@@ -465,31 +481,19 @@ class SWENLIL(BaseIO):
 
         self._warn_if_pre_archive_cutoff(start_time)
 
-        if download and not self._csvs_for(mode, start_time):
+        if download and not self._csvs_for(start_time):
             try:
                 self.download_and_process(start_time)
             except FileNotFoundError as e:
                 logger.error(f"`download_and_process` failed because: {e}")
 
-        file_paths = self._csvs_for(mode, start_time)
+        return [self._read_and_truncate(fp, start_time, end_time) for fp in self._csvs_for(start_time)]
 
-        if mode == "cme":
-            return [self._read_and_truncate(fp, start_time, end_time) for fp in file_paths]
-
-        columns = ["bx_gsm", "by_gsm", "bz_gsm", "bavg", "speed", "proton_density", "temperature", "pdyn", "file_name"]
-        if not file_paths:
-            warnings.warn(f"No {mode} file found for {start_time.date()}")
-            return pd.DataFrame(columns=columns)
-
-        return self._read_and_truncate(file_paths[0], start_time, end_time)
-
-    def _csvs_for(self, mode: Mode, target_date: datetime) -> list[Path]:
-        """List the existing CSVs for `mode` on `target_date`.
+    def _csvs_for(self, target_date: datetime) -> list[Path]:
+        """List the existing CSVs of this mode on `target_date`.
 
         Parameters
         ----------
-        mode : Literal["bkg", "cme"]
-            Which ENLIL run mode.
         target_date : datetime
             Date to look up.
 
@@ -499,7 +503,7 @@ class SWENLIL(BaseIO):
             Matching CSV paths, sorted by run time.
         """
         directory = self.data_dir / target_date.strftime("%Y/%m")
-        pattern = f"ENLIL_FORECAST_{mode}_{target_date.strftime('%Y%m%d')}_*.csv"
+        pattern = f"ENLIL_FORECAST_{self.MODE}_{target_date.strftime('%Y%m%d')}_*.csv"
         return sorted(directory.glob(pattern)) if directory.exists() else []
 
     def _read_and_truncate(self, file_path: Path, start_time: datetime, end_time: Optional[datetime]) -> pd.DataFrame:
@@ -539,9 +543,6 @@ class SWENLIL(BaseIO):
         df.index = pd.to_datetime(df.index, format="ISO8601", utc=True)
         df.index.name = "t"
 
-        # `_read_single_file` sorts before writing, so this only matters for a file that was
-        # tampered with, but callers truncate and interpolate over this index and both give
-        # wrong answers on an unsorted one.
         return df.sort_index()
 
     def _read_single_file(self, file_path: Path, start_time: datetime) -> pd.DataFrame:
@@ -663,3 +664,132 @@ class SWENLIL(BaseIO):
             b_gsm.y.to_value(u.T),
             b_gsm.z.to_value(u.T),
         )
+
+
+class SWENLIL_BKG(SWENLIL):
+    """
+    A class for handling NOAA SWPC WSA-ENLIL ambient background (`bkg`) runs.
+
+    Exactly one background run is archived per day, at 00:00 UTC, so a read
+    returns a single data frame and a date without a run is an error when
+    downloading.
+
+    Parameters
+    ----------
+    data_dir : Path | None
+        Data directory for the ENLIL data. If not provided, it will be read from the environment variable.
+
+    Methods
+    -------
+    download_and_process
+    read
+
+    Raises
+    ------
+    ValueError
+        Returns `ValueError` if necessary environment variable is not set.
+    """
+
+    MODE: Mode = "bkg"
+
+    LABEL = "enlil_bkg"
+
+    def _missing_run_error(self, target_date: datetime) -> FileNotFoundError:
+        """A missing `bkg` run means an incomplete archive, unlike a missing `cme` run."""
+        return FileNotFoundError(f"No ENLIL {self.MODE} run found for {target_date.date()}.")
+
+    def read(
+        self,
+        start_time: datetime,
+        end_time: Optional[datetime] = None,
+        download: bool = False,
+    ) -> pd.DataFrame:
+        """
+        Read the processed ENLIL Earth-position background run of `start_time`'s date.
+
+        Only the run keyed by `start_time`'s date is read; no other dates are combined in.
+
+        Parameters
+        ----------
+        start_time : datetime
+            Start time of the data to read. Its date selects the run.
+        end_time : datetime, optional
+            End time of the data to read. If not provided, defaults to the last
+            timestamp in the run's file.
+        download : bool, optional
+            Download and process data on the go, defaults to False.
+
+        Returns
+        -------
+        pd.DataFrame
+            A data frame with columns `bx_gsm`, `by_gsm`, `bz_gsm`, `bavg`, `speed`,
+            `proton_density`, `temperature`, `pdyn`, `file_name`, indexed by time (UTC).
+            Empty if no background run exists for that date.
+        """
+        start_time = enforce_utc_timezone(start_time)
+        runs = self._read_runs(start_time, end_time, download)
+
+        if not runs:
+            warnings.warn(f"No {self.MODE} file found for {start_time.date()}")
+            return pd.DataFrame(columns=OUTPUT_COLUMNS)
+
+        return runs[0]
+
+
+class SWENLIL_CME(SWENLIL):
+    """
+    A class for handling NOAA SWPC WSA-ENLIL CME simulation (`cme`) runs.
+
+    CME runs are archived only when a CME was modeled, so zero, one, or several
+    runs can exist for a given day, each at its own run time. A read therefore
+    returns a list of data frames, and a date without a run is not an error.
+
+    Parameters
+    ----------
+    data_dir : Path | None
+        Data directory for the ENLIL data. If not provided, it will be read from the environment variable.
+
+    Methods
+    -------
+    download_and_process
+    read
+
+    Raises
+    ------
+    ValueError
+        Returns `ValueError` if necessary environment variable is not set.
+    """
+
+    MODE: Mode = "cme"
+
+    LABEL = "enlil_cme"
+
+    def read(
+        self,
+        start_time: datetime,
+        end_time: Optional[datetime] = None,
+        download: bool = False,
+    ) -> list[pd.DataFrame]:
+        """
+        Read every processed ENLIL Earth-position CME run of `start_time`'s date.
+
+        Only runs keyed by `start_time`'s date are read; no other dates are combined in.
+
+        Parameters
+        ----------
+        start_time : datetime
+            Start time of the data to read. Its date selects the runs.
+        end_time : datetime, optional
+            End time of the data to read. If not provided, defaults to the last
+            timestamp in each run's file.
+        download : bool, optional
+            Download and process data on the go, defaults to False.
+
+        Returns
+        -------
+        list[pd.DataFrame]
+            One data frame per CME run, sorted by run time, each with columns `bx_gsm`,
+            `by_gsm`, `bz_gsm`, `bavg`, `speed`, `proton_density`, `temperature`, `pdyn`,
+            `file_name`, indexed by time (UTC). Empty if that date has no CME run.
+        """
+        return self._read_runs(start_time, end_time, download)

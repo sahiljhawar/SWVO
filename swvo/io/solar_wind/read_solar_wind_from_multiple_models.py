@@ -19,7 +19,16 @@ import pandas as pd
 from scipy.interpolate import UnivariateSpline
 
 from swvo.io.exceptions import ModelError
-from swvo.io.solar_wind import AVERAGE_VALUES_TO_FILL, DSCOVR, SWACE, SWENLIL, SWOMNI, SWSWIFTEnsemble
+from swvo.io.solar_wind import (
+    AVERAGE_VALUES_TO_FILL,
+    DSCOVR,
+    SWACE,
+    SWENLIL,
+    SWENLIL_BKG,
+    SWENLIL_CME,
+    SWOMNI,
+    SWSWIFTEnsemble,
+)
 from swvo.io.utils import (
     any_nans,
     construct_updated_data_frame,
@@ -28,14 +37,14 @@ from swvo.io.utils import (
 
 logger = logging.getLogger(__name__)
 
-SWModel = DSCOVR | SWACE | SWOMNI | SWSWIFTEnsemble | SWENLIL
+SWModel = DSCOVR | SWACE | SWOMNI | SWSWIFTEnsemble | SWENLIL_BKG | SWENLIL_CME
 
 ENLIL_MAX_LOOKBACK_DAYS = 5
 
 logging.captureWarnings(True)
 
 
-def read_solar_wind_from_multiple_models(  # noqa: PLR0913
+def read_solar_wind_from_multiple_models(
     start_time: datetime,
     end_time: datetime,
     model_order: Sequence[SWModel] | None = None,
@@ -51,7 +60,7 @@ def read_solar_wind_from_multiple_models(  # noqa: PLR0913
 
     The model order represents the priorities of models. The first model in the model order is read. If there are still NaNs in the resulting data, the next model will be read. And so on. In the case of reading ensemble predictions, a list will be returned, otherwise a plain data frame will be returned.
 
-    SWIFT and ENLIL are both forecast models and only ever provide data after `historical_data_cutoff_time`. The one placed first covers as much of the forecast window as it reaches and the other fills the remainder. Ensembles come from SWIFT whenever it supplies one, in which case ENLIL contributes only its latest run, copied out to match the SWIFT members. ENLIL's own CME runs become the ensemble instead when SWIFT supplies nothing, either because it is absent from the model order or because it had no data for the requested period. The one exception is ENLIL placed *before* SWIFT, where SWIFT's ensemble size is not yet known and ENLIL therefore stays a single run. ENLIL rows are labelled `enlil_cme` or `enlil_bkg` in the `model` column, after the run mode they came from.
+    SWIFT and ENLIL are both forecast models and only ever provide data after `historical_data_cutoff_time`. Each in turn covers as much of the forecast window as it reaches and hands the remainder to the next one in the order. In the default order that chain is SWIFT, then `SWENLIL_CME`, then `SWENLIL_BKG`: where SWIFT runs out before `end_time` the latest ENLIL CME run carries on from there, a period with no CME run at all is left to `SWENLIL_BKG`, and whatever none of them reach stays NaN unless `fill_average` is set, which closes the tail with ten year averages. Ensembles come from SWIFT whenever it supplies one, in which case ENLIL contributes only its latest run, copied out to match the SWIFT members. ENLIL's own CME runs become the ensemble instead when SWIFT supplies nothing, either because it is absent from the model order or because it had no data for the requested period. The one exception is ENLIL placed *before* SWIFT, where SWIFT's ensemble size is not yet known and ENLIL therefore stays a single run. ENLIL rows are labelled `enlil_cme` or `enlil_bkg` in the `model` column, after the run mode they came from.
 
     Parameters
     ----------
@@ -61,7 +70,8 @@ def read_solar_wind_from_multiple_models(  # noqa: PLR0913
     end_time : datetime
         End time of the data request.
     model_order : list, optional
-        Order in which data will be read from the models. Defaults to [OMNI, DSCOVR, ACE, SWIFT].
+        Order in which data will be read from the models.
+        Defaults to [OMNI, DSCOVR, ACE, SWIFT, ENLIL CME, ENLIL BKG].
     reduce_ensemble : Literal["mean", "median"], optional
         The method to reduce ensembles to a single time series. Defaults to None.
     historical_data_cutoff_time : datetime, optional
@@ -112,8 +122,11 @@ def read_solar_wind_from_multiple_models(  # noqa: PLR0913
         historical_data_cutoff_time = min(datetime.now(timezone.utc), end_time)
 
     if model_order is None:
-        model_order = [SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble()]
-        logger.warning("No model order specified, using default order: SWOMNI, DSCOVR, SWACE, SWSWIFTEnsemble")
+        model_order = [SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL_CME(), SWENLIL_BKG()]
+        logger.warning(
+            "No model order specified, using default order: SWOMNI, DSCOVR, SWACE, SWSWIFTEnsemble, "
+            "SWENLIL_CME, SWENLIL_BKG"
+        )
 
     swift_index = next((i for i, m in enumerate(model_order) if isinstance(m, SWSWIFTEnsemble)), None)
     forecast_indices = [i for i, m in enumerate(model_order) if isinstance(m, (SWSWIFTEnsemble, SWENLIL))]
@@ -175,8 +188,7 @@ def read_solar_wind_from_multiple_models(  # noqa: PLR0913
             else:
                 logger.info(f"{active_model.LABEL} data not available for future dates")
 
-        model_label = _enlil_model_label(data_one_model) if isinstance(active_model, SWENLIL) else active_model.LABEL
-        data_out = construct_updated_data_frame(data_out, data_one_model, model_label)
+        data_out = construct_updated_data_frame(data_out, data_one_model, active_model.LABEL)
 
         # A forecast model can stop short of end_time and pin the index there, which would leave
         # the next forecast model nowhere to write and end the loop before it is even read.
@@ -221,32 +233,6 @@ def read_solar_wind_from_multiple_models(  # noqa: PLR0913
     return data_out
 
 
-def _enlil_model_label(data: list[pd.DataFrame] | pd.DataFrame) -> str:
-    """Label ENLIL data by the run mode it was read from.
-
-    A single read never mixes modes, so the mode of the first file name applies to all of it.
-
-    Parameters
-    ----------
-    data : list[pd.DataFrame] | pd.DataFrame
-        The data returned by ENLIL.
-
-    Returns
-    -------
-    str
-        `"enlil_cme"` or `"enlil_bkg"`, falling back to `"enlil"` if the mode cannot be told.
-    """
-    for df in data if isinstance(data, list) else [data]:
-        if df.empty or "file_name" not in df.columns:
-            continue
-        file_name = Path(str(df["file_name"].iloc[0])).name
-        for mode in ("cme", "bkg"):
-            if f"_{mode}_" in file_name:
-                return f"{SWENLIL.LABEL}_{mode}"
-
-    return SWENLIL.LABEL
-
-
 def _has_valid_data(data: list[pd.DataFrame] | pd.DataFrame) -> bool:
     """Whether a model returned at least one numeric value.
 
@@ -270,7 +256,7 @@ def _has_valid_data(data: list[pd.DataFrame] | pd.DataFrame) -> bool:
     return False
 
 
-def _read_from_model(  # noqa: PLR0913
+def _read_from_model(
     model: SWModel,
     start_time: datetime,
     end_time: datetime,
@@ -509,13 +495,14 @@ def _read_latest_enlil_run(
     Read the most recent ENLIL run available at `historical_data_cutoff_time`.
 
     A run is keyed by its date, so the search starts at the date of `historical_data_cutoff_time`
-    and walks backwards a day at a time until runs are found. For each date the CME runs are
-    preferred, falling back to the background run when the date has no CME run at all.
+    and walks backwards a day at a time until runs of `model`'s own mode are found. Finding none
+    leaves the forecast window to the next model in the order, which is how a `SWENLIL_BKG` placed
+    after a `SWENLIL_CME` takes over on days that carry no CME run.
 
     Parameters
     ----------
     model : SWENLIL
-        The ENLIL model to read from.
+        The ENLIL model to read from, either :class:`SWENLIL_CME` or :class:`SWENLIL_BKG`.
     start_time : datetime
         Start time of the data request, which fixes the one minute grid the data is put on.
     end_time : datetime
@@ -537,23 +524,17 @@ def _read_latest_enlil_run(
     run_date = historical_data_cutoff_time.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
 
     for _ in range(ENLIL_MAX_LOOKBACK_DAYS):
-        cme_runs = model.read(run_date, end_time, download=download, mode="cme")
-        runs: list[pd.DataFrame] = cme_runs if isinstance(cme_runs, list) else [cme_runs]
-
-        if not runs:
-            # The CME read above already downloaded every run of this date, if any exist.
-            background_run = model.read(run_date, end_time, download=False, mode="bkg")
-            runs = background_run if isinstance(background_run, list) else [background_run]
-
+        read_runs = model.read(run_date, end_time, download=download)
+        runs: list[pd.DataFrame] = read_runs if isinstance(read_runs, list) else [read_runs]
         runs = [df for df in runs if not df.empty]
 
         if runs:
-            logger.info(f"Reading {len(runs)} ENLIL run(s) of {run_date.date()} up to {end_time}")
+            logger.info(f"Reading {len(runs)} ENLIL {model.MODE} run(s) of {run_date.date()} up to {end_time}")
             return _interpolate_enlil_to_common_index(runs, start_time, end_time, historical_data_cutoff_time)
 
         run_date -= timedelta(days=1)
 
-    logger.info("No ENLIL data available for the requested time range")
+    logger.info(f"No ENLIL {model.MODE} data available for the requested time range")
     return []
 
 

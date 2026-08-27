@@ -18,11 +18,15 @@ from swvo.io.solar_wind import (
     DSCOVR,
     SWACE,
     SWENLIL,
+    SWENLIL_BKG,
+    SWENLIL_CME,
     SWOMNI,
     SWSWIFTEnsemble,
     read_solar_wind_from_multiple_models,
 )
-from swvo.io.solar_wind.read_solar_wind_from_multiple_models import _interpolate_short_gaps
+from swvo.io.solar_wind.read_solar_wind_from_multiple_models import (
+    _interpolate_short_gaps,
+)
 
 TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = Path(os.path.join(TEST_DIR, "data/"))
@@ -31,7 +35,7 @@ READ_SW_MODULE = importlib.import_module("swvo.io.solar_wind.read_solar_wind_fro
 ENLIL_COLUMNS = ["bx_gsm", "by_gsm", "bz_gsm", "bavg", "speed", "proton_density", "temperature", "pdyn"]
 
 
-def _write_enlil_run(  # noqa: PLR0913
+def _write_enlil_run(
     model: SWENLIL,
     mode: str,
     date: datetime,
@@ -58,8 +62,8 @@ class TestReadSolarWindFromMultipleModels:
         # and the shared data directory is already tens of megabytes.
         enlil_dir = tmp_path_factory.mktemp("enlil_stream")
         for run_date in (datetime(2024, 11, 22, tzinfo=timezone.utc), datetime(2024, 11, 25, tzinfo=timezone.utc)):
-            _write_enlil_run(SWENLIL(enlil_dir), "bkg", run_date, "0000", 300.0, cadence=timedelta(hours=1))
-            _write_enlil_run(SWENLIL(enlil_dir), "cme", run_date, "1800", 403.0, cadence=timedelta(hours=1))
+            _write_enlil_run(SWENLIL_BKG(enlil_dir), "bkg", run_date, "0000", 300.0, cadence=timedelta(hours=1))
+            _write_enlil_run(SWENLIL_CME(enlil_dir), "cme", run_date, "1800", 403.0, cadence=timedelta(hours=1))
 
         ENV_VAR_NAMES = {
             "OMNI_HIGH_RES_STREAM_DIR": f"{str(DATA_DIR)}/OMNI",
@@ -100,13 +104,17 @@ class TestReadSolarWindFromMultipleModels:
 
     @pytest.fixture
     def enlil_instance(self, tmp_path):
-        return SWENLIL(tmp_path / "enlil")
+        return SWENLIL_CME(tmp_path / "enlil")
+
+    @pytest.fixture
+    def enlil_bkg_instance(self, tmp_path):
+        return SWENLIL_BKG(tmp_path / "enlil")
 
     def test_basic_historical_read(self, sample_times, expected_columns):
         data = read_solar_wind_from_multiple_models(
             start_time=sample_times["past_start"],
             end_time=sample_times["past_end"],
-            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL()],
+            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"],
         )
 
@@ -151,7 +159,7 @@ class TestReadSolarWindFromMultipleModels:
         data = read_solar_wind_from_multiple_models(
             start_time=sample_times["past_start"],
             end_time=sample_times["future_end"],
-            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL()],
+            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"],
         )
 
@@ -167,7 +175,7 @@ class TestReadSolarWindFromMultipleModels:
         data = read_solar_wind_from_multiple_models(
             start_time=sample_times["past_start"],
             end_time=sample_times["far_future_end"],
-            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL()],
+            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"],
         )
 
@@ -190,7 +198,7 @@ class TestReadSolarWindFromMultipleModels:
         data = read_solar_wind_from_multiple_models(
             start_time=sample_times["past_start"],
             end_time=sample_times["past_end"],
-            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL()],
+            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"] - timedelta(days=3),
         )
 
@@ -207,7 +215,7 @@ class TestReadSolarWindFromMultipleModels:
         data = read_solar_wind_from_multiple_models(
             start_time=start,
             end_time=end,
-            model_order=[SWOMNI(), SWSWIFTEnsemble(), SWENLIL()],
+            model_order=[SWOMNI(), SWSWIFTEnsemble(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"],
         )
 
@@ -224,7 +232,7 @@ class TestReadSolarWindFromMultipleModels:
         data = read_solar_wind_from_multiple_models(
             start_time=start,
             end_time=sample_times["past_end"],
-            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL()],
+            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"],
         )
 
@@ -245,7 +253,7 @@ class TestReadSolarWindFromMultipleModels:
         params = {
             "start_time": sample_times["past_start"],
             "end_time": sample_times["future_start"],
-            "model_order": [SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL()],
+            "model_order": [SWOMNI(), DSCOVR(), SWACE(), SWSWIFTEnsemble(), SWENLIL_CME()],
             "historical_data_cutoff_time": sample_times["test_time_now"],
         }
 
@@ -392,7 +400,7 @@ class TestReadSolarWindFromMultipleModels:
         result = read_solar_wind_from_multiple_models(
             start_time=start_time,
             end_time=end_time,
-            model_order=[SWOMNI(), SWSWIFTEnsemble(), SWENLIL()],
+            model_order=[SWOMNI(), SWSWIFTEnsemble(), SWENLIL_CME()],
             historical_data_cutoff_time=historical_data_cutoff_time,
             fill_average=fill_average,
         )
@@ -440,7 +448,7 @@ class TestReadSolarWindFromMultipleModels:
         data_no_rec = read_solar_wind_from_multiple_models(
             start_time=extended_start,
             end_time=extended_end,
-            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL()],
+            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"],
             download=False,
             do_interpolation=True,
@@ -449,7 +457,7 @@ class TestReadSolarWindFromMultipleModels:
         data_with_rec = read_solar_wind_from_multiple_models(
             start_time=extended_start,
             end_time=extended_end,
-            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL()],
+            model_order=[SWOMNI(), DSCOVR(), SWACE(), SWENLIL_CME()],
             historical_data_cutoff_time=sample_times["test_time_now"],
             download=True,
             do_interpolation=True,
@@ -501,14 +509,17 @@ class TestReadSolarWindFromMultipleModels:
         assert len({d.loc[d["model"] == "enlil_cme", "file_name"].iloc[0] for d in data}) == 3
 
     @pytest.mark.parametrize(("mode", "expected_label"), [("cme", "enlil_cme"), ("bkg", "enlil_bkg")])
-    def test_model_label_names_the_run_mode(self, enlil_instance, sample_times, mode, expected_label):
+    def test_model_label_names_the_run_mode(
+        self, enlil_instance, enlil_bkg_instance, sample_times, mode, expected_label
+    ):
         now = sample_times["test_time_now"]
-        _write_enlil_run(enlil_instance, mode, now, "1800" if mode == "cme" else "0000", 400.0)
+        model = enlil_instance if mode == "cme" else enlil_bkg_instance
+        _write_enlil_run(model, mode, now, "1800" if mode == "cme" else "0000", 400.0)
 
         data = read_solar_wind_from_multiple_models(
             start_time=now - timedelta(days=1),
             end_time=now + timedelta(days=2),
-            model_order=[SWOMNI(), enlil_instance],
+            model_order=[SWOMNI(), model],
             historical_data_cutoff_time=now,
         )
 
@@ -539,20 +550,92 @@ class TestReadSolarWindFromMultipleModels:
                 marker = {"omni": "OMNI", "swift": "gsm_", "enlil_cme": "_cme_"}[str(label)]
                 assert group["file_name"].astype(str).str.contains(marker).all()
 
-    def test_falls_back_to_bkg_when_no_cme_runs(self, enlil_instance, sample_times):
+    def test_falls_back_to_bkg_when_no_cme_runs(self, enlil_instance, enlil_bkg_instance, sample_times):
         now = sample_times["test_time_now"]
-        _write_enlil_run(enlil_instance, "bkg", now, "0000", 300.0)
+        _write_enlil_run(enlil_bkg_instance, "bkg", now, "0000", 300.0)
 
         data = read_solar_wind_from_multiple_models(
             start_time=now - timedelta(days=1),
             end_time=now + timedelta(days=2),
-            model_order=[SWOMNI(), enlil_instance],
+            model_order=[SWOMNI(), enlil_instance, enlil_bkg_instance],
             historical_data_cutoff_time=now,
         )
 
         assert isinstance(data, pd.DataFrame)
         assert (data.loc[data["model"] == "enlil_bkg", "speed"] == 300.0).all()
         assert data.loc[data["model"] == "enlil_bkg", "file_name"].str.contains("bkg").all()
+
+    def test_bkg_class_in_model_order_reads_only_background_runs(self, tmp_path, sample_times):
+        """Either run-mode class can go in the model order, and SWENLIL_BKG keeps to the
+        background run even on a date that also has CME runs."""
+        now = sample_times["test_time_now"]
+        bkg_instance = SWENLIL_BKG(tmp_path / "enlil")
+        _write_enlil_run(bkg_instance, "bkg", now, "0000", 300.0)
+        _write_enlil_run(bkg_instance, "cme", now, "1800", 403.0)
+
+        data = read_solar_wind_from_multiple_models(
+            start_time=now - timedelta(days=1),
+            end_time=now + timedelta(days=2),
+            model_order=[SWOMNI(), bkg_instance],
+            historical_data_cutoff_time=now,
+        )
+
+        assert isinstance(data, pd.DataFrame)
+        assert "enlil_cme" not in data["model"].dropna().unique()
+        assert (data.loc[data["model"] == "enlil_bkg", "speed"] == 300.0).all()
+
+    def test_swift_hands_over_to_cme_then_to_bkg(self, enlil_instance, enlil_bkg_instance, sample_times):
+        """The forecast window is covered in model order: SWIFT for as far as it reaches, then the
+        latest CME run, then the background run for whatever the CME run does not cover."""
+        now = sample_times["test_time_now"]
+        # The SWIFT ensemble reaches 2024-12-02 (now + 7 days), so these horizons make each model
+        # run out in turn before end_time.
+        _write_enlil_run(enlil_instance, "cme", now, "1800", 403.0, days=8)
+        _write_enlil_run(enlil_bkg_instance, "bkg", now, "0000", 300.0, days=12)
+
+        data = read_solar_wind_from_multiple_models(
+            start_time=now - timedelta(days=1),
+            end_time=sample_times["far_future_end"],
+            model_order=[SWOMNI(), SWSWIFTEnsemble(), enlil_instance, enlil_bkg_instance],
+            historical_data_cutoff_time=now,
+        )
+
+        assert isinstance(data, list)
+        for d in data:
+            swift = d.index[d["model"] == "swift"]
+            cme = d.index[d["model"] == "enlil_cme"]
+            bkg = d.index[d["model"] == "enlil_bkg"]
+
+            assert len(swift) > 0 and len(cme) > 0 and len(bkg) > 0
+            assert cme.min() > swift.max()
+            assert bkg.min() > cme.max()
+            assert (d.loc[d["model"] == "enlil_cme", "speed"] == 403.0).all()
+            assert (d.loc[d["model"] == "enlil_bkg", "speed"] == 300.0).all()
+
+    def test_average_fill_closes_the_tail_neither_enlil_reaches(self, enlil_instance, enlil_bkg_instance, sample_times):
+        now = sample_times["test_time_now"]
+        end_time = now + timedelta(days=6)
+        _write_enlil_run(enlil_instance, "cme", now, "1800", 403.0, days=2)
+        _write_enlil_run(enlil_bkg_instance, "bkg", now, "0000", 300.0, days=4)
+
+        data = read_solar_wind_from_multiple_models(
+            start_time=now - timedelta(days=1),
+            end_time=end_time,
+            model_order=[SWOMNI(), enlil_instance, enlil_bkg_instance],
+            historical_data_cutoff_time=now,
+            fill_average=True,
+        )
+
+        assert isinstance(data, pd.DataFrame)
+        assert data.index.max() == end_time
+        # the forecast window is covered end to end; the historical part keeps OMNI's own gaps
+        assert not data.loc[data.index > now, "speed"].isna().any()
+
+        filled = data.index[data["model"] == "10_year_average_filled"]
+        assert len(filled) > 0
+        # the averages only start once the background run, itself after the CME run, runs out
+        assert filled.min() > data.index[data["model"] == "enlil_bkg"].max()
+        assert data.index[data["model"] == "enlil_bkg"].min() > data.index[data["model"] == "enlil_cme"].max()
 
     def test_walks_back_to_an_earlier_run_date(self, enlil_instance, sample_times):
         now = sample_times["test_time_now"]
@@ -590,14 +673,14 @@ class TestReadSolarWindFromMultipleModels:
             # ENLIL picks up exactly where SWIFT stops
             assert enlil_rows.index.min() > swift_rows.index.max()
 
-    def test_enlil_never_fills_before_the_historical_cutoff(self, enlil_instance, sample_times):
+    def test_enlil_never_fills_before_the_historical_cutoff(self, enlil_bkg_instance, sample_times):
         now = sample_times["test_time_now"]
-        _write_enlil_run(enlil_instance, "bkg", now - timedelta(days=3), "0000", 300.0)
+        _write_enlil_run(enlil_bkg_instance, "bkg", now - timedelta(days=3), "0000", 300.0)
 
         data = read_solar_wind_from_multiple_models(
             start_time=now - timedelta(days=3),
             end_time=now + timedelta(days=2),
-            model_order=[SWOMNI(), enlil_instance],
+            model_order=[SWOMNI(), enlil_bkg_instance],
             historical_data_cutoff_time=now,
         )
 
@@ -703,7 +786,7 @@ class TestReadSolarWindFromMultipleModels:
         def raise_value_error(self, *args, **kwargs):
             raise ValueError("enlil_instance is unhappy")
 
-        monkeypatch.setattr(SWENLIL, "read", raise_value_error)
+        monkeypatch.setattr(SWENLIL_CME, "read", raise_value_error)
 
         with pytest.raises(ValueError, match="enlil_instance is unhappy"):
             read_solar_wind_from_multiple_models(
