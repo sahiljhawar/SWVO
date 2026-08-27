@@ -141,11 +141,13 @@ class TestHpGFZ:
         mock_response.raise_for_status = Mock()
         mock_get = mocker.patch("swvo.io.hp.gfz.requests.get", return_value=mock_response)
 
-        mocker.patch("swvo.io.hp.gfz.rmtree")
         mocker.patch.object(hp30gfz, "_process_single_file", return_value=pd.DataFrame())
 
         hp30gfz.download_and_process(start_time, end_time)
         mock_get.assert_called()
+
+        temp_dir = Path("./temp_hp_wget")
+        assert not temp_dir.exists(), "Temporary directory should be cleaned up"
 
     def test_download_api_url_construction(self, hp30gfz, tmp_path, mocker):
         start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
