@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from swvo.io.kp.ensemble import KpEnsemble as KpEnsemble
+from swvo.io.kp.niemegk import KpGFZ as KpGFZ
 from swvo.io.kp.niemegk import KpNiemegk as KpNiemegk
 from swvo.io.kp.omni import KpOMNI as KpOMNI
 from swvo.io.kp.swpc import KpSWPC as KpSWPC

@@ -390,3 +390,6 @@ class KpNiemegk(BaseIO):
         data["kp"] = np.round(data["kp"], decimals=2)
 
         return data
+
+
+KpGFZ = KpNiemegk

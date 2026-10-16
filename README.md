@@ -48,7 +48,7 @@ This package provides tools to read, process, and analyze several key solar and 
   - **Sources & Classes:**
     - OMNI: `KpOMNI`
     - SWPC: `KpSWPC`
-    - Niemegk: `KpNiemegk`
+    - Niemegk: `KpNiemegk` (alias: `KpGFZ`)
     - Ensemble: `KpEnsemble`
     - BSG: `KpBGS`
     - SIDC: `KpSIDC`
