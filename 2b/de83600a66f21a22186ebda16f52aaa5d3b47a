@@ -1,0 +1,21 @@
+docs/presentation.rst
+  s_e2e08aa39fe488::t_ac0938fbe44341 1-15
+docs/index.rst
+  s_e2e08aa39fe488::t_812528aab66106 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2bde83600a66f21a22186ebda16f52aaa5d3b47a",
+  "prompts": {},
+  "sessions": {
+    "s_e2e08aa39fe488": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3029778e-85a6-4ef9-af37-eacb75214195",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sahil Jhawar <sahil.jhawar448@gmail.com>"
+    }
+  }
+}
